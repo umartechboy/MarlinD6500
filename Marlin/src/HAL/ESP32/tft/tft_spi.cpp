@@ -19,8 +19,47 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
-#pragma once
 
-#if HAS_FSMC_TFT
-  #error "Sorry! TFT displays are not available for HAL/ESP32."
-#endif
+#include "../../platforms.h"
+
+#ifdef ESP32
+
+#include "../../../inc/MarlinConfig.h"
+
+#if HAS_SPI_TFT
+#include "tft_spi.h"
+
+void TFT_SPI::Init(){
+  
+}
+bool TFT_SPI::isBusy(){
+  return false;
+}
+void TFT_SPI::Abort(){
+
+}
+void TFT_SPI::DataTransferBegin(uint16_t DataWidth){
+
+}
+uint32_t TFT_SPI::GetID(){
+  return 0;
+}
+void TFT_SPI::WriteData(uint16_t Data){
+
+}
+void TFT_SPI::DataTransferEnd(){
+
+}
+void TFT_SPI::WriteReg(uint16_t Reg){
+
+}
+void TFT_SPI::WriteSequence(uint16_t *Data, uint16_t Count){
+
+}
+void TFT_SPI::WriteMultiple(uint16_t Color, uint32_t Count){
+
+}
+
+
+#endif // HAS_SPI_TFT
+#endif // ESP32

@@ -37,7 +37,10 @@
   #define ENDIAN_COLOR(C) (C)
 #endif
 
-#if HAS_UI_320x240
+#if HAS_UI_128x128
+  #define TFT_WIDTH         128
+  #define TFT_HEIGHT        128
+#elif HAS_UI_320x240
   #define TFT_WIDTH         320
   #define TFT_HEIGHT        240
 #elif HAS_UI_480x320

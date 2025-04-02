@@ -21,6 +21,34 @@
  */
 #pragma once
 
-#if HAS_FSMC_TFT
-  #error "Sorry! TFT displays are not available for HAL/ESP32."
+#ifndef LCD_READ_ID
+  #define LCD_READ_ID 0x04   // Read display identification information (0xD3 on ILI9341)
 #endif
+#ifndef LCD_READ_ID4
+  #define LCD_READ_ID4 0xD3   // Read display identification information (0xD3 on ILI9341)
+#endif
+
+#define DATASIZE_8BIT  8
+#define DATASIZE_16BIT 16
+
+#define TFT_IO_DRIVER  TFT_SPI
+
+class TFT_SPI {
+private:
+
+public:
+  static void Init(); // needed
+  static bool isBusy();// needed
+  static void Abort(); // needed
+  static uint32_t GetID();
+  static void WriteData(uint16_t Data);
+  static void DataTransferEnd();
+  static void WriteReg(uint16_t Reg);
+  static void WriteSequence(uint16_t *Data, uint16_t Count);
+  static void WriteMultiple(uint16_t Color, uint32_t Count);
+  
+
+  static void DataTransferBegin(uint16_t DataWidth = DATASIZE_16BIT); // needed
+};
+
+
