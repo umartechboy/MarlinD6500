@@ -41,6 +41,10 @@
   #include "../feature/spindle_laser.h"
 #endif
 
+#if M3D_TouchPadDriverForADCKeypad
+#include "..\HAL\ESP32\tft\touch_on_adc_keypad.h"
+#endif
+
 #if ENABLED(USE_CONTROLLER_FAN)
   #include "../feature/controllerfan.h"
 #endif
@@ -2585,7 +2589,9 @@ void Temperature::init() {
   TERN_(HAS_TEMP_ADC_BOARD,     hal.adc_enable(TEMP_BOARD_PIN));
   TERN_(HAS_TEMP_ADC_REDUNDANT, hal.adc_enable(TEMP_REDUNDANT_PIN));
   TERN_(FILAMENT_WIDTH_SENSOR,  hal.adc_enable(FILWIDTH_PIN));
+  #if !M3D_TouchPadDriverForADCKeypad
   TERN_(HAS_ADC_BUTTONS,        hal.adc_enable(ADC_KEYPAD_PIN));
+  #endif
   TERN_(POWER_MONITOR_CURRENT,  hal.adc_enable(POWER_MONITOR_CURRENT_PIN));
   TERN_(POWER_MONITOR_VOLTAGE,  hal.adc_enable(POWER_MONITOR_VOLTAGE_PIN));
 
@@ -3734,7 +3740,10 @@ void Temperature::isr() {
       case PrepareJoy_Z: hal.adc_start(JOY_Z_PIN); break;
       case MeasureJoy_Z: ACCUMULATE_ADC(joystick.z); break;
     #endif
-
+    
+    #if M3D_TouchPadDriverForADCKeypad
+      touchOnADCKeyPad_Loop();
+    #else
     #if HAS_ADC_BUTTONS
       #ifndef ADC_BUTTON_DEBOUNCE_DELAY
         #define ADC_BUTTON_DEBOUNCE_DELAY 16
@@ -3760,6 +3769,7 @@ void Temperature::isr() {
         if (ADCKey_count == ADC_BUTTON_DEBOUNCE_DELAY) ADCKey_pressed = true;
         break;
     #endif // HAS_ADC_BUTTONS
+    #endif // M3D_TouchPadDriverForADCKeypad
 
     case StartupDelay: break;
 

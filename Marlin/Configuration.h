@@ -2608,6 +2608,18 @@
 //=============================================================================
 // @section lcd
 
+
+// M3D D8500 UI. Has a 128x128 ST7735 with a touch based 5 buttons keypad.
+#define M3D_D8500_UI
+#if ENABLED(M3D_D8500_UI)
+  #define TFT_GENERIC
+  // This should be used only in case Marlin uses a ui_x.cpp that is derived from another and needs scaling
+  #define TFT_ScaleX  12800 / 32000
+  #define TFT_ScaleY  12800 / 24000
+  #define M3D_TouchPadDriverForADCKeypad 1
+  #define HAS_ADC_BUTTONS 1
+  #define IS_RRW_KEYPAD   1 // needed for the emulation over ZoneStar Pane;
+#endif
 //
 // RepRapDiscount Smart Controller.
 // https://reprap.org/wiki/RepRapDiscount_Smart_Controller
@@ -3184,7 +3196,7 @@
  *   TFT_ROTATE_270, TFT_ROTATE_270_MIRROR_X, TFT_ROTATE_270_MIRROR_Y,
  *   TFT_MIRROR_X, TFT_MIRROR_Y, TFT_NO_ROTATION
  */
-//#define TFT_ROTATION TFT_NO_ROTATION
+#define TFT_ROTATION TFT_NO_ROTATION
 
 //=============================================================================
 //============================  Other Controllers  ============================

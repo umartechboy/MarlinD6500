@@ -40,6 +40,10 @@
 #include "marlinui.h"
 MarlinUI ui;
 
+#if M3D_TouchPadDriverForADCKeypad
+#include "..\HAL\ESP32\tft\touch_on_adc_keypad.h"
+#endif
+
 #if HAS_DISPLAY
   #include "../gcode/queue.h"
   #include "fontutils.h"
@@ -1200,6 +1204,11 @@ void MarlinUI::init() {
     TERN_(HAS_GRAPHICAL_TFT, tft_idle());
   }
 
+  #if M3D_TouchPadDriverForADCKeypad
+  uint8_t get_ADC_keyValue() {
+    touchOnADCKeyPad_getKey();
+  }
+  #else
   #if HAS_ADC_BUTTONS
 
     typedef struct {
@@ -1265,8 +1274,8 @@ void MarlinUI::init() {
       }
       return 0;
     }
-
   #endif // HAS_ADC_BUTTONS
+  #endif // M3D_TouchPadDriverForADCKeypad
 
   #if HAS_ENCODER_ACTION
 

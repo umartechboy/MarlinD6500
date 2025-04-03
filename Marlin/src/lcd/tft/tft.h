@@ -73,12 +73,33 @@
   #error "TFT_BUFFER_SIZE can not exceed 65535"
 #endif
 
+#ifdef TFT_ScaleX
+#if (TFT_ScaleX == 100)
+#define _scaleOnX(v) (v)
+#else
+#define _scaleOnX(v) (((int32_t)(v) * int32_t(TFT_ScaleX)) / 100)
+#endif
+#else
+#define _scaleOnX(v) (v)
+#endif
+#ifdef TFT_ScaleY
+#if (TFT_ScaleY == 100)
+#define _scaleOnY(v) (v)
+#else
+#define _scaleOnY(v) (((int32_t)(v) * int32_t(TFT_ScaleY)) / 100)
+#endif
+#else
+#define _scaleOnY(v) (v)
+#endif
 class TFT {
   private:
     static TFT_String string;
     static TFT_IO io;
 
   public:
+    int ScaleX = TFT_ScaleX;
+    int ScaleY = TFT_ScaleY;
+
     static TFT_Queue queue;
 
     static uint16_t buffer[TFT_BUFFER_SIZE];
@@ -93,15 +114,16 @@ class TFT {
     static void write_sequence(uint16_t *Data, uint16_t Count) { io.WriteSequence(Data, Count); }
     static void set_window(uint16_t Xmin, uint16_t Ymin, uint16_t Xmax, uint16_t Ymax) { io.set_window(Xmin, Ymin, Xmax, Ymax); }
 
-    static void fill(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t color) { queue.fill(x, y, width, height, color); }
-    static void canvas(uint16_t x, uint16_t y, uint16_t width, uint16_t height) { queue.canvas(x, y, width, height); }
     static void set_background(uint16_t color) { queue.set_background(color); }
-    static void add_text(uint16_t x, uint16_t y, uint16_t color, TFT_String tft_string, uint16_t maxWidth = 0) { queue.add_text(x, y, color, tft_string.string(), maxWidth); }
-    static void add_text(uint16_t x, uint16_t y, uint16_t color, const char *string, uint16_t maxWidth = 0) { queue.add_text(x, y, color, string, maxWidth); }
-    static void add_image(int16_t x, int16_t y, MarlinImage image, uint16_t *colors) { queue.add_image(x, y, image, colors); }
-    static void add_image(int16_t x, int16_t y, MarlinImage image, uint16_t color_main = COLOR_WHITE, uint16_t color_background = COLOR_BACKGROUND, uint16_t color_shadow = COLOR_BLACK) { queue.add_image(x, y, image, color_main,  color_background, color_shadow); }
-    static void add_bar(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t color) { queue.add_bar(x, y, width, height, color); }
-    static void add_rectangle(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t color) { queue.add_rectangle(x, y, width, height, color); }
+
+    static void fill(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t color) { queue.fill(_scaleOnX(x), _scaleOnY(y), _scaleOnX(width), _scaleOnY(height), color); }
+    static void canvas(uint16_t x, uint16_t y, uint16_t width, uint16_t height) { queue.canvas(_scaleOnX(x), _scaleOnY(y), _scaleOnX(width), _scaleOnY(height)); }
+    static void add_text(uint16_t x, uint16_t y, uint16_t color, TFT_String tft_string, uint16_t maxWidth = 0) { queue.add_text(_scaleOnX(x), _scaleOnY(y), color, tft_string.string(), maxWidth); }
+    static void add_text(uint16_t x, uint16_t y, uint16_t color, const char *string, uint16_t maxWidth = 0) { queue.add_text(_scaleOnX(x), _scaleOnY(y), color, string, maxWidth); }
+    static void add_image(int16_t x, int16_t y, MarlinImage image, uint16_t *colors) { queue.add_image(_scaleOnX(x), _scaleOnY(y), image, colors); }
+    static void add_image(int16_t x, int16_t y, MarlinImage image, uint16_t color_main = COLOR_WHITE, uint16_t color_background = COLOR_BACKGROUND, uint16_t color_shadow = COLOR_BLACK) { queue.add_image(_scaleOnX(x), _scaleOnY(y), image, color_main,  color_background, color_shadow); }
+    static void add_bar(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t color) { queue.add_bar(_scaleOnX(x), _scaleOnY(y), _scaleOnX(width), _scaleOnY(height), color); }
+    static void add_rectangle(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t color) { queue.add_rectangle(_scaleOnX(x), _scaleOnY(y), _scaleOnX(width), _scaleOnY(height), color); }
     static void draw_edit_screen_buttons();
 };
 

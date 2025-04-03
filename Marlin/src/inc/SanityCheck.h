@@ -2969,6 +2969,12 @@ static_assert(Y_MAX_LENGTH >= Y_BED_SIZE, "Movement bounds (Y_MIN_POS, Y_MAX_POS
   #error "TFT_(COLOR|CLASSIC|LVGL)_UI requires a TFT display to be enabled."
 #endif
 
+#if M3D_TouchPadDriverForADCKeypad
+#ifndef ESP32
+#error M3D Touchpad needs 4 ESP32 touch pins to work
+#endif
+#endif
+
 #if ENABLED(TFT_GENERIC) && NONE(TFT_INTERFACE_FSMC, TFT_INTERFACE_SPI)
   #error "TFT_GENERIC requires either TFT_INTERFACE_FSMC or TFT_INTERFACE_SPI interface."
 #endif
