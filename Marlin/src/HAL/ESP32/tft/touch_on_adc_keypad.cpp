@@ -1,4 +1,7 @@
 #include "touch_on_adc_keypad.h"
+#include "..\..\..\inc\MarlinConfigPre.h"
+
+#if M3D_TouchPadDriverForADCKeypad
 
 void touchOnADCKeyPad_Loop(){ // no gestures supported yet.
 
@@ -25,3 +28,5 @@ uint8_t touchOnADCKeyPad_getKey(){
     if (hasBooleanTouch(tRight_Pin)) return BLEN_KEYPAD_RIGHT;
     return 0;
 }
+
+#endif

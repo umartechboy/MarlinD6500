@@ -1206,7 +1206,7 @@ void MarlinUI::init() {
 
   #if M3D_TouchPadDriverForADCKeypad
   uint8_t get_ADC_keyValue() {
-    touchOnADCKeyPad_getKey();
+    return touchOnADCKeyPad_getKey();
   }
   #else
   #if HAS_ADC_BUTTONS
