@@ -63,7 +63,7 @@
 #define Z_ENABLE_PIN                          4
 #else
 #define Z_STEP_PIN                            27 // Done
-#define Z_DIR_PIN                             12
+#define Z_DIR_PIN                             202 // Done
 #define Z_ENABLE_PIN                          22
 #endif
 
