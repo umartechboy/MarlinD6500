@@ -85,7 +85,8 @@
 //
 // Temperature Sensors
 //
-#define TEMP_0_PIN                            36  // Analog Input
+#define TEMP_0_PIN                            216  // Analog Input
+#define TEMP_1_PIN                            217 // Analog Input
 #if ENABLED(M3DPrintVueSupport)
 #define TEMP_BED_PIN                          -1  // Disable Bed for PrintVue connections
 #else
