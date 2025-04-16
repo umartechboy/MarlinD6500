@@ -201,7 +201,51 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
 
   extern "C" {
     esp_err_t esp_task_wdt_reset();
-  }
+  
+    // Declare original weak functions from the ESP32 core
+    extern void __digitalWrite(uint8_t pin, uint8_t val);
+    extern int  __digitalRead(uint8_t pin);
+    extern uint16_t __analogRead(uint8_t pin);
+    
+    // Override digitalWrite
+    void digitalWrite(uint8_t pin, uint8_t val) {
+      if (pin >= 201 && pin <= 216) {
+        // Do nothing
+      } else {
+        __digitalWrite(pin, val);       // Call the original
+      }
+    }
+    
+    // Override digitalRead
+    int digitalRead(uint8_t pin) {
+      if (pin >= 200 && pin <= 207){
+        //return pcf1.read(pin - 200);
+        return 0;
+      }
+      else if (pin > 207 && pin <= 215) {
+          //return pcf2.read(pin - 208);
+          return 0;
+      }
+      else
+        return __digitalRead(pin);       // Call the original
+    }
+    // Override analogRead
+    uint16_t analogRead(uint8_t pin) {
+      if (pin >= 216 && pin < 220) {
+        //uint16_t val = map(ads.readADC_SingleEnded(pin - 216), 0, 32767, 0, 1023);
+        // Serial.print("analogRead on ADS (");
+        // Serial.print(pin);
+        // Serial.print(") = ");
+        // Serial.print(val);
+        // Serial.println();
+        int val = 1000;
+        return val;
+      } else {
+        return __analogRead(pin);        // Call the original
+      }
+    }    
+  } // extern "C"
+  
 
   void watchdogSetup() {
     // do whatever. don't remove this function.

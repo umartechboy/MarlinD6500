@@ -41,20 +41,20 @@
 
 // Limit Switches
 //
-#define X_STOP_PIN                            34
-#define Y_STOP_PIN                            35
-#define Z_STOP_PIN                            15
+#define X_STOP_PIN                            34 // Done
+#define Y_STOP_PIN                            35 // Done
+#define Z_STOP_PIN                            15 
 
 //
 // Steppers
 //
 
-#define X_STEP_PIN                            32
-#define X_DIR_PIN                             33
+#define X_STEP_PIN                            32 // Done
+#define X_DIR_PIN                             33 // Done
 #define X_ENABLE_PIN                          25
 
-#define Y_STEP_PIN                            26
-#define Y_DIR_PIN                             27
+#define Y_STEP_PIN                            26 // Done
+#define Y_DIR_PIN                             25 // Done
 #define Y_ENABLE_PIN                          14
 
 #if ENABLED(D6500_RouterPCB)
@@ -62,7 +62,7 @@
 #define Z_DIR_PIN                             12
 #define Z_ENABLE_PIN                          4
 #else
-#define Z_STEP_PIN                            21
+#define Z_STEP_PIN                            27 // Done
 #define Z_DIR_PIN                             12
 #define Z_ENABLE_PIN                          22
 #endif
@@ -72,9 +72,14 @@
 #define E0_DIR_PIN                            17
 #define E0_ENABLE_PIN                         21
 #else
-#define E0_STEP_PIN                           16
+#define E0_STEP_PIN                           16 // Done
 #define E0_DIR_PIN                            4
 #define E0_ENABLE_PIN                         17
+
+
+#define E1_STEP_PIN                           2 // Done
+#define E1_DIR_PIN                            4
+#define E1_ENABLE_PIN                         17
 #endif
 
 //
