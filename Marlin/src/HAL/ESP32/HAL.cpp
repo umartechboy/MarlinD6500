@@ -28,7 +28,13 @@
 #include <esp_adc_cal.h>
 #include <HardwareSerial.h>
 #include <soc/adc_channel.h>
+#include <Adafruit_ADS1X15.h>
+#include <PCF8574.h>
 
+PCF8574 pcf2(0x20);
+PCF8574 pcf1(0x21); // Closer to ESP32
+
+Adafruit_ADS1115 ads;  /* Use this for the 16-bit version */
 #if ENABLED(USE_ESP32_TASK_WDT)
   #include <esp_task_wdt.h>
 #endif
@@ -124,6 +130,11 @@ struct {
   extern void M3DPrintVueLoop();
 #endif
 void MarlinHAL::init_board() {
+  
+  Wire.begin();
+  pcf1.begin();
+  pcf2.begin();
+
   #if ENABLED(USE_ESP32_TASK_WDT)
     esp_task_wdt_init(10, true);
   #endif
@@ -207,44 +218,58 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
     extern int  __digitalRead(uint8_t pin);
     extern uint16_t __analogRead(uint8_t pin);
     
-    // Override digitalWrite
-    void digitalWrite(uint8_t pin, uint8_t val) {
-      if (pin >= 201 && pin <= 216) {
-        // Do nothing
-      } else {
-        __digitalWrite(pin, val);       // Call the original
-      }
+  // Override digitalWrite
+  void digitalWrite(uint8_t pin, uint8_t val) {
+    if (pin >= 200 && pin <= 207) {
+      //pcf1.write(pin - 200, val);
+      // Serial.print("digitalWrite on PCF1 (");
+      // Serial.print(pin);
+      // Serial.print(", ");
+      // Serial.print(val);
+      // Serial.println(")");
     }
-    
-    // Override digitalRead
-    int digitalRead(uint8_t pin) {
-      if (pin >= 200 && pin <= 207){
-        //return pcf1.read(pin - 200);
-        return 0;
-      }
-      else if (pin > 207 && pin <= 215) {
-          //return pcf2.read(pin - 208);
-          return 0;
-      }
-      else
-        return __digitalRead(pin);       // Call the original
-    }
-    // Override analogRead
-    uint16_t analogRead(uint8_t pin) {
-      if (pin >= 216 && pin < 220) {
-        //uint16_t val = map(ads.readADC_SingleEnded(pin - 216), 0, 32767, 0, 1023);
-        // Serial.print("analogRead on ADS (");
+    else if (pin > 207 && pin <= 215) {
+        //pcf2.write(pin - 208, val);
+        // Serial.print("digitalWrite on PCF2 (");
         // Serial.print(pin);
-        // Serial.print(") = ");
+        // Serial.print(", ");
         // Serial.print(val);
-        // Serial.println();
-        int val = 970 * 4;
-        return val;
-      } else {
-        return __analogRead(pin);        // Call the original
-      }
-    }    
-  } // extern "C"
+        // Serial.println(")");
+    }
+    else 
+      __digitalWrite(pin, val);       // Call the original
+  }
+    
+  // Override digitalRead
+  int digitalRead(uint8_t pin) {
+    if (pin >= 200 && pin <= 207){
+      return 0;
+      //return pcf1.read(pin - 200);
+    }
+    else if (pin > 207 && pin <= 215) {
+      return 0;
+        //return pcf2.read(pin - 208);
+    }
+    else
+      return __digitalRead(pin);       // Call the original
+  }
+  
+  // Override analogRead
+  uint16_t analogRead(uint8_t pin) {
+    if (pin >= 216 && pin < 220) {
+      //uint16_t val = map(ads.readADC_SingleEnded(pin - 216), 0, 32767, 0, 1023);
+      int val = 970;
+      // Serial.print("analogRead on ADS (");
+      // Serial.print(pin - 216);
+      // Serial.print(") = ");
+      // Serial.print(val);
+      // Serial.println();
+      return val;
+    } else {
+      return __analogRead(pin);        // Call the original
+    }
+  }  
+} // extern "C"
   
 
   void watchdogSetup() {
@@ -288,6 +313,8 @@ void adc1_set_attenuation(adc1_channel_t chan, adc_atten_t atten) {
 
 void MarlinHAL::adc_init() {
   // Configure ADC
+  ads.begin(); // default address
+  ads.setGain(GAIN_ONE);
   adc1_config_width(ADC_WIDTH_12Bit);
 
   // Configure channels only if used as (re-)configuring a pin for ADC that is used elsewhere might have adverse effects
@@ -324,7 +351,7 @@ void MarlinHAL::adc_init() {
 
 void MarlinHAL::adc_start(const pin_t pin) {
   if (pin >= 216 && pin < 220){
-    adc_result = 970;
+    adc_result = analogRead(pin);
     return; // Its on ADS
   }
   const adc1_channel_t chan = get_channel(pin);
