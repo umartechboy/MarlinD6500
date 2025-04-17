@@ -31,8 +31,8 @@
 #include <Adafruit_ADS1X15.h>
 #include <PCF8574.h>
 
-PCF8574 pcf2(0x20);
-PCF8574 pcf1(0x21); // Closer to ESP32
+PCF8574 pcf1(0x20);
+PCF8574 pcf2(0x21); // Closer to ESP32 (U6)
 
 Adafruit_ADS1115 ads;  /* Use this for the 16-bit version */
 #if ENABLED(USE_ESP32_TASK_WDT)
@@ -131,10 +131,13 @@ struct {
 #endif
 void MarlinHAL::init_board() {
   
+  SERIAL_IMPL.println("Starting Wire and IO Expander");
   Wire.begin();
   pcf1.begin();
   pcf2.begin();
+  ads.begin(); // default address
 
+  SERIAL_IMPL.println("Expanders On.");
   #if ENABLED(USE_ESP32_TASK_WDT)
     esp_task_wdt_init(10, true);
   #endif
@@ -220,21 +223,21 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
     
   // Override digitalWrite
   void digitalWrite(uint8_t pin, uint8_t val) {
-    if (pin >= 200 && pin <= 207) {
+    if (pin >= 200 && pin < 208) {
       //pcf1.write(pin - 200, val);
-      // Serial.print("digitalWrite on PCF1 (");
-      // Serial.print(pin);
-      // Serial.print(", ");
-      // Serial.print(val);
-      // Serial.println(")");
+      // SERIAL_IMPL.print("digitalWrite on PCF1 (");
+      // SERIAL_IMPL.print(pin - 200);
+      // SERIAL_IMPL.print(", ");
+      // SERIAL_IMPL.print(val);
+      // SERIAL_IMPL.println(")");
     }
-    else if (pin > 207 && pin <= 215) {
+    else if (pin >= 208 && pin < 216) {
         //pcf2.write(pin - 208, val);
-        // Serial.print("digitalWrite on PCF2 (");
-        // Serial.print(pin);
-        // Serial.print(", ");
-        // Serial.print(val);
-        // Serial.println(")");
+        // SERIAL_IMPL.print("digitalWrite on PCF2 (");
+        // SERIAL_IMPL.print(pin - 208);
+        // SERIAL_IMPL.print(", ");
+        // SERIAL_IMPL.print(val);
+        // SERIAL_IMPL.println(")");
     }
     else 
       __digitalWrite(pin, val);       // Call the original
@@ -242,13 +245,27 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
     
   // Override digitalRead
   int digitalRead(uint8_t pin) {
-    if (pin >= 200 && pin <= 207){
-      return 0;
-      //return pcf1.read(pin - 200);
+    SERIAL_IMPL.print("digitalRead(");
+    SERIAL_IMPL.print(pin);
+    SERIAL_IMPL.print(") = ");
+    SERIAL_IMPL.println(__digitalRead(pin));
+    if (pin >= 200 && pin < 208){
+      SERIAL_IMPL.print("digitalRead on PCF1 (");
+      SERIAL_IMPL.print(pin - 200);
+      SERIAL_IMPL.print(") = ");
+      int val = pcf1.read(pin - 200);
+      SERIAL_IMPL.print(val);
+      SERIAL_IMPL.println();
+      return val;
     }
-    else if (pin > 207 && pin <= 215) {
-      return 0;
-        //return pcf2.read(pin - 208);
+    else if (pin >= 208 && pin < 216){
+      SERIAL_IMPL.print("digitalRead on PCF2 (");
+      SERIAL_IMPL.print(pin - 208);
+      SERIAL_IMPL.print(") = ");
+      int val = pcf2.read(pin - 208);
+      SERIAL_IMPL.print(val);
+      SERIAL_IMPL.println();
+      return val;
     }
     else
       return __digitalRead(pin);       // Call the original
@@ -256,14 +273,15 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
   
   // Override analogRead
   uint16_t analogRead(uint8_t pin) {
+    // This gets called. ADS pin 0 for 216
     if (pin >= 216 && pin < 220) {
       //uint16_t val = map(ads.readADC_SingleEnded(pin - 216), 0, 32767, 0, 1023);
       int val = 970;
-      // Serial.print("analogRead on ADS (");
-      // Serial.print(pin - 216);
-      // Serial.print(") = ");
-      // Serial.print(val);
-      // Serial.println();
+      //SERIAL_IMPL.print("analogRead on ADS (");
+      //SERIAL_IMPL.print(pin - 216);
+      //SERIAL_IMPL.print(") = ");
+      //SERIAL_IMPL.print(val);
+      //SERIAL_IMPL.println();
       return val;
     } else {
       return __analogRead(pin);        // Call the original
@@ -313,7 +331,6 @@ void adc1_set_attenuation(adc1_channel_t chan, adc_atten_t atten) {
 
 void MarlinHAL::adc_init() {
   // Configure ADC
-  ads.begin(); // default address
   ads.setGain(GAIN_ONE);
   adc1_config_width(ADC_WIDTH_12Bit);
 

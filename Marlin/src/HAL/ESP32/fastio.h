@@ -28,8 +28,8 @@
  */
 
 // I2S expander pin mapping.
-#define IS_I2S_EXPANDER_PIN(IO) TEST(IO, 7)
-#define I2S_EXPANDER_PIN_INDEX(IO) (IO & 0x7F)
+#define IS_I2S_EXPANDER_PIN(IO) (IO >= 255)
+#define I2S_EXPANDER_PIN_INDEX(IO) (IO & 0xFF)
 
 // Set pin as input
 #define _SET_INPUT(IO)          pinMode(IO, INPUT)
