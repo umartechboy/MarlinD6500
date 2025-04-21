@@ -135,10 +135,24 @@ struct {
 void MarlinHAL::init_board() {
   
   SERIAL_IMPL.println("Starting Wire and IO Expander");
-  sWire.begin(20, 22);
-  pcf1.begin();
-  pcf2.begin();
-  ads.begin(0x48, &sWire); // default address
+  sWire.begin(21, 22, 400000);
+  if (pcf1.begin()){
+    SERIAL_IMPL.println("PCF1 Started");
+  }
+  else  
+    SERIAL_IMPL.println("PCF1 Failed");
+    
+  if (pcf2.begin()){
+    SERIAL_IMPL.println("PCF2 Started");
+  }
+  else  
+    SERIAL_IMPL.println("PCF2 Failed");
+    
+  if (ads.begin(0x48, &sWire)){
+    SERIAL_IMPL.println("ADS1115 Started");
+  }
+  else  
+    SERIAL_IMPL.println("ADS1115 Failed");
 
   SERIAL_IMPL.println("Expanders On.");
   #if ENABLED(USE_ESP32_TASK_WDT)
@@ -254,7 +268,7 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
     // SERIAL_IMPL.println(__digitalRead(pin));
     if (pin >= 200 && pin < 208){
       // SERIAL_IMPL.print("digitalRead on PCF1 (");
-      // SERIAL_IMPL.print(pin - 200);
+      // SERIAL_IMPL.print(pin - 200);`
       // SERIAL_IMPL.print(") = ");
       int val = pcf1.read(pin - 200);
       // SERIAL_IMPL.print(val);
