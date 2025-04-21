@@ -28,11 +28,14 @@
 #include <esp_adc_cal.h>
 #include <HardwareSerial.h>
 #include <soc/adc_channel.h>
-#include <Adafruit_ADS1X15.h>
-#include <PCF8574.h>
+#include <ESP32_SoftWire.h>
+#include "SoftWireLibs/PCF8574/PCF8574.h"
+#include "SoftWireLibs/ADS1x15/Adafruit_ADS1X15.h"
 
-PCF8574 pcf1(0x20);
-PCF8574 pcf2(0x21); // Closer to ESP32 (U6)
+
+SoftWire sWire;
+PCF8574 pcf1(0x20, &sWire);
+PCF8574 pcf2(0x21, &sWire); // Closer to ESP32 (U6)
 
 Adafruit_ADS1115 ads;  /* Use this for the 16-bit version */
 #if ENABLED(USE_ESP32_TASK_WDT)
@@ -132,10 +135,10 @@ struct {
 void MarlinHAL::init_board() {
   
   SERIAL_IMPL.println("Starting Wire and IO Expander");
-  Wire.begin();
+  sWire.begin(20, 22);
   pcf1.begin();
   pcf2.begin();
-  ads.begin(); // default address
+  ads.begin(0x48, &sWire); // default address
 
   SERIAL_IMPL.println("Expanders On.");
   #if ENABLED(USE_ESP32_TASK_WDT)
@@ -224,7 +227,7 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
   // Override digitalWrite
   void digitalWrite(uint8_t pin, uint8_t val) {
     if (pin >= 200 && pin < 208) {
-      //pcf1.write(pin - 200, val);
+      pcf1.write(pin - 200, val);
       // SERIAL_IMPL.print("digitalWrite on PCF1 (");
       // SERIAL_IMPL.print(pin - 200);
       // SERIAL_IMPL.print(", ");
@@ -232,7 +235,7 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
       // SERIAL_IMPL.println(")");
     }
     else if (pin >= 208 && pin < 216) {
-        //pcf2.write(pin - 208, val);
+        pcf2.write(pin - 208, val);
         // SERIAL_IMPL.print("digitalWrite on PCF2 (");
         // SERIAL_IMPL.print(pin - 208);
         // SERIAL_IMPL.print(", ");
@@ -245,26 +248,26 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
     
   // Override digitalRead
   int digitalRead(uint8_t pin) {
-    SERIAL_IMPL.print("digitalRead(");
-    SERIAL_IMPL.print(pin);
-    SERIAL_IMPL.print(") = ");
-    SERIAL_IMPL.println(__digitalRead(pin));
+    // SERIAL_IMPL.print("digitalRead(");
+    // SERIAL_IMPL.print(pin);
+    // SERIAL_IMPL.print(") = ");
+    // SERIAL_IMPL.println(__digitalRead(pin));
     if (pin >= 200 && pin < 208){
-      SERIAL_IMPL.print("digitalRead on PCF1 (");
-      SERIAL_IMPL.print(pin - 200);
-      SERIAL_IMPL.print(") = ");
+      // SERIAL_IMPL.print("digitalRead on PCF1 (");
+      // SERIAL_IMPL.print(pin - 200);
+      // SERIAL_IMPL.print(") = ");
       int val = pcf1.read(pin - 200);
-      SERIAL_IMPL.print(val);
-      SERIAL_IMPL.println();
+      // SERIAL_IMPL.print(val);
+      // SERIAL_IMPL.println();
       return val;
     }
     else if (pin >= 208 && pin < 216){
-      SERIAL_IMPL.print("digitalRead on PCF2 (");
-      SERIAL_IMPL.print(pin - 208);
-      SERIAL_IMPL.print(") = ");
+      // SERIAL_IMPL.print("digitalRead on PCF2 (");
+      // SERIAL_IMPL.print(pin - 208);
+      // SERIAL_IMPL.print(") = ");
       int val = pcf2.read(pin - 208);
-      SERIAL_IMPL.print(val);
-      SERIAL_IMPL.println();
+      // SERIAL_IMPL.print(val);
+      // SERIAL_IMPL.println();
       return val;
     }
     else
