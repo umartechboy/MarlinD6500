@@ -237,24 +237,35 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
     extern void __digitalWrite(uint8_t pin, uint8_t val);
     extern int  __digitalRead(uint8_t pin);
     extern uint16_t __analogRead(uint8_t pin);
-    
+  uint16_t pcfMap = 0xFFFF;
   // Override digitalWrite
   void digitalWrite(uint8_t pin, uint8_t val) {
-    if (pin >= 200 && pin < 208) {
-      pcf1.write(pin - 200, val);
-      // SERIAL_IMPL.print("digitalWrite on PCF1 (");
-      // SERIAL_IMPL.print(pin - 200);
-      // SERIAL_IMPL.print(", ");
-      // SERIAL_IMPL.print(val);
-      // SERIAL_IMPL.println(")");
-    }
-    else if (pin >= 208 && pin < 216) {
-        pcf2.write(pin - 208, val);
-        // SERIAL_IMPL.print("digitalWrite on PCF2 (");
-        // SERIAL_IMPL.print(pin - 208);
+    
+    if (pin >= 200 && pin < 216){    
+      
+      if ((pcfMap >> (pin - 200)) & 1 == val)
+        return;
+      if (val)
+        pcfMap |=  ((uint16_t)(1 << (pin - 200)));
+      else
+        pcfMap &= ~((uint16_t)(1 << (pin - 200)));
+          
+      if (pin >= 200 && pin < 208) {
+        pcf1.write(pin - 200, val & 1);
+        // SERIAL_IMPL.print("digitalWrite on PCF1 (");
+        // SERIAL_IMPL.print(pin - 200);
         // SERIAL_IMPL.print(", ");
         // SERIAL_IMPL.print(val);
         // SERIAL_IMPL.println(")");
+      }
+      else {//if (pin >= 208 && pin < 216) {
+          pcf2.write(pin - 208, val & 1);
+          // SERIAL_IMPL.print("digitalWrite on PCF2 (");
+          // SERIAL_IMPL.print(pin - 208);
+          // SERIAL_IMPL.print(", ");
+          // SERIAL_IMPL.print(val);
+          // SERIAL_IMPL.println(")");
+      }
     }
     else 
       __digitalWrite(pin, val);       // Call the original
@@ -276,6 +287,22 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
       return val;
     }
     else if (pin >= 208 && pin < 216){
+      if (pin == 213) { // Z Stop       
+        int16_t rawADS = ads.readADC_SingleEnded(0);
+        SERIAL_IMPL.print("analogRead on ADS = "); 
+        SERIAL_IMPL.print(rawADS);
+        float V = ads.computeVolts(rawADS);
+        rawADS = V / 3.3F * 1023;
+        SERIAL_IMPL.print(", V = "); 
+        SERIAL_IMPL.print(V);
+        SERIAL_IMPL.print(", V to ADC = "); 
+        SERIAL_IMPL.print(rawADS);
+        SERIAL_IMPL.print(", mapped 1023 = ");
+        SERIAL_IMPL.print(map(rawADS, 0, 32767, 0, 1023));
+        SERIAL_IMPL.print(", mapped 4095 = ");
+        SERIAL_IMPL.print(map(rawADS, 0, 32767, 0, 4095));
+        SERIAL_IMPL.println();
+      }
       // SERIAL_IMPL.print("digitalRead on PCF2 (");
       // SERIAL_IMPL.print(pin - 208);
       // SERIAL_IMPL.print(") = ");
@@ -292,14 +319,18 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
   uint16_t analogRead(uint8_t pin) {
     // This gets called. ADS pin 0 for 216
     if (pin >= 216 && pin < 220) {
-      //uint16_t val = map(ads.readADC_SingleEnded(pin - 216), 0, 32767, 0, 1023);
-      int val = 970;
+      long counts = ads.readADC_SingleEnded(pin - 216);
+      return counts * 0.03875;
+      // return counts;
+      // isr_float_t V = ads.computeVolts(val);
+      //return (V / 3.3F) * 1023;
+      //int val = 970;
       //SERIAL_IMPL.print("analogRead on ADS (");
       //SERIAL_IMPL.print(pin - 216);
       //SERIAL_IMPL.print(") = ");
       //SERIAL_IMPL.print(val);
       //SERIAL_IMPL.println();
-      return val;
+      //return val;
     } else {
       return __analogRead(pin);        // Call the original
     }
