@@ -121,7 +121,7 @@ int16_t Adafruit_ADS1X15::readADC_SingleEnded(uint8_t channel) {
 
   // Wait for the conversion to complete
   while (!conversionComplete())
-    ;
+    delay(1);
 
   // Read the conversion results
   return getLastConversionResults();

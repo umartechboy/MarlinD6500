@@ -96,9 +96,9 @@
 //
 // Heaters / Fans
 //
-#define HEATER_0_PIN                           210 // Done
-#define HEATER_1_PIN                           211 // Done
-#define FAN_PIN                                -1 // Can't manually control the fan
+#define HEATER_0_PIN                           211 // Done
+#define HEATER_1_PIN                           210 // Done
+#define FAN_PIN                                214 // Done
 #if ENABLED(M3DPrintVueSupport)
 #define HEATER_BED_PIN                         -1 // Disable Bed for PrintVue connections
 #else
