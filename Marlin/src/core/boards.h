@@ -451,6 +451,7 @@
 #define BOARD_MKS_TINYBEE             6008  // MKS TinyBee based on ESP32 (with I2S stepper stream)
 #define BOARD_ENWI_ESPNP              6009  // enwi ESPNP based on ESP32 (with I2S stepper stream)
 #define BOARD_D6500                   6010  // Markhor3D D6500
+#define BOARD_D8500                   6011  // Markhor3D D8500
 
 //
 // SAMD51 ARM Cortex M4

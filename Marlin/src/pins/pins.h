@@ -743,6 +743,8 @@
   #include "esp32/pins_FYSETC_E4.h"             // ESP32                                  env:FYSETC_E4
 #elif MB(D6500)
   #include "esp32/pins_D6500.h"                 // ESP32                                  env:D6500
+#elif MB(D8500)
+  #include "esp32/pins_D8500.h"                 // ESP32                                  env:D8500
 #elif MB(PANDA_ZHU)
   #include "esp32/pins_PANDA_ZHU.h"             // ESP32                                  env:PANDA
 #elif MB(PANDA_M4)

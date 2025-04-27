@@ -87,8 +87,9 @@
 
 // Choose the name from boards.h that matches your setup
 #ifndef MOTHERBOARD
-  #define MOTHERBOARD BOARD_D6500
+  #define MOTHERBOARD BOARD_D8500
 #endif
+
 
 /**
  * Select the serial port on the board to use for communication with the host.
@@ -2501,7 +2502,7 @@
  * SD Card support is disabled by default. If your controller has an SD slot,
  * you must uncomment the following option or it won't work.
  */
-//#define SDSUPPORT
+#define SDSUPPORT
 
 /**
  * SD CARD: ENABLE CRC
