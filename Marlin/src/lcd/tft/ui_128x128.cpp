@@ -64,6 +64,7 @@
  #if ENABLED(SHOW_BOOTSCREEN)
  
    void MarlinUI::show_bootscreen() {
+    SERIAL_IMPL.println("MarlinUI::show_bootscreen");
      tft.queue.reset();
  
      tft.canvas(0, 0, TFT_WIDTH, TFT_HEIGHT);
@@ -83,6 +84,7 @@
        tft.add_text(tft_string.center(TFT_WIDTH), SITE_URL_Y, COLOR_WEBSITE_URL, tft_string);
      #endif
  
+     SERIAL_IMPL.println("calling tft.queue.sync()");
      tft.queue.sync();
    }
  

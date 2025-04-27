@@ -101,6 +101,7 @@ if (lcd_id != 0xFFFFFFFF) return;
   #elif TFT_DRIVER == ST7735_144
   
       SERIAL_IMPL.println("TFT_DRIVER == ST7735_144");  
+      TFTObj = &io;
       digitalWrite(TFT_RST, 0);
       delay(1);
       digitalWrite(TFT_RST, 1);
@@ -110,6 +111,12 @@ if (lcd_id != 0xFFFFFFFF) return;
       io.fillScreen(ST77XX_BLACK);
       io.setTextColor(ST77XX_WHITE);
       io.print("TFT is on, Guys!");
+      io.startWrite();
+      io.setAddrWindow(50,50,30,30);
+      io.writeColor(ST7735_GREEN, 30*30);
+      io.endWrite();
+
+      io.fillRect(10,10, 20, 20, ST77XX_RED);
   #elif TFT_DRIVER == SSD1963
     write_esc_sequence(ssd1963_init);
   #elif TFT_DRIVER == ST7789
@@ -196,6 +203,22 @@ void TFT_IO::set_window(uint16_t Xmin, uint16_t Ymin, uint16_t Xmax, uint16_t Ym
       io.WriteData(Ymax);
       io.WriteReg(0x00);
       break;
+    case ST7735_144:
+    SERIAL_IMPL.println("io.setAddrWindow");
+    // Print total size of address window
+    SERIAL_IMPL.print(" Area: ");
+    SERIAL_IMPL.print((Xmax - Xmin + 1) * (Ymax - Ymin + 1));
+    SERIAL_IMPL.print(", Xmin: ");
+    SERIAL_IMPL.print(Xmin);
+    SERIAL_IMPL.print(", Ymin: ");
+    SERIAL_IMPL.print(Ymin);
+    SERIAL_IMPL.print(", Xmax: ");
+    SERIAL_IMPL.print(Xmax);
+    SERIAL_IMPL.print(", Ymax: ");
+    SERIAL_IMPL.println(Ymax);
+    io.startWrite();
+    io.setAddrWindow(Xmin, Ymin, Xmax - Xmin + 1, Ymax - Ymin + 1);
+     break;
     case ST7735:    // ST7735     160x128
     case ST7789:    // ST7789V    320x240
     case ST7796:    // ST7796     480x320

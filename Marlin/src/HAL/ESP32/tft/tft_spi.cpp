@@ -31,6 +31,7 @@
 #include "tft_spi.h"
 #include "..\..\..\lcd\tft_io\tft_ids.h"
 
+TFT_SPI* TFTObj;
 
 // Initialize the display
 
@@ -43,24 +44,41 @@ void TFT_SPI::Abort(){
 
 }
 void TFT_SPI::DataTransferBegin(uint16_t DataWidth){
+  // SERIAL_IMPL.print("DataTransferBegin: ");
+  // SERIAL_IMPL.println(DataWidth);
+  //TFTObj->startWrite();
+}
+void TFT_SPI::DataTransferEnd(){
+  // SERIAL_IMPL.println("DataTransferEnd");
+  //TFTObj->endWrite();
 }
 uint32_t TFT_SPI::GetID(){
   return ST7735_144;
 }
 void TFT_SPI::WriteData(uint16_t Data){
-// Never gets called
-}
-void TFT_SPI::DataTransferEnd(){
-  // Never gets called
+  // SERIAL_IMPL.print("WriteData: ");
+  // SERIAL_IMPL.println(Data);
+  //TFTObj->write16(Data);
 }
 void TFT_SPI::WriteReg(uint16_t Reg){
-  // Never gets called
+  // SERIAL_IMPL.print("WriteReg: ");
+  // SERIAL_IMPL.println(Reg);
+  //TFTObj->writeCommand16(Reg);
 }
 void TFT_SPI::WriteSequence(uint16_t *Data, uint16_t Count){
-// Never gets called
+  
+  SERIAL_IMPL.print("WriteSequence: ");
+  SERIAL_IMPL.println(Count);
+  TFTObj->writePixels(Data, Count);
+  TFTObj->endWrite();
 }
 void TFT_SPI::WriteMultiple(uint16_t Color, uint32_t Count){
-// Never gets called
+  SERIAL_IMPL.print("WriteMultiple Color: ");
+  SERIAL_IMPL.print(Color);
+  SERIAL_IMPL.print(", count: ");
+  SERIAL_IMPL.println(Count);
+  TFTObj->writeColor(Color, Count);
+  TFTObj->endWrite();
 }
 
 

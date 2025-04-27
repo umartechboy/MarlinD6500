@@ -65,3 +65,4 @@ public:
 };
 
 
+extern TFT_SPI* TFTObj;
