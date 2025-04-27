@@ -24,6 +24,7 @@
 #define LTDC_RGB        0xABAB
 #define SSD1963         0x5761
 #define ST7735          0x89F0
+#define ST7735_144      0x89F1
 #define ST7789          0x8552
 #define ST7796          0x7796
 #define R61505          0x1505

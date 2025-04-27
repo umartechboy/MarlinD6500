@@ -35,7 +35,9 @@
   extern bool draw_menu_navigation;
 #endif
 
-#if HAS_UI_320x240
+#if HAS_UI_128x128
+  #include "ui_128x128.h"
+#elif HAS_UI_320x240
   #include "ui_320x240.h"
 #elif HAS_UI_480x320 || HAS_UI_480x272
   #include "ui_480x320.h"

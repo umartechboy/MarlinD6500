@@ -1503,7 +1503,7 @@
   #endif
 #elif ENABLED(TFT_GENERIC)
   #define TFT_DEFAULT_ORIENTATION (TFT_EXCHANGE_XY | TFT_INVERT_X | TFT_INVERT_Y)
-  #if NONE(TFT_RES_320x240, TFT_RES_480x272, TFT_RES_480x320)
+  #if NONE(TFT_RES_128x128, TFT_RES_320x240, TFT_RES_480x272, TFT_RES_480x320)
     #define TFT_RES_320x240
   #endif
   #if NONE(TFT_INTERFACE_FSMC, TFT_INTERFACE_SPI)
@@ -1511,7 +1511,10 @@
   #endif
 #endif
 
-#if ENABLED(TFT_RES_320x240)
+#if ENABLED(TFT_RES_128x128)
+  #define TFT_WIDTH  128
+  #define TFT_HEIGHT 128
+#elif ENABLED(TFT_RES_320x240)
   #define TFT_WIDTH  320
   #define TFT_HEIGHT 240
   #define GRAPHICAL_TFT_UPSCALE 2
@@ -1560,7 +1563,13 @@
 #endif
 
 #if ENABLED(TFT_COLOR_UI)
-  #if TFT_HEIGHT == 240
+  #if TFT_HEIGHT == 128
+    #if ENABLED(TFT_INTERFACE_SPI)
+      #define TFT_128x128_SPI
+    // #elif ENABLED(TFT_INTERFACE_FSMC)
+    //   #define TFT_128x128
+    #endif
+  #elif TFT_HEIGHT == 240
     #if ENABLED(TFT_INTERFACE_SPI)
       #define TFT_320x240_SPI
     #elif ENABLED(TFT_INTERFACE_FSMC)
@@ -1585,7 +1594,9 @@
   #endif
 #endif
 
-#if EITHER(TFT_320x240, TFT_320x240_SPI)
+#if defined(TFT_128x128_SPI)
+  #define HAS_UI_128x128 1
+#elif EITHER(TFT_320x240, TFT_320x240_SPI)
   #define HAS_UI_320x240 1
 #elif EITHER(TFT_480x320, TFT_480x320_SPI)
   #define HAS_UI_480x320 1
@@ -1594,7 +1605,7 @@
 #elif defined(TFT_1024x600_LTDC)
   #define HAS_UI_1024x600 1
 #endif
-#if ANY(HAS_UI_320x240, HAS_UI_480x320, HAS_UI_480x272)
+#if ANY(HAS_UI_128x128, HAS_UI_320x240, HAS_UI_480x320, HAS_UI_480x272)
   #define LCD_HEIGHT TERN(TOUCH_SCREEN, 6, 7)   // Fewer lines with touch buttons onscreen
 #elif HAS_UI_1024x600
   #define LCD_HEIGHT TERN(TOUCH_SCREEN, 12, 13) // Fewer lines with touch buttons onscreen

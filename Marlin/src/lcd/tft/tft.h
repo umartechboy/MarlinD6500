@@ -37,7 +37,10 @@
   #define ENDIAN_COLOR(C) (C)
 #endif
 
-#if HAS_UI_320x240
+#if HAS_UI_128x128
+  #define TFT_WIDTH         128
+  #define TFT_HEIGHT        128
+#elif HAS_UI_320x240
   #define TFT_WIDTH         320
   #define TFT_HEIGHT        240
 #elif HAS_UI_480x320
@@ -70,15 +73,40 @@
   #error "TFT_BUFFER_SIZE can not exceed 65535"
 #endif
 
+#ifdef TFT_ScaleX
+#if (TFT_ScaleX == 100)
+#define _scaleOnX(v) (v)
+#else
+#define _scaleOnX(v) (((int32_t)(v) * int32_t(TFT_ScaleX)) / 100)
+#endif
+#else
+#define _scaleOnX(v) (v)
+#endif
+#ifdef TFT_ScaleY
+#if (TFT_ScaleY == 100)
+#define _scaleOnY(v) (v)
+#else
+#define _scaleOnY(v) (((int32_t)(v) * int32_t(TFT_ScaleY)) / 100)
+#endif
+#else
+#define _scaleOnY(v) (v)
+#endif
+
 class TFT {
   private:
     static TFT_String string;
     static TFT_IO io;
 
   public:
+  
     static TFT_Queue queue;
 
     static uint16_t buffer[TFT_BUFFER_SIZE];
+
+  #if ENABLED(M3D_D8500_UI)
+    int ScaleX = TFT_ScaleX;
+    int ScaleY = TFT_ScaleY;
+  #endif
 
     static void init();
     static void set_font(const uint8_t *Font) { string.set_font(Font); }

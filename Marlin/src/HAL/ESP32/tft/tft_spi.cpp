@@ -19,26 +19,50 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
+#include "tft_spi.h"
+#include "../../platforms.h"
 
-#include "../../inc/MarlinConfig.h"
 
-#if HAS_GRAPHICAL_TFT
+#include "../../../pins/esp32/pins_D8500.h"
 
-#include "tft.h"
 
-//#define DEBUG_GRAPHICAL_TFT
-#define DEBUG_OUT ENABLED(DEBUG_GRAPHICAL_TFT)
-#include "../../core/debug_out.h"
+#ifdef ESP32
+#if HAS_SPI_TFT
+#include "tft_spi.h"
+#include "..\..\..\lcd\tft_io\tft_ids.h"
 
-uint16_t TFT::buffer[];
 
-void TFT::init() {
-  
-  SERIAL_IMPL.println("TFT::init()");
-  io.Init();
-  io.InitTFT();
+// Initialize the display
+
+void TFT_SPI::Init(){
+}
+bool TFT_SPI::isBusy(){
+  return false;
+}
+void TFT_SPI::Abort(){
+
+}
+void TFT_SPI::DataTransferBegin(uint16_t DataWidth){
+}
+uint32_t TFT_SPI::GetID(){
+  return ST7735_144;
+}
+void TFT_SPI::WriteData(uint16_t Data){
+// Never gets called
+}
+void TFT_SPI::DataTransferEnd(){
+  // Never gets called
+}
+void TFT_SPI::WriteReg(uint16_t Reg){
+  // Never gets called
+}
+void TFT_SPI::WriteSequence(uint16_t *Data, uint16_t Count){
+// Never gets called
+}
+void TFT_SPI::WriteMultiple(uint16_t Color, uint32_t Count){
+// Never gets called
 }
 
-TFT tft;
 
-#endif // HAS_GRAPHICAL_TFT
+#endif // HAS_SPI_TFT
+#endif // ESP32

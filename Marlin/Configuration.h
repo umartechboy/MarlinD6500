@@ -2609,6 +2609,22 @@
 //=============================================================================
 // @section lcd
 
+// M3D D8500 UI. Has a 128x128 ST7735 with a touch based 5 buttons keypad.
+#if MOTHERBOARD == BOARD_D8500
+#define M3D_D8500_UI
+#endif
+
+#if ENABLED(M3D_D8500_UI)
+  #define TFT_GENERIC  
+  #define TFT_COLOR_UI
+  // This should be used only in case Marlin uses a ui_x.cpp that is derived from another and needs scaling
+  #define TFT_ScaleX  32000 / 320
+  #define TFT_ScaleY  12800 / 240
+  #define M3D_TouchPadDriverForADCKeypad 1
+  #define HAS_ADC_BUTTONS 1
+  #define IS_RRW_KEYPAD   1 // needed for the emulation over ZoneStar Pane;
+#endif
+
 //
 // RepRapDiscount Smart Controller.
 // https://reprap.org/wiki/RepRapDiscount_Smart_Controller
@@ -3143,15 +3159,17 @@
 // Generic TFT with detailed options
 //
 //#define TFT_GENERIC
+#define TFT_GENERIC
 #if ENABLED(TFT_GENERIC)
-  // :[ 'AUTO', 'ST7735', 'ST7789', 'ST7796', 'R61505', 'ILI9328', 'ILI9341', 'ILI9488' ]
-  #define TFT_DRIVER AUTO
+  // :[ 'AUTO', 'ST7735', 'ST7735_144' 'ST7789', 'ST7796', 'R61505', 'ILI9328', 'ILI9341', 'ILI9488' ]
+  #define TFT_DRIVER ST7735_144
 
   // Interface. Enable one of the following options:
   //#define TFT_INTERFACE_FSMC
-  //#define TFT_INTERFACE_SPI
+  #define TFT_INTERFACE_SPI
 
   // TFT Resolution. Enable one of the following options:
+  #define TFT_RES_128x128
   //#define TFT_RES_320x240
   //#define TFT_RES_480x272
   //#define TFT_RES_480x320

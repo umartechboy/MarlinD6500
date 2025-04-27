@@ -30,6 +30,10 @@
 #if TFT_DRIVER == ST7735 || TFT_DRIVER == AUTO
   #include "st7735.h"
 #endif
+
+#if TFT_DRIVER == ST7735_144
+  #include <Adafruit_ST7735.h>
+#endif
 #if TFT_DRIVER == ST7789 || TFT_DRIVER == AUTO
   #include "st7789v.h"
 #endif
@@ -60,6 +64,10 @@ TFT_IO_DRIVER TFT_IO::io;
 uint32_t TFT_IO::lcd_id = 0xFFFFFFFF;
 
 void TFT_IO::InitTFT() {
+  
+  SERIAL_IMPL.print("TFT_IO::InitTFT() ");  
+  SERIAL_IMPL.println(lcd_id);
+
 if (lcd_id != 0xFFFFFFFF) return;
 
   #if PIN_EXISTS(TFT_BACKLIGHT)
@@ -90,6 +98,18 @@ if (lcd_id != 0xFFFFFFFF) return;
 
   #if TFT_DRIVER == ST7735
     write_esc_sequence(st7735_init);
+  #elif TFT_DRIVER == ST7735_144
+  
+      SERIAL_IMPL.println("TFT_DRIVER == ST7735_144");  
+      digitalWrite(TFT_RST, 0);
+      delay(1);
+      digitalWrite(TFT_RST, 1);
+      delay(1);
+      io.initR(INITR_144GREENTAB);
+      io.setRotation(3);
+      io.fillScreen(ST77XX_BLACK);
+      io.setTextColor(ST77XX_WHITE);
+      io.print("TFT is on, Guys!");
   #elif TFT_DRIVER == SSD1963
     write_esc_sequence(ssd1963_init);
   #elif TFT_DRIVER == ST7789

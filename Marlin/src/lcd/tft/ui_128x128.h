@@ -19,26 +19,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
+#pragma once
 
-#include "../../inc/MarlinConfig.h"
+#define MARLIN_LOGO_FULL_SIZE MarlinLogo160x160x16
 
-#if HAS_GRAPHICAL_TFT
+#define TFT_STATUS_TOP_Y       0
+#define TFT_TOP_LINE_Y         2
 
-#include "tft.h"
+#define MENU_TEXT_X_OFFSET    10
+#define MENU_TEXT_Y_OFFSET     7
 
-//#define DEBUG_GRAPHICAL_TFT
-#define DEBUG_OUT ENABLED(DEBUG_GRAPHICAL_TFT)
-#include "../../core/debug_out.h"
+#define MENU_ITEM_ICON_X       0
+#define MENU_ITEM_ICON_Y       0
+#define MENU_ITEM_ICON_SPACE  32
 
-uint16_t TFT::buffer[];
+#define MENU_ITEM_HEIGHT      32
+#define MENU_LINE_HEIGHT      (MENU_ITEM_HEIGHT + 2)
 
-void TFT::init() {
-  
-  SERIAL_IMPL.println("TFT::init()");
-  io.Init();
-  io.InitTFT();
-}
+#define MENU_FONT_NAME        Helvetica14
+#define SYMBOLS_FONT_NAME     Helvetica14_symbols
 
-TFT tft;
-
-#endif // HAS_GRAPHICAL_TFT
+#include "ui_common.h"

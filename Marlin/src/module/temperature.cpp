@@ -1834,6 +1834,7 @@ void Temperature::min_temp_error(const heater_id_t heater_id) {
  *  - Update the heated bed PID output value
  */
 void Temperature::task() {
+  //SERIAL_IMPL.println("Thermal Manager Task");
   if (marlin_state == MF_INITIALIZING) return hal.watchdog_refresh(); // If Marlin isn't started, at least reset the watchdog!
 
   static bool no_reentry = false;  // Prevent recursion
@@ -2584,8 +2585,10 @@ void Temperature::init() {
   TERN_(HAS_TEMP_ADC_COOLER,    hal.adc_enable(TEMP_COOLER_PIN));
   TERN_(HAS_TEMP_ADC_BOARD,     hal.adc_enable(TEMP_BOARD_PIN));
   TERN_(HAS_TEMP_ADC_REDUNDANT, hal.adc_enable(TEMP_REDUNDANT_PIN));
-  TERN_(FILAMENT_WIDTH_SENSOR,  hal.adc_enable(FILWIDTH_PIN));
+  TERN_(FILAMENT_WIDTH_SENSOR,  hal.adc_enable(FILWIDTH_PIN));  
+  #if !M3D_TouchPadDriverForADCKeypad
   TERN_(HAS_ADC_BUTTONS,        hal.adc_enable(ADC_KEYPAD_PIN));
+  #endif
   TERN_(POWER_MONITOR_CURRENT,  hal.adc_enable(POWER_MONITOR_CURRENT_PIN));
   TERN_(POWER_MONITOR_VOLTAGE,  hal.adc_enable(POWER_MONITOR_VOLTAGE_PIN));
 
@@ -3735,6 +3738,9 @@ void Temperature::isr() {
       case MeasureJoy_Z: ACCUMULATE_ADC(joystick.z); break;
     #endif
 
+    #if M3D_TouchPadDriverForADCKeypad
+      // we handle the loop in hal.cpp
+    #else
     #if HAS_ADC_BUTTONS
       #ifndef ADC_BUTTON_DEBOUNCE_DELAY
         #define ADC_BUTTON_DEBOUNCE_DELAY 16
@@ -3760,6 +3766,7 @@ void Temperature::isr() {
         if (ADCKey_count == ADC_BUTTON_DEBOUNCE_DELAY) ADCKey_pressed = true;
         break;
     #endif // HAS_ADC_BUTTONS
+    #endif
 
     case StartupDelay: break;
 
