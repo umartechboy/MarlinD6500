@@ -31,6 +31,7 @@ extern const uint8_t ISO10646_1_5x7[];
 extern const uint8_t font10x20[];
 
 extern const uint8_t Helvetica12Bold[];
+extern const uint8_t Helvetica8Bold[];
 
 extern const uint8_t Helvetica14[], Helvetica14_symbols[];
 extern const uint8_t Helvetica18[], Helvetica18_symbols[];

@@ -204,9 +204,7 @@ void TFT_IO::set_window(uint16_t Xmin, uint16_t Ymin, uint16_t Xmax, uint16_t Ym
       io.WriteReg(0x00);
       break;
     case ST7735_144:
-    SERIAL_IMPL.println("io.setAddrWindow");
-    // Print total size of address window
-    SERIAL_IMPL.print(" Area: ");
+    SERIAL_IMPL.println("io.setAddrWindow, Area: ");
     SERIAL_IMPL.print((Xmax - Xmin + 1) * (Ymax - Ymin + 1));
     SERIAL_IMPL.print(", Xmin: ");
     SERIAL_IMPL.print(Xmin);
@@ -217,7 +215,7 @@ void TFT_IO::set_window(uint16_t Xmin, uint16_t Ymin, uint16_t Xmax, uint16_t Ym
     SERIAL_IMPL.print(", Ymax: ");
     SERIAL_IMPL.println(Ymax);
     io.startWrite();
-    io.setAddrWindow(Xmin, Ymin, Xmax - Xmin + 1, Ymax - Ymin + 1);
+    io.setAddrWindowClipped(Xmin, Ymin, Xmax, Ymax);
      break;
     case ST7735:    // ST7735     160x128
     case ST7789:    // ST7789V    320x240

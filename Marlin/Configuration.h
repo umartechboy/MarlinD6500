@@ -2618,7 +2618,7 @@
   #define TFT_GENERIC  
   #define TFT_COLOR_UI
   // This should be used only in case Marlin uses a ui_x.cpp that is derived from another and needs scaling
-  #define TFT_ScaleX  32000 / 320
+  #define TFT_ScaleX  12800 / 320
   #define TFT_ScaleY  12800 / 240
   #define M3D_TouchPadDriverForADCKeypad 1
   #define HAS_ADC_BUTTONS 1

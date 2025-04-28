@@ -16,17 +16,55 @@ void touchOnADCKeyPad_Loop(){ // no gestures supported yet.
 // BLEN_KEYPAD_MIDDLE, 
 // BLEN_KEYPAD_UP, 
 // BLEN_KEYPAD_LEFT, 
+int pinMap [] = {14, 13, 15, 12};
+int keyMap [] = {BLEN_KEYPAD_RIGHT, BLEN_KEYPAD_UP, BLEN_KEYPAD_LEFT, BLEN_KEYPAD_DOWN, BLEN_KEYPAD_MIDDLE};
+int baseValues [4];
+#define readPad(i) (min(100, (min(100, (max(0, (baseValues[(((uint32_t)i) % 4)] - touchRead(pinMap[(((uint32_t)i) % 4)]))) * 100 / baseValues[(((uint32_t)i) % 4)]) * 2))) / 100.0F)
 
-#define hasBooleanTouch(pin) (touchRead(pin) > 50)
-
+bool first = true;
 uint8_t touchOnADCKeyPad_getKey(){
-    if(hasBooleanTouch(tUp_Pin) && hasBooleanTouch(tDown_Pin) && hasBooleanTouch(tLeft_Pin) && hasBooleanTouch(tRight_Pin))
-        return BLEN_KEYPAD_MIDDLE;
-    if (hasBooleanTouch(tUp_Pin)) return BLEN_KEYPAD_UP;
-    if (hasBooleanTouch(tDown_Pin)) return BLEN_KEYPAD_DOWN;
-    if (hasBooleanTouch(tLeft_Pin)) return BLEN_KEYPAD_LEFT;
-    if (hasBooleanTouch(tRight_Pin)) return BLEN_KEYPAD_RIGHT;
-    return 0;
+    if (first){
+        for (int i = 0; i < 4; i++){
+          for (int ri = 0; ri < 10; ri ++)
+            baseValues [i] += touchRead(pinMap[i]);
+          baseValues[i] /= 10;
+        }
+      first = false;
+    }
+    float all [4];
+    for (int i = 0; i < 4; i++) {
+      all[i] = readPad(i);
+      Serial.print(all[i]);
+      Serial.print(", ");
+    }
+    Serial.println();
+    int maxI = 0;
+    
+    // Check if its the middle button
+    bool allAbove0 = true;
+    for (int i = 0; i < 4; i++) {
+      if (all[i] < 0.05){
+          allAbove0 = false;
+          break;
+        }
+    }
+    if (allAbove0){
+      Serial.println(keyMap[maxI]);
+      return keyMap[4];
+      //return 0;
+    }
+    
+    for (int i = 0; i < 4; i++) {
+      if (all[i] > all[maxI])
+        maxI = i;
+    }
+    
+    if (all[maxI] < 0.5){
+      return 0;
+    }
+    Serial.println(keyMap[maxI]);
+    return keyMap[maxI];
+    //return 0;
 }
 
 #endif

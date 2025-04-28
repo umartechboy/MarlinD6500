@@ -929,6 +929,7 @@
  
        // Update button states for button_pressed(), etc.
        // If the state changes the next update may be delayed 300-500ms.
+       //SERIAL_IMPL.println("update_buttons()");
        update_buttons();
  
        // If the action button is pressed...

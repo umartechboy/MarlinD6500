@@ -207,7 +207,16 @@ void MarlinHAL::init_board() {
 
 volatile uint16_t adcCache[4] = {26000, 26000, 26000, 26000};
 volatile bool needsConversion[4] = {0, 0, 0, 0};
+
+ // All displays share the MarlinUI class
+ #include "..\..\lcd\marlinui.h"
+ extern MarlinUI ui;
+ 
+
 void MarlinHAL::idletask() {
+  //SERIAL_IMPL.println("update_buttons Idle()");
+  //ui.update_buttons();
+
   #if BOTH(WIFISUPPORT, OTASUPPORT)
     OTA_handle();
   #endif
@@ -221,6 +230,8 @@ void MarlinHAL::idletask() {
       adcCache[i] = ads.readADC_SingleEnded(i) * 0.03875;
     }
   }
+  
+  ui.update_buttons();
   
 }
 

@@ -52,6 +52,8 @@ public:
   TFT_SPI():Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST){
 
   }
+  
+  void setAddrWindowClipped(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);
   static void Init(); // needed
   static bool isBusy();// needed
   static void Abort(); // needed
@@ -62,6 +64,13 @@ public:
   static void WriteSequence(uint16_t *Data, uint16_t Count);
   static void WriteMultiple(uint16_t Color, uint32_t Count);
   static void DataTransferBegin(uint16_t DataWidth = DATASIZE_16BIT); // needed
+private:
+  int skipX = 0;
+  int skipY = 0;
+  int writtenInX = 0;
+  int writtenInY = 0;
+  int addressWindowWidth = 0;
+  int addressWindowHeight = 0;
 };
 
 

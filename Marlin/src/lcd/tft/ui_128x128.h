@@ -31,12 +31,12 @@
 
 #define MENU_ITEM_ICON_X       0
 #define MENU_ITEM_ICON_Y       0
-#define MENU_ITEM_ICON_SPACE  32
+#define MENU_ITEM_ICON_SPACE  28
 
-#define MENU_ITEM_HEIGHT      32
+#define MENU_ITEM_HEIGHT      20
 #define MENU_LINE_HEIGHT      (MENU_ITEM_HEIGHT + 2)
 
-#define MENU_FONT_NAME        Helvetica14
-#define SYMBOLS_FONT_NAME     Helvetica14_symbols
+#define MENU_FONT_NAME        Helvetica8Bold
+#define SYMBOLS_FONT_NAME     Helvetica8Bold
 
 #include "ui_common.h"
