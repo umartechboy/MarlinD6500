@@ -693,13 +693,9 @@
     #define DEFAULT_Kd_LIST { 114.00, 114.00 }
   #else
   // V5
-  #define DEFAULT_Kp 71.14
-  #define DEFAULT_Ki 9.10
-  #define DEFAULT_Kd 139.09
-  // < V5
-  // #define DEFAULT_Kp 32.03
-  // #define DEFAULT_Ki 3.27
-  // #define DEFAULT_Kd 78.44
+  #define DEFAULT_Kp 25.04
+  #define DEFAULT_Ki 4.88
+  #define DEFAULT_Kd 32.14
   #endif
 #endif
 
@@ -880,7 +876,7 @@
  * details can be tuned in Configuration_adv.h
  */
 
-#define THERMAL_PROTECTION_HOTENDS // Enable thermal protection for all extruders
+//#define THERMAL_PROTECTION_HOTENDS // Enable thermal protection for all extruders
 //#define THERMAL_PROTECTION_BED     // Enable thermal protection for the heated bed
 #define THERMAL_PROTECTION_CHAMBER // Enable thermal protection for the heated chamber
 #define THERMAL_PROTECTION_COOLER  // Enable thermal protection for the laser cooling
@@ -1064,8 +1060,8 @@
 // Specify here all the endstop connectors that are connected to any endstop or probe.
 // Almost all printers will be using one per axis. Probes will use one or more of the
 // extra connectors. Leave undefined any used for non-endstop and non-probe purposes.
-#define USE_XMIN_PLUG
-#define USE_YMIN_PLUG
+//#define USE_XMIN_PLUG
+//#define USE_YMIN_PLUG
 #define USE_ZMIN_PLUG
 //#define USE_IMIN_PLUG
 //#define USE_JMIN_PLUG
@@ -1073,8 +1069,8 @@
 //#define USE_UMIN_PLUG
 //#define USE_VMIN_PLUG
 //#define USE_WMIN_PLUG
-//#define USE_XMAX_PLUG
-//#define USE_YMAX_PLUG
+#define USE_XMAX_PLUG
+#define USE_YMAX_PLUG
 //#define USE_ZMAX_PLUG
 //#define USE_IMAX_PLUG
 //#define USE_JMAX_PLUG
@@ -1205,7 +1201,9 @@
 #if defined(UseSuperSilentDrivers)
 #define DEFAULT_AXIS_STEPS_PER_UNIT   { 208.1164, 208.1164, 52.0291, 47.33 }
 #else
-#define DEFAULT_AXIS_STEPS_PER_UNIT   { 52.0291, 52.0291, 208.116, 47.33 }
+// GT2 with 16 teeth pulley and TMC on 3200 or 4988 on 1600 steps/rev gives 100/50 steps per mm
+// BMG Extruder on A4988 give almost 196.7
+#define DEFAULT_AXIS_STEPS_PER_UNIT   { 50, 50, 96.6838, 196.7 }
 #endif
 
 //#define DEFAULT_AXIS_STEPS_PER_UNIT   { 32.0512, 32.0512, 15.409, 54.35 }
@@ -1215,9 +1213,9 @@
  * Override with M203
  *                                      X, Y, Z [, I [, J [, K...]]], E0 [, E1[, E2...]]
  */
-#define DEFAULT_MAX_FEEDRATE          { 300, 300, 60, 20 }
+#define DEFAULT_MAX_FEEDRATE          { 400, 300, 60, 60 }
 
-//#define LIMITED_MAX_FR_EDITING        // Limit edit via M203 or LCD to DEFAULT_MAX_FEEDRATE * 2
+#define LIMITED_MAX_FR_EDITING        // Limit edit via M203 or LCD to DEFAULT_MAX_FEEDRATE * 2
 #if ENABLED(LIMITED_MAX_FR_EDITING)
   #define MAX_FEEDRATE_EDIT_VALUES    { 600, 600, 10, 50 } // ...or, set your own edit limits
 #endif
@@ -1228,11 +1226,11 @@
  * Override with M201
  *                                      X, Y, Z [, I [, J [, K...]]], E0 [, E1[, E2...]]
  */
-#define DEFAULT_MAX_ACCELERATION      { 1000, 1000, 400, 10000 }
+#define DEFAULT_MAX_ACCELERATION      { 2000, 2000, 400, 10000 }
 
-//#define LIMITED_MAX_ACCEL_EDITING     // Limit edit via M201 or LCD to DEFAULT_MAX_ACCELERATION * 2
+#define LIMITED_MAX_ACCEL_EDITING     // Limit edit via M201 or LCD to DEFAULT_MAX_ACCELERATION * 2
 #if ENABLED(LIMITED_MAX_ACCEL_EDITING)
-  #define MAX_ACCEL_EDIT_VALUES       { 6000, 6000, 200, 20000 } // ...or, set your own edit limits
+  #define MAX_ACCEL_EDIT_VALUES       { 2000, 10000, 400, 10000 } // ...or, set your own edit limits
 #endif
 
 /**
@@ -1726,8 +1724,8 @@
 
 // Direction of endstops when homing; 1=MAX, -1=MIN
 // :[-1,1]
-#define X_HOME_DIR -1
-#define Y_HOME_DIR -1
+#define X_HOME_DIR 1
+#define Y_HOME_DIR 1
 #define Z_HOME_DIR -1
 //#define I_HOME_DIR -1
 //#define J_HOME_DIR -1
@@ -1739,8 +1737,8 @@
 // @section geometry
 
 // The size of the printable area
-#define X_BED_SIZE 150
-#define Y_BED_SIZE 150
+#define X_BED_SIZE 200
+#define Y_BED_SIZE 156
 
 // Travel limits (linear=mm, rotational=°) after homing, corresponding to endstop positions.
 #define X_MIN_POS 0
@@ -2611,7 +2609,7 @@
 
 // M3D D8500 UI. Has a 128x128 ST7735 with a touch based 5 buttons keypad.
 #if MOTHERBOARD == BOARD_D8500
-#define M3D_D8500_UI
+// #define M3D_D8500_UI // we define out own UI in the board
 #endif
 
 #if ENABLED(M3D_D8500_UI)
@@ -3269,7 +3267,7 @@
 // Use software PWM to drive the fan, as for the heaters. This uses a very low frequency
 // which is not as annoying as with the hardware PWM. On the other hand, if this frequency
 // is too low, you should also increment SOFT_PWM_SCALE.
-//#define FAN_SOFT_PWM
+#define FAN_SOFT_PWM
 
 // Incrementing this by 1 will double the software PWM frequency,
 // affecting heaters, and the fan if FAN_SOFT_PWM is enabled.

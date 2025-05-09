@@ -33,7 +33,7 @@
 #define MENU_ITEM_ICON_Y       0
 #define MENU_ITEM_ICON_SPACE  28
 
-#define MENU_ITEM_HEIGHT      20
+#define MENU_ITEM_HEIGHT      28
 #define MENU_LINE_HEIGHT      (MENU_ITEM_HEIGHT + 2)
 
 #define MENU_FONT_NAME        Helvetica8Bold

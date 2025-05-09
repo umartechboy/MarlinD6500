@@ -38,7 +38,7 @@
 
 // Limit Switches
 //
-#define X_STOP_PIN                            34 // Done
+#define X_STOP_PIN                            215 // Done
 #define Y_STOP_PIN                            35 // Done
 #define Z_STOP_PIN                            213 // Done 
 
@@ -54,25 +54,27 @@
 #define Y_DIR_PIN                             25 // Done
 #define Y_ENABLE_PIN                          206 // Done
 
-#define Z_STEP_PIN                            27 // Done
-#define Z_DIR_PIN                             202 // Done
-#define Z_ENABLE_PIN                          207 // Done
+// Swapping Z and E because the positions for the motors have changed
+#define Z_STEP_PIN                           2 // Done
+#define Z_DIR_PIN                            204 // Done
+#define Z_ENABLE_PIN                         209 // Done
 
+#define E0_STEP_PIN                            27 // Done
+#define E0_DIR_PIN                             202 // Done
+#define E0_ENABLE_PIN                          207 // Done
 
-#define E0_STEP_PIN                           16 // Done
-#define E0_DIR_PIN                            203 // Done
-#define E0_ENABLE_PIN                         208 // Done
+#define E1_STEP_PIN                           16 // Done
+#define E1_DIR_PIN                            203 // Done
+#define E1_ENABLE_PIN                         208 // Done
 
-
-#define E1_STEP_PIN                           2 // Done
-#define E1_DIR_PIN                            204 // Done
-#define E1_ENABLE_PIN                         209 // Done
 
 //
 // Temperature Sensors
 //
-#define TEMP_0_PIN                            216  // Analog Input
-#define TEMP_1_PIN                            217 // Analog Input
+//#define TEMP_0_PIN                            216  // Analog Input
+#define TEMP_0_PIN                            34  // Back to ESP
+//#define TEMP_1_PIN                            217 // Analog Input
+#define TEMP_1_PIN                            36 // Back to ESP
 #if ENABLED(M3DPrintVueSupport)
 #define TEMP_BED_PIN                          -1  // Disable Bed for PrintVue connections
 #else
@@ -82,9 +84,9 @@
 //
 // Heaters / Fans
 //
-#define HEATER_0_PIN                           211 // Done
-#define HEATER_1_PIN                           210 // Done
-#define FAN_PIN                                214 // Done
+#define HEATER_0_PIN                           210 // Done
+#define HEATER_1_PIN                           211 // Done
+#define FAN_PIN                                212 // Done
 #if ENABLED(M3DPrintVueSupport)
 #define HEATER_BED_PIN                         -1 // Disable Bed for PrintVue connections
 #else

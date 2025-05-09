@@ -30,14 +30,15 @@
 #include <soc/adc_channel.h>
 #include <ESP32_SoftWire.h>
 #include "SoftWireLibs/PCF8574/PCF8574.h"
-#include "SoftWireLibs/ADS1x15/Adafruit_ADS1X15.h"
+//#include "SoftWireLibs/ADS1x15/Adafruit_ADS1X15.h"
 
 
 SoftWire sWire;
 PCF8574 pcf1(0x20, &sWire);
 PCF8574 pcf2(0x21, &sWire); // Closer to ESP32 (U6)
+uint16_t pcfMap = 0xFFFF;
 
-Adafruit_ADS1115 ads;  /* Use this for the 16-bit version */
+//Adafruit_ADS1115 ads;  /* Use this for the 16-bit version */
 #if ENABLED(USE_ESP32_TASK_WDT)
   #include <esp_task_wdt.h>
 #endif
@@ -148,15 +149,16 @@ void MarlinHAL::init_board() {
   else  
     SERIAL_IMPL.println("PCF2 Failed");
     
-  if (ads.begin(0x48, &sWire)){
-    SERIAL_IMPL.println("ADS1115 Started");
-  }
-  else  
-    SERIAL_IMPL.println("ADS1115 Failed");
+  // if (ads.begin(0x48, &sWire)){
+  //   SERIAL_IMPL.println("ADS1115 Started");
+  // }
+  // else  
+  //   SERIAL_IMPL.println("ADS1115 Failed");
 
   SERIAL_IMPL.println("Expanders On.");
-  pcf1.write8(0);
-  pcf2.write8(0);
+  pcfMap = 0b00000000 | (0b10100000 << 8);
+  pcf1.write8(pcfMap); // 200-207
+  pcf2.write8(pcfMap >> 8); // 208-215, 1 for X and Z stops
   #if ENABLED(USE_ESP32_TASK_WDT)
     esp_task_wdt_init(10, true);
   #endif
@@ -205,7 +207,7 @@ void MarlinHAL::init_board() {
   #endif
 }
 
-volatile uint16_t adcCache[4] = {26000, 26000, 26000, 26000};
+volatile int16_t adcCache[4] = {26000, 26000, 26000, 26000};
 volatile bool needsConversion[4] = {0, 0, 0, 0};
 
  // All displays share the MarlinUI class
@@ -224,12 +226,19 @@ void MarlinHAL::idletask() {
   #if ENABLED(M3DPrintVueSupport)
     M3DPrintVueLoop();
   #endif
-  for (int i = 0; i < 4; i++){
-    if (needsConversion[i]){
-      needsConversion[i] = false;
-      adcCache[i] = ads.readADC_SingleEnded(i) * 0.03875;
-    }
-  }
+  // for (int i = 0; i < 4; i++){
+  //   if (needsConversion[i]){
+  //     int16_t newVal = ads.readADC_SingleEnded(i) * 0.03875;
+  //     if (abs(newVal - adcCache[i]) > 50){
+  //       adcCache[i] = ((long)(newVal * 5 + adcCache[i] * 95)) / 100;  
+  //     }
+  //     else{
+  //       adcCache[i] = newVal;
+  //       needsConversion[i] = false;
+  //     }
+  //     //SERIAL_IMPL.println(adcCache[i]);
+  //   }
+  // }
   
   ui.update_buttons();
   
@@ -258,8 +267,7 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
     // Declare original weak functions from the ESP32 core
     extern void __digitalWrite(uint8_t pin, uint8_t val);
     extern int  __digitalRead(uint8_t pin);
-    extern uint16_t __analogRead(uint8_t pin);
-  uint16_t pcfMap = 0xFFFF;
+    //extern uint16_t __analogRead(uint8_t pin);
   // Override digitalWrite
   void digitalWrite(uint8_t pin, uint8_t val) {
     
@@ -338,48 +346,48 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
   }
   
   // Override analogRead
-  uint16_t analogRead(uint8_t pin) {
-    // This gets called. ADS pin 0 for 216
-    if (pin >= 216 && pin < 220) {
-      pin -= 216; // remove the offset for good
+  // uint16_t analogRead(uint8_t pin) {
+  //   // This gets called. ADS pin 0 for 216
+  //   if (pin >= 216 && pin < 220) {
+  //     pin -= 216; // remove the offset for good
 
-      // // At least mark that this channel needs conversion
-      // needsConversion[pin] = true;
-      // if (ads.conversionComplete()) {// we can trigger the next conversion
-      //   for (int i = 0; i < 4; i++){ // find a channel that we need to convert
-      //     adcChannelInReading = (adcChannelInReading + 1) % 4; // lets poll with a new value
-      //     if (needsConversion[adcChannelInReading]){ // we have a channel that needs conversion
-      //       needsConversion[adcChannelInReading] = false; // doesn't need conversion anymore
-      //       ads.startADCReading(MUX_BY_CHANNEL[adcChannelInReading], false); // trigger the conversion
-      //       mayHaveNewData[adcChannelInReading] = true; // mark that this register needs to be read
-      //       break;
-      //     }
-      //   }
-      // }
-      // else {// we can atleast read it.
-      //   if (mayHaveNewData[adcChannelInReading]){
-      //     mayHaveNewData[adcChannelInReading] = false;
-      //     adcCache[adcChannelInReading] = ads.getLastConversionResults();
-      //   }
-      // }
+  //     // // At least mark that this channel needs conversion
+  //     // needsConversion[pin] = true;
+  //     // if (ads.conversionComplete()) {// we can trigger the next conversion
+  //     //   for (int i = 0; i < 4; i++){ // find a channel that we need to convert
+  //     //     adcChannelInReading = (adcChannelInReading + 1) % 4; // lets poll with a new value
+  //     //     if (needsConversion[adcChannelInReading]){ // we have a channel that needs conversion
+  //     //       needsConversion[adcChannelInReading] = false; // doesn't need conversion anymore
+  //     //       ads.startADCReading(MUX_BY_CHANNEL[adcChannelInReading], false); // trigger the conversion
+  //     //       mayHaveNewData[adcChannelInReading] = true; // mark that this register needs to be read
+  //     //       break;
+  //     //     }
+  //     //   }
+  //     // }
+  //     // else {// we can atleast read it.
+  //     //   if (mayHaveNewData[adcChannelInReading]){
+  //     //     mayHaveNewData[adcChannelInReading] = false;
+  //     //     adcCache[adcChannelInReading] = ads.getLastConversionResults();
+  //     //   }
+  //     // }
 
-      // For now, just return what we previously had.
-      needsConversion[pin] = true; // and trust that the loop will update it soon
-      return adcCache[pin];
-      // return counts;
-      // isr_float_t V = ads.computeVolts(val);
-      //return (V / 3.3F) * 1023;
-      //int val = 970;
-      //SERIAL_IMPL.print("analogRead on ADS (");
-      //SERIAL_IMPL.print(pin - 216);
-      //SERIAL_IMPL.print(") = ");
-      //SERIAL_IMPL.print(val);
-      //SERIAL_IMPL.println();
-      //return val;
-    } else {
-      return __analogRead(pin);        // Call the original
-    }
-  }  
+  //     // For now, just return what we previously had.
+  //     needsConversion[pin] = true; // and trust that the loop will update it soon
+  //     return adcCache[pin];
+  //     // return counts;
+  //     // isr_float_t V = ads.computeVolts(val);
+  //     //return (V / 3.3F) * 1023;
+  //     //int val = 970;
+  //     //SERIAL_IMPL.print("analogRead on ADS (");
+  //     //SERIAL_IMPL.print(pin - 216);
+  //     //SERIAL_IMPL.print(") = ");
+  //     //SERIAL_IMPL.print(val);
+  //     //SERIAL_IMPL.println();
+  //     //return val;
+  //   } else {
+  //     return __analogRead(pin);        // Call the original
+  //   }
+  // }  
 } // extern "C"
   
 
@@ -424,26 +432,27 @@ void adc1_set_attenuation(adc1_channel_t chan, adc_atten_t atten) {
 
 void MarlinHAL::adc_init() {
   // Configure ADC
-  ads.setGain(GAIN_ONE);
+  // ads.setGain(GAIN_ONE);
+  // ads.setDataRate(RATE_ADS1015_128SPS);
   //ads.setDataRate(RATE_ADS1015_3300SPS);  
   //ads.startADCReading(ADS1X15_REG_CONFIG_MUX_DIFF_0_1, /*continuous=*/true);
   adc1_config_width(ADC_WIDTH_12Bit);
 
   // Configure channels only if used as (re-)configuring a pin for ADC that is used elsewhere might have adverse effects
-  //TERN_(HAS_TEMP_ADC_0,        adc1_set_attenuation(get_channel(TEMP_0_PIN), ADC_ATTEN_11db));
-  //TERN_(HAS_TEMP_ADC_1,        adc1_set_attenuation(get_channel(TEMP_1_PIN), ADC_ATTEN_11db));
-  //TERN_(HAS_TEMP_ADC_2,        adc1_set_attenuation(get_channel(TEMP_2_PIN), ADC_ATTEN_11db));
-  //TERN_(HAS_TEMP_ADC_3,        adc1_set_attenuation(get_channel(TEMP_3_PIN), ADC_ATTEN_11db));
-  //TERN_(HAS_TEMP_ADC_4,        adc1_set_attenuation(get_channel(TEMP_4_PIN), ADC_ATTEN_11db));
-  //TERN_(HAS_TEMP_ADC_5,        adc1_set_attenuation(get_channel(TEMP_5_PIN), ADC_ATTEN_11db));
-  //TERN_(HAS_TEMP_ADC_6,        adc2_set_attenuation(get_channel(TEMP_6_PIN), ADC_ATTEN_11db));
-  //TERN_(HAS_TEMP_ADC_7,        adc3_set_attenuation(get_channel(TEMP_7_PIN), ADC_ATTEN_11db));
-  //TERN_(HAS_HEATED_BED,        adc1_set_attenuation(get_channel(TEMP_BED_PIN), ADC_ATTEN_11db));
-  //TERN_(HAS_TEMP_CHAMBER,      adc1_set_attenuation(get_channel(TEMP_CHAMBER_PIN), ADC_ATTEN_11db));
-  //TERN_(HAS_TEMP_PROBE,        adc1_set_attenuation(get_channel(TEMP_PROBE_PIN), ADC_ATTEN_11db));
-  //TERN_(HAS_TEMP_COOLER,       adc1_set_attenuation(get_channel(TEMP_COOLER_PIN), ADC_ATTEN_11db));
-  //TERN_(HAS_TEMP_BOARD,        adc1_set_attenuation(get_channel(TEMP_BOARD_PIN), ADC_ATTEN_11db));
-  //TERN_(FILAMENT_WIDTH_SENSOR, adc1_set_attenuation(get_channel(FILWIDTH_PIN), ADC_ATTEN_11db));
+  TERN_(HAS_TEMP_ADC_0,        adc1_set_attenuation(get_channel(TEMP_0_PIN), ADC_ATTEN_11db));
+  TERN_(HAS_TEMP_ADC_1,        adc1_set_attenuation(get_channel(TEMP_1_PIN), ADC_ATTEN_11db));
+  TERN_(HAS_TEMP_ADC_2,        adc1_set_attenuation(get_channel(TEMP_2_PIN), ADC_ATTEN_11db));
+  TERN_(HAS_TEMP_ADC_3,        adc1_set_attenuation(get_channel(TEMP_3_PIN), ADC_ATTEN_11db));
+  TERN_(HAS_TEMP_ADC_4,        adc1_set_attenuation(get_channel(TEMP_4_PIN), ADC_ATTEN_11db));
+  TERN_(HAS_TEMP_ADC_5,        adc1_set_attenuation(get_channel(TEMP_5_PIN), ADC_ATTEN_11db));
+  TERN_(HAS_TEMP_ADC_6,        adc2_set_attenuation(get_channel(TEMP_6_PIN), ADC_ATTEN_11db));
+  TERN_(HAS_TEMP_ADC_7,        adc3_set_attenuation(get_channel(TEMP_7_PIN), ADC_ATTEN_11db));
+  TERN_(HAS_HEATED_BED,        adc1_set_attenuation(get_channel(TEMP_BED_PIN), ADC_ATTEN_11db));
+  TERN_(HAS_TEMP_CHAMBER,      adc1_set_attenuation(get_channel(TEMP_CHAMBER_PIN), ADC_ATTEN_11db));
+  TERN_(HAS_TEMP_PROBE,        adc1_set_attenuation(get_channel(TEMP_PROBE_PIN), ADC_ATTEN_11db));
+  TERN_(HAS_TEMP_COOLER,       adc1_set_attenuation(get_channel(TEMP_COOLER_PIN), ADC_ATTEN_11db));
+  TERN_(HAS_TEMP_BOARD,        adc1_set_attenuation(get_channel(TEMP_BOARD_PIN), ADC_ATTEN_11db));
+  TERN_(FILAMENT_WIDTH_SENSOR, adc1_set_attenuation(get_channel(FILWIDTH_PIN), ADC_ATTEN_11db));
 
   // Note that adc2 is shared with the WiFi module, which has higher priority, so the conversion may fail.
   // That's why we're not setting it up here.
@@ -462,15 +471,27 @@ void MarlinHAL::adc_init() {
 #endif
 
 void MarlinHAL::adc_start(const pin_t pin) {
-  if (pin >= 216 && pin < 220){
-    adc_result = analogRead(pin);
-    return; // Its on ADS
-  }
+  // if (pin >= 216 && pin < 220){
+  //   adc_result = analogRead(pin);
+  //   return; // Its on ADS
+  // }
   const adc1_channel_t chan = get_channel(pin);
   uint32_t mv;
   esp_adc_cal_get_voltage((adc_channel_t)chan, &characteristics[attenuations[chan]], &mv);
 
-  adc_result = mv * isr_float_t(1023) / isr_float_t(ADC_REFERENCE_VOLTAGE) / isr_float_t(1000);
+  // Lets try to compensate for the voltage drop in the presence of the heater.
+  // Th1:
+  // Without Heater | With Heater 1
+  // 3198          | 3195
+  // 370          | 505
+
+  uint32_t mvToReturn = mv;
+  if ((pcfMap >> 10) & 0b1 && pin == 34) {// Heater 1
+    // Do the linearization
+    mvToReturn = map(mv, 505, 3195, 370, 3197);
+  }
+
+  adc_result = mvToReturn * isr_float_t(1023) / isr_float_t(ADC_REFERENCE_VOLTAGE) / isr_float_t(1000);
 
   // Change the attenuation level based on the new reading
   adc_atten_t atten;
