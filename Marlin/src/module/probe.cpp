@@ -675,9 +675,9 @@ bool Probe::probe_down_to_z(const_float_t z, const_feedRate_t fr_mm_s) {
 
     SERIAL_ECHOLNPGM("Taring probe");
     WRITE(PROBE_TARE_PIN, PROBE_TARE_STATE);
-    delay(PROBE_TARE_TIME);
+    safe_delay(PROBE_TARE_TIME);
     WRITE(PROBE_TARE_PIN, !PROBE_TARE_STATE);
-    delay(PROBE_TARE_DELAY);
+    safe_delay(PROBE_TARE_DELAY);
 
     endstops.hit_on_purpose();
     return false;
@@ -694,7 +694,7 @@ bool Probe::probe_down_to_z(const_float_t z, const_feedRate_t fr_mm_s) {
  */
 float Probe::run_z_probe(const bool sanity_check/*=true*/) {
   DEBUG_SECTION(log_probe, "Probe::run_z_probe", DEBUGGING(LEVELING));
-
+  SERIAL_IMPL.println("run_z_probe");
   auto try_to_probe = [&](PGM_P const plbl, const_float_t z_probe_low_point, const feedRate_t fr_mm_s, const bool scheck, const float clearance) -> bool {
     // Tare the probe, if supported
     if (TERN0(PROBE_TARE, tare())) return true;
@@ -709,6 +709,9 @@ float Probe::run_z_probe(const bool sanity_check/*=true*/) {
         if (probe_fail) DEBUG_ECHOPGM(" No trigger.");
         if (early_fail) DEBUG_ECHOPGM(" Triggered early.");
         DEBUG_EOL();
+        if (early_fail){
+          SERIAL_IMPL.printf("scheck: %d, current_position.z: %f, offset.z: %f, clearance: %f\r\n", scheck, current_position.z, offset.z, clearance);
+        }
       }
     #else
       UNUSED(plbl);
@@ -735,6 +738,9 @@ float Probe::run_z_probe(const bool sanity_check/*=true*/) {
 
     // Raise to give the probe clearance
     do_blocking_move_to_z(current_position.z + Z_CLEARANCE_MULTI_PROBE, z_probe_fast_mm_s);
+    SERIAL_IMPL.println("Raised. Stabilizing...");
+    
+    safe_delay(100); // Stabilize the probe
 
   #elif Z_PROBE_FEEDRATE_FAST != Z_PROBE_FEEDRATE_SLOW
 
@@ -828,7 +834,7 @@ float Probe::run_z_probe(const bool sanity_check/*=true*/) {
     if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPGM("2nd Probe Z:", z2, " Discrepancy:", first_probe_z - z2);
 
     // Return a weighted average of the fast and slow probes
-    const float measured_z = (z2 * 3.0 + first_probe_z * 2.0) * 0.2;
+    const float measured_z = (z2 * 4.5 + first_probe_z * 0.5) * 0.2;
 
   #else
 
@@ -887,11 +893,19 @@ float Probe::probe_at_point(const_float_t rx, const_float_t ry, const ProbePtRai
   #endif
 
   float measured_z = NAN;
-  if (!deploy()) {
-    measured_z = run_z_probe(sanity_check) + offset.z;
-    TERN_(HAS_PTC, ptc.apply_compensation(measured_z));
-    TERN_(X_AXIS_TWIST_COMPENSATION, measured_z += xatc.compensation(npos + offset_xy));
-  }
+  int retriesLeft = 3;
+  do {
+    if (!deploy()) {
+      measured_z = run_z_probe(sanity_check) + offset.z;
+      TERN_(HAS_PTC, ptc.apply_compensation(measured_z));
+      TERN_(X_AXIS_TWIST_COMPENSATION, measured_z += xatc.compensation(npos + offset_xy));
+    }
+    if (isnan(measured_z)){
+      SERIAL_IMPL.println("Probing failed. Retrying...");
+      
+    }
+  } while (--retriesLeft > 0 && isnan(measured_z));
+  
   if (!isnan(measured_z)) {
     const bool big_raise = raise_after == PROBE_PT_BIG_RAISE;
     if (big_raise || raise_after == PROBE_PT_RAISE)

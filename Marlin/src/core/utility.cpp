@@ -24,12 +24,15 @@
 
 #include "../MarlinCore.h"
 #include "../module/temperature.h"
-
+extern void LoadCellLoop();
 void safe_delay(millis_t ms) {
   while (ms > 50) {
     ms -= 50;
-    delay(50);
+    long st = millis();
+    while(millis() - st < 50)
+      LoadCellLoop();
     thermalManager.task();
+    
   }
   delay(ms);
   thermalManager.task(); // This keeps us safe if too many small safe_delay() calls are made

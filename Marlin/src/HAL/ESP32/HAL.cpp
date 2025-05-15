@@ -30,6 +30,7 @@
 #include <soc/adc_channel.h>
 #include <ESP32_SoftWire.h>
 #include "SoftWireLibs/PCF8574/PCF8574.h"
+#include "LoadCell/LoadCell.h"
 //#include "SoftWireLibs/ADS1x15/Adafruit_ADS1X15.h"
 
 
@@ -159,6 +160,9 @@ void MarlinHAL::init_board() {
   pcfMap = 0b00000000 | (0b10100000 << 8);
   pcf1.write8(pcfMap); // 200-207
   pcf2.write8(pcfMap >> 8); // 208-215, 1 for X and Z stops
+  
+  LoadCellSetup();
+
   #if ENABLED(USE_ESP32_TASK_WDT)
     esp_task_wdt_init(10, true);
   #endif
@@ -215,10 +219,14 @@ volatile bool needsConversion[4] = {0, 0, 0, 0};
  extern MarlinUI ui;
  
 
+ long lastLoadCellLoop = 0;
 void MarlinHAL::idletask() {
   //SERIAL_IMPL.println("update_buttons Idle()");
   //ui.update_buttons();
-
+  if (millis() - lastLoadCellLoop > 13) {// < 80hz
+    lastLoadCellLoop = millis();
+    LoadCellLoop();
+  }
   #if BOTH(WIFISUPPORT, OTASUPPORT)
     OTA_handle();
   #endif
@@ -297,16 +305,21 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
           // SERIAL_IMPL.println(")");
       }
     }
+    else if (pin == 217){ // Probe enable disable
+      ProbeEnable = val;
+    }
     else 
       __digitalWrite(pin, val);       // Call the original
   }
     
   // Override digitalRead
   int digitalRead(uint8_t pin) {
-    // SERIAL_IMPL.print("digitalRead(");
-    // SERIAL_IMPL.print(pin);
-    // SERIAL_IMPL.print(") = ");
-    // SERIAL_IMPL.println(__digitalRead(pin));
+    // if (pin == 216){
+    //   SERIAL_IMPL.print("dr ");
+    //   SERIAL_IMPL.print(pin);
+    //   SERIAL_IMPL.print(" ");
+    //   SERIAL_IMPL.println(__digitalRead(pin));
+    // }
     if (pin >= 200 && pin < 208){
     //   // SERIAL_IMPL.print("digitalRead on PCF1 (");
     //   // SERIAL_IMPL.print(pin - 200);`
@@ -340,6 +353,10 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
     //   // SERIAL_IMPL.print(val);
     //   // SERIAL_IMPL.println();
        return val;
+    }
+    else if (pin == 216) {
+      // Loadcell
+      return LoadCellProbe();
     }
     else
       return __digitalRead(pin);       // Call the original

@@ -827,6 +827,7 @@ void Endstops::update() {
     // When closing the gap check the enabled probe
     if (probe_switch_activated())
       UPDATE_ENDSTOP_BIT(Z, TERN(USES_Z_MIN_PROBE_PIN, MIN_PROBE, MIN));
+      UPDATE_ENDSTOP_BIT(Z, TERN(USES_Z_MIN_PROBE_PIN, MIN_PROBE, MIN));  
   #endif
 
   #if HAS_Z_MAX && !Z_SPI_SENSORLESS
