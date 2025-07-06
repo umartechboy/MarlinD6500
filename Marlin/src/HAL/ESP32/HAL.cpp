@@ -31,6 +31,7 @@
 #include <ESP32_SoftWire.h>
 #include "SoftWireLibs/PCF8574/PCF8574.h"
 #include "LoadCell/LoadCell.h"
+#include "UI/M3DUI.h"
 //#include "SoftWireLibs/ADS1x15/Adafruit_ADS1X15.h"
 
 
@@ -161,6 +162,7 @@ void MarlinHAL::init_board() {
   pcf1.write8(pcfMap); // 200-207
   pcf2.write8(pcfMap >> 8); // 208-215, 1 for X and Z stops
   
+  //UISetup();
   LoadCellSetup();
 
   #if ENABLED(USE_ESP32_TASK_WDT)
@@ -227,10 +229,12 @@ void MarlinHAL::idletask() {
     lastLoadCellLoop = millis();
     LoadCellLoop();
   }
+  //UILoop();
   #if BOTH(WIFISUPPORT, OTASUPPORT)
     OTA_handle();
   #endif
   TERN_(ESP3D_WIFISUPPORT, esp3dlib.idletask());
+
   #if ENABLED(M3DPrintVueSupport)
     M3DPrintVueLoop();
   #endif
