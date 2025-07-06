@@ -21,12 +21,16 @@
  bool ProbeEnable = true; // on by default for tarring
  float lastReading = 0;
  int exampleReadingCount = 0;
- float threshold = 2;
+ float threshold = 1;
  float rawValueFilterFactor = 0.1F;
  float FloatingFactor = 0.008F;
  #define FilterOutSeriesOfErraticValue 5
  int lastReturn  = 0;
+ float lastAnalogReturn = 0;
  long lastProbe = 1000; // will force a tare
+ float readProbeAnalog(){
+    return lastAnalogReturn;
+ }
  int LoadCellProbe(){
     lastProbe = millis();
     return lastReturn;
@@ -96,6 +100,7 @@
 
             floatingAverage = reading * floatingFactor + floatingAverage * (1 - floatingFactor);
             float offsetCorrected = floatingAverage - reading;
+            lastAnalogReturn = offsetCorrected;
             debug(floatingAverage);
             debug("(fAvg) -");
             debug(reading);

@@ -38,43 +38,41 @@
 
 // Limit Switches
 //
-#define X_STOP_PIN                            215 // Done
-#define Y_STOP_PIN                            35 // Done
-#define Z_STOP_PIN                            213 // Done 
+#define X_STOP_PIN                            215   // Done PCB
+#define Y_STOP_PIN                            35    // Done PCB
+#define Z_STOP_PIN                            213   // Done PCB
 
 //
 // Steppers
 //
 
-#define X_STEP_PIN                            32 // Done
-#define X_DIR_PIN                             33 // Done
-#define X_ENABLE_PIN                          205 // Done
+#define X_STEP_PIN                            32    // Done PCB 
+#define X_DIR_PIN                             33    // Done PCB
+#define X_ENABLE_PIN                          205   // Done PCB
 
-#define Y_STEP_PIN                            26 // Done
-#define Y_DIR_PIN                             25 // Done
-#define Y_ENABLE_PIN                          206 // Done
+#define Y_STEP_PIN                            26    // Done PCB
+#define Y_DIR_PIN                             25    // Done PCB
+#define Y_ENABLE_PIN                          206   // Done PCB
 
 // Swapping Z and E because the positions for the motors have changed
-#define Z_STEP_PIN                           2 // Done
-#define Z_DIR_PIN                            204 // Done
-#define Z_ENABLE_PIN                         209 // Done
+#define Z_STEP_PIN                           2      // Done PCB
+#define Z_DIR_PIN                            204    // Done PCB
+#define Z_ENABLE_PIN                         209    // Done PCB
 
-#define E0_STEP_PIN                            27 // Done
-#define E0_DIR_PIN                             202 // Done
-#define E0_ENABLE_PIN                          207 // Done
+#define E0_STEP_PIN                            27   // Done PCB
+#define E0_DIR_PIN                             202  // Done PCB
+#define E0_ENABLE_PIN                          207  // Done PCB
 
-#define E1_STEP_PIN                           16 // Done
-#define E1_DIR_PIN                            203 // Done
-#define E1_ENABLE_PIN                         208 // Done
+#define E1_STEP_PIN                           16    // Done PCB
+#define E1_DIR_PIN                            203   // Done PCB
+#define E1_ENABLE_PIN                         208   // Done PCB
 
 
 //
 // Temperature Sensors
 //
-//#define TEMP_0_PIN                            216  // Analog Input
-#define TEMP_0_PIN                            34  // Back to ESP
-//#define TEMP_1_PIN                            217 // Analog Input
-#define TEMP_1_PIN                            36 // Back to ESP
+#define TEMP_0_PIN                            34    // Back to ESP // Done PCB
+#define TEMP_1_PIN                            36    // Back to ESP // Done PCB
 #if ENABLED(M3DPrintVueSupport)
 #define TEMP_BED_PIN                          -1  // Disable Bed for PrintVue connections
 #else
