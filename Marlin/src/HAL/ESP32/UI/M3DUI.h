@@ -10,6 +10,9 @@
 #include <SD.h>
 #include "base64Stream.h"
 #include <PNGdec.h>
+#include "../../../MarlinCore.h"
+#include "../../../gcode/queue.h"
+#include "../../../module/printcounter.h"
 
 void centerString(BufferedDisplay* g, const char* str,  int16_t x, int16_t y, int16_t* wOut = 0, int16_t* hOut = 0);
 void centerRightString(BufferedDisplay* g, const char* str,  int16_t x, int16_t y, int16_t* wOut = 0, int16_t* hOut = 0);
@@ -70,6 +73,7 @@ class MenuStep {
         Color BackColor;
         Color TextColor;
         Bitmap* Icon = 0;
+        virtual void OnGoingToStep() {}
         virtual void HandleKeyUp(Keys key) {}
         virtual void IncrementValue() {}
         virtual void DecrementValue() {}
@@ -278,6 +282,20 @@ class PrintStep : public MenuStep{
         BackColor = DarkPurple;
         TextColor = ST7735_WHITE;
         Icon = &bmp_StartPrint;
+    }
+    void OnGoingToStep() override{
+        card.openAndPrintFile(fileName.c_str());
+        // card.percentDone();
+        if (card.jobRecoverFileExists())
+            queue.enqueue_now(F("M1000"));
+        
+        // queue.inject(F("M25"));                                 // Queue Pause
+        // queue.inject(F("M24"));                                 // Queue resume
+        // queue.inject(F("G91\nG0 Z10 F600\nG90"));                 // Raise Z soon after returning to main loop
+        // card.abortFilePrintSoon();                                // There is a delay while the current steps play out
+        // planner.synchronize();    
+        // TERN_(HAS_STEPPER_RESET, disableStepperDrivers());          // Disable all steppers - now!
+        // print_job_timer
     }
 };
 class PrintPositionStep : public MenuStep{
@@ -658,6 +676,7 @@ class MenuHost{
     }
     void GotoStep(MenuStep* step) {
         TargetStep = step;
+        step->OnGoingToStep();
         ResetAnimationProgress(500);
         menuTrasnsitionStage = MenuTransitionStage::TransitionaingScreens;
     }
