@@ -38,7 +38,15 @@
 SoftWire sWire;
 PCF8574 pcf1(0x20, &sWire);
 PCF8574 pcf2(0x21, &sWire); // Closer to ESP32 (U6)
-uint16_t pcfMap = 0xFFFF;
+SemaphoreHandle_t xPCFIOMutex;
+TaskHandle_t pcfTaskHandle = NULL;
+volatile uint8_t pcf1_cache = 0xFF;
+volatile uint8_t pcf2_cache = 0xFF;
+volatile bool pcf1_write_pending = false;
+volatile bool pcf2_write_pending = false;
+volatile bool pcf1_read_pending = false;
+volatile bool pcf2_read_pending = false;
+volatile uint16_t pcfMap = 0xFFFF;
 
 //Adafruit_ADS1115 ads;  /* Use this for the 16-bit version */
 #if ENABLED(USE_ESP32_TASK_WDT)
@@ -135,8 +143,60 @@ struct {
   extern void M3DPrintVueSetup();
   extern void M3DPrintVueLoop();
 #endif
+void pcfServiceTask(void *param) {
+  for (;;) {
+    // Block until notified
+    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);  // clears notification automatically
+
+    if (xSemaphoreTake(xPCFIOMutex, portMAX_DELAY)) {
+      if (pcf1_write_pending) {
+        for (uint8_t i = 0; i < 8; ++i) {
+          bool val = (pcfMap >> i) & 1;
+          pcf1.write(i, val);
+          if (val) pcf1_cache |= (1 << i);
+          else     pcf1_cache &= ~(1 << i);
+        }
+        pcf1_write_pending = false;
+      }
+
+      if (pcf2_write_pending) {
+        for (uint8_t i = 0; i < 8; ++i) {
+          bool val = (pcfMap >> (i + 8)) & 1;
+          pcf2.write(i, val);
+          if (val) pcf2_cache |= (1 << i);
+          else     pcf2_cache &= ~(1 << i);
+        }
+        pcf2_write_pending = false;
+      }
+
+      if (pcf1_read_pending) {
+        for (uint8_t i = 0; i < 8; ++i) {
+          int val = pcf1.read(i);
+          if (val) pcf1_cache |= (1 << i);
+          else     pcf1_cache &= ~(1 << i);
+        }
+        pcf1_read_pending = false;
+      }
+
+      if (pcf2_read_pending) {
+        for (uint8_t i = 0; i < 8; ++i) {
+          int val = pcf2.read(i);
+          if (val) pcf2_cache |= (1 << i);
+          else     pcf2_cache &= ~(1 << i);
+        }
+        pcf2_read_pending = false;
+      }
+
+      xSemaphoreGive(xPCFIOMutex);
+    }
+  }
+}
+
+
 void InitIOExpanders(){
 
+  xPCFIOMutex = xSemaphoreCreateMutex();
+  xTaskCreatePinnedToCore(pcfServiceTask, "PCFService", 2048, NULL, 1, &pcfTaskHandle, 1);
   //SERIAL_IMPL.println("Starting Wire and IO Expander");
   sWire.begin(21, 22, 400000);
   if (pcf1.begin()){
@@ -163,6 +223,7 @@ void InitIOExpanders(){
   pcf2.write8(pcfMap >> 8); // 208-215, 1 for X and Z stops
   
 }
+
 void MarlinHAL::init_board() {
   
   UISetup();
@@ -292,91 +353,88 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
     //extern uint16_t __analogRead(uint8_t pin);
   // Override digitalWrite
   void digitalWrite(uint8_t pin, uint8_t val) {
-    
-    if (pin >= 200 && pin < 216){    
+  if (pin >= 200 && pin < 216) {
+    uint8_t bit = pin - 200;
+    uint8_t chip = (bit < 8) ? 1 : 2;
+    uint8_t chipBit = bit % 8;
+
+    if (((pcfMap >> bit) & 1) == val) return;
+
+    if (val) pcfMap |= (1 << bit);
+    else     pcfMap &= ~(1 << bit);
+
+    if (xPortInIsrContext()) {
+      if (chip == 1) pcf1_write_pending = true;
+      else           pcf2_write_pending = true;
       
-      if ((pcfMap >> (pin - 200)) & 1 == val)
-        return;
-      if (val)
-        pcfMap |=  ((uint16_t)(1 << (pin - 200)));
-      else
-        pcfMap &= ~((uint16_t)(1 << (pin - 200)));
-          
-      if (pin >= 200 && pin < 208) {
-        pcf1.write(pin - 200, val & 1);
-        // SERIAL_IMPL.print("digitalWrite on PCF1 (");
-        // SERIAL_IMPL.print(pin - 200);
-        // SERIAL_IMPL.print(", ");
-        // SERIAL_IMPL.print(val);
-        // SERIAL_IMPL.println(")");
+      
+      if (pcfTaskHandle != NULL) {
+        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+        vTaskNotifyGiveFromISR(pcfTaskHandle, &xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
       }
-      else {//if (pin >= 208 && pin < 216) {
-        if ((pin == 210 || pin == 211) && !heaterPinsEnabled)
-            return;
-          pcf2.write(pin - 208, val & 1);
-          // SERIAL_IMPL.print("digitalWrite on PCF2 (");
-          // SERIAL_IMPL.print(pin - 208);
-          // SERIAL_IMPL.print(", ");
-          // SERIAL_IMPL.print(val);
-          // SERIAL_IMPL.println(")");
+      return;
+    }
+
+    // Not in ISR: update immediately
+    if (xSemaphoreTake(xPCFIOMutex, portMAX_DELAY)) {
+      if (chip == 1) {
+        pcf1.write(chipBit, val);
+        if (val) pcf1_cache |= (1 << chipBit);
+        else     pcf1_cache &= ~(1 << chipBit);
+      } else {
+        pcf2.write(chipBit, val);
+        if (val) pcf2_cache |= (1 << chipBit);
+        else     pcf2_cache &= ~(1 << chipBit);
       }
+      xSemaphoreGive(xPCFIOMutex);
     }
-    else if (pin == 217){ // Probe enable disable
-      ProbeEnable = val;
-    }
-    else 
-      __digitalWrite(pin, val);       // Call the original
+    return;
   }
+
+  __digitalWrite(pin, val);
+}
+
     
   // Override digitalRead
   int digitalRead(uint8_t pin) {
-    // if (pin == 216){
-    //   SERIAL_IMPL.print("dr ");
-    //   SERIAL_IMPL.print(pin);
-    //   SERIAL_IMPL.print(" ");
-    //   SERIAL_IMPL.println(__digitalRead(pin));
-    // }
-    if (pin >= 200 && pin < 208){
-    //   // SERIAL_IMPL.print("digitalRead on PCF1 (");
-    //   // SERIAL_IMPL.print(pin - 200);`
-    //   // SERIAL_IMPL.print(") = ");
-       int val = pcf1.read(pin - 200);
-    //   // SERIAL_IMPL.print(val);
-    //   // SERIAL_IMPL.println();
-       return val;
+  if (pin >= 200 && pin < 216) {
+    uint8_t bit = pin - 200;
+    uint8_t chip = (bit < 8) ? 1 : 2;
+    uint8_t chipBit = bit % 8;
+
+    if (xPortInIsrContext()) {
+      if (chip == 1) pcf1_read_pending = true;
+      else           pcf2_read_pending = true;
+
+      if (pcfTaskHandle != NULL) {
+        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+        vTaskNotifyGiveFromISR(pcfTaskHandle, &xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+      }
+      // Return last known value
+      return (chip == 1 ? (pcf1_cache >> chipBit) : (pcf2_cache >> chipBit)) & 1;
     }
-     else if (pin >= 208 && pin < 216){
-    //   if (pin == 213) { // Z Stop       
-    //     int16_t rawADS = ads.readADC_SingleEnded(0);
-    //     SERIAL_IMPL.print("analogRead on ADS = "); 
-    //     SERIAL_IMPL.print(rawADS);
-    //     float V = ads.computeVolts(rawADS);
-    //     rawADS = V / 3.3F * 1023;
-    //     SERIAL_IMPL.print(", V = "); 
-    //     SERIAL_IMPL.print(V);
-    //     SERIAL_IMPL.print(", V to ADC = "); 
-    //     SERIAL_IMPL.print(rawADS);
-    //     SERIAL_IMPL.print(", mapped 1023 = ");
-    //     SERIAL_IMPL.print(map(rawADS, 0, 32767, 0, 1023));
-    //     SERIAL_IMPL.print(", mapped 4095 = ");
-    //     SERIAL_IMPL.print(map(rawADS, 0, 32767, 0, 4095));
-    //     SERIAL_IMPL.println();
-    //   }
-    //   // SERIAL_IMPL.print("digitalRead on PCF2 (");
-    //   // SERIAL_IMPL.print(pin - 208);
-    //   // SERIAL_IMPL.print(") = ");
-       int val = pcf2.read(pin - 208);
-    //   // SERIAL_IMPL.print(val);
-    //   // SERIAL_IMPL.println();
-       return val;
+
+    int val = 0;
+    if (xSemaphoreTake(xPCFIOMutex, portMAX_DELAY)) {
+      if (chip == 1) {
+        val = pcf1.read(chipBit);
+        if (val) pcf1_cache |= (1 << chipBit);
+        else     pcf1_cache &= ~(1 << chipBit);
+      } else {
+        val = pcf2.read(chipBit);
+        if (val) pcf2_cache |= (1 << chipBit);
+        else     pcf2_cache &= ~(1 << chipBit);
+      }
+      xSemaphoreGive(xPCFIOMutex);
     }
-    else if (pin == 216) {
-      // Loadcell
-      return LoadCellProbe();
-    }
-    else
-      return __digitalRead(pin);       // Call the original
+    return val;
   }
+
+  return __digitalRead(pin);
+}
+
   
   // Override analogRead
   // uint16_t analogRead(uint8_t pin) {
