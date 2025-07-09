@@ -1533,7 +1533,7 @@
 #define PROBING_MARGIN 10
 
 // X and Y axis travel speed (mm/min) between probes
-#define XY_PROBE_FEEDRATE (60*60)
+#define XY_PROBE_FEEDRATE (100*60)
 
 // Feedrate (mm/min) for the first approach when double-probing (MULTIPLE_PROBING == 2)
 #define Z_PROBE_FEEDRATE_FAST 100
@@ -1638,7 +1638,7 @@
 #define PROBING_FANS_OFF          // Turn fans off when probing
 #define PROBING_ESTEPPERS_OFF     // Turn all extruder steppers off when probing
 #define PROBING_STEPPERS_OFF      // Turn all steppers off (unless needed to hold position) when probing (including extruders)
-#define DELAY_BEFORE_PROBING 2000  // (ms) To prevent vibrations from triggering piezo sensors
+#define DELAY_BEFORE_PROBING 500  // (ms) To prevent vibrations from triggering piezo sensors
 
 // Require minimum nozzle and/or bed temperature for probing
 //#define PREHEAT_BEFORE_PROBING
