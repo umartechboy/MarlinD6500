@@ -284,10 +284,10 @@ class PrintStep : public MenuStep{
         Icon = &bmp_StartPrint;
     }
     void OnGoingToStep() override{
-        card.openAndPrintFile(fileName.c_str());
+        //card.openAndPrintFile(fileName.c_str());
         // card.percentDone();
-        if (card.jobRecoverFileExists())
-            queue.enqueue_now(F("M1000"));
+        // if (card.jobRecoverFileExists())
+        //     queue.enqueue_now(F("M1000"));
         
         // queue.inject(F("M25"));                                 // Queue Pause
         // queue.inject(F("M24"));                                 // Queue resume

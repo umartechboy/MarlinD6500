@@ -2412,6 +2412,7 @@ void Temperature::updateTemperaturesFromRawValues() {
  *  - Wait 250ms for temperatures to settle
  *  - Init temp_range[], used for catching min/maxtemp
  */
+extern void LoadCellLoop();
 void Temperature::init() {
 
   TERN_(PROBING_HEATERS_OFF, paused_for_probing = false);
@@ -2568,6 +2569,8 @@ void Temperature::init() {
 
   hal.adc_init();
 
+
+  // Glitch happens after this
   TERN_(HAS_TEMP_ADC_0,         hal.adc_enable(TEMP_0_PIN));
   TERN_(HAS_TEMP_ADC_1,         hal.adc_enable(TEMP_1_PIN));
   TERN_(HAS_TEMP_ADC_2,         hal.adc_enable(TEMP_2_PIN));
@@ -2595,10 +2598,15 @@ void Temperature::init() {
   #if HAS_JOY_ADC_EN
     SET_INPUT_PULLUP(JOY_EN_PIN);
   #endif
-
+  // glitch happens after this
   HAL_timer_start(MF_TIMER_TEMP, TEMP_TIMER_FREQUENCY);
+  // Glitch happens before this
+  // while(true){
+  //   LoadCellLoop();
+  //   yield();
+  // }
   ENABLE_TEMPERATURE_INTERRUPT();
-
+//Glitch Happens before this
   #if HAS_AUTO_FAN_0
     INIT_E_AUTO_FAN_PIN(E0_AUTO_FAN_PIN);
   #endif

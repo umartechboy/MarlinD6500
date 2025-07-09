@@ -571,9 +571,17 @@ void GcodeSuite::process_parsed_command(const bool no_ok/*=false*/) {
         case 73: M73(); break;                                    // M73: Set progress percentage (for display on LCD)
       #endif
 
-      case 75: M75(); M1101(); break;                                      // M75: Start print timer
+      case 75: M75(); 
+      #if ENABLED(M3DPrintVueSupport)
+      M1101(); 
+      #endif
+      break;                                      // M75: Start print timer
       case 76: M76(); break;                                      // M76: Pause print timer
-      case 77: M77(); M1103(); break;                                      // M77: Stop print timer
+      case 77: M77();
+      #if ENABLED(M3DPrintVueSupport)
+      M1103(); 
+      #endif
+      break;                                      // M77: Stop print timer
 
       #if ENABLED(PRINTCOUNTER)
         case 78: M78(); break;                                    // M78: Show print statistics

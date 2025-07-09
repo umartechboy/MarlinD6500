@@ -52,7 +52,14 @@ const tTimerConfig timer_config[NUM_HARDWARE_TIMERS] = {
 // Public functions
 // ------------------------
 
-void IRAM_ATTR timer_isr(void *para) {
+bool timersEnabled = true;
+void disableESPMarlinTimers(){
+  timersEnabled = false;
+}
+void enableESPMarlinTimers(){
+  timersEnabled = true;
+}
+void IRAM_ATTR timer_isr(void *para) {  
   const tTimerConfig& timer = timer_config[(int)para];
 
   // Retrieve the interrupt status and the counter value
@@ -68,9 +75,8 @@ void IRAM_ATTR timer_isr(void *para) {
       case TIMER_MAX: break;
     }
   }
-
-  timer.fn();
-
+  if (timersEnabled || (int)para != 1)  // Don't run the thermal if disabled
+    timer.fn();
   // After the alarm has been triggered
   // Enable it again so it gets triggered the next time
   TG[timer.group]->hw_timer[timer.idx].config.alarm_en = TIMER_ALARM_EN;

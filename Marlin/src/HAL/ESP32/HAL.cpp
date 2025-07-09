@@ -135,21 +135,21 @@ struct {
   extern void M3DPrintVueSetup();
   extern void M3DPrintVueLoop();
 #endif
-void MarlinHAL::init_board() {
-  
-  SERIAL_IMPL.println("Starting Wire and IO Expander");
+void InitIOExpanders(){
+
+  //SERIAL_IMPL.println("Starting Wire and IO Expander");
   sWire.begin(21, 22, 400000);
   if (pcf1.begin()){
-    SERIAL_IMPL.println("PCF1 Started");
+    //SERIAL_IMPL.println("PCF1 Started");
   }
   else  
-    SERIAL_IMPL.println("PCF1 Failed");
+    //SERIAL_IMPL.println("PCF1 Failed");
     
   if (pcf2.begin()){
-    SERIAL_IMPL.println("PCF2 Started");
+    //SERIAL_IMPL.println("PCF2 Started");
   }
   else  
-    SERIAL_IMPL.println("PCF2 Failed");
+    //SERIAL_IMPL.println("PCF2 Failed");
     
   // if (ads.begin(0x48, &sWire)){
   //   SERIAL_IMPL.println("ADS1115 Started");
@@ -157,12 +157,15 @@ void MarlinHAL::init_board() {
   // else  
   //   SERIAL_IMPL.println("ADS1115 Failed");
 
-  SERIAL_IMPL.println("Expanders On.");
+  //SERIAL_IMPL.println("Expanders On.");
   pcfMap = 0b00000000 | (0b10100000 << 8);
   pcf1.write8(pcfMap); // 200-207
   pcf2.write8(pcfMap >> 8); // 208-215, 1 for X and Z stops
   
-  //UISetup();
+}
+void MarlinHAL::init_board() {
+  
+  UISetup();
   LoadCellSetup();
 
   #if ENABLED(USE_ESP32_TASK_WDT)
@@ -221,15 +224,15 @@ volatile bool needsConversion[4] = {0, 0, 0, 0};
  extern MarlinUI ui;
  
 
- long lastLoadCellLoop = 0;
+long lastLoadCellLoop = 0;
 void MarlinHAL::idletask() {
   //SERIAL_IMPL.println("update_buttons Idle()");
   //ui.update_buttons();
-  if (millis() - lastLoadCellLoop > 13) {// < 80hz
-    lastLoadCellLoop = millis();
-    LoadCellLoop();
-  }
-  //UILoop();
+  // if (millis() - lastLoadCellLoop > 13) {// < 80hz
+  //   lastLoadCellLoop = millis();
+  //   LoadCellLoop();
+  // }
+  UILoop();
   #if BOTH(WIFISUPPORT, OTASUPPORT)
     OTA_handle();
   #endif
@@ -268,12 +271,19 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
 // ------------------------
 // Watchdog Timer
 // ------------------------
-
 #if ENABLED(USE_WATCHDOG)
 
   #define WDT_TIMEOUT_US TERN(WATCHDOG_DURATION_8S, 8000000, 4000000) // 4 or 8 second timeout
 
   extern "C" {
+    bool heaterPinsEnabled = true;
+    void disableHeaterPins(){
+      heaterPinsEnabled = false;
+      delay(1); // confirms we are outside pcf writes that takes 200us
+    }
+    void enableHeaterPins(){
+      heaterPinsEnabled = true;
+    }
     esp_err_t esp_task_wdt_reset();
   
     // Declare original weak functions from the ESP32 core
@@ -301,6 +311,8 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
         // SERIAL_IMPL.println(")");
       }
       else {//if (pin >= 208 && pin < 216) {
+        if ((pin == 210 || pin == 211) && !heaterPinsEnabled)
+            return;
           pcf2.write(pin - 208, val & 1);
           // SERIAL_IMPL.print("digitalWrite on PCF2 (");
           // SERIAL_IMPL.print(pin - 208);
@@ -595,6 +607,13 @@ void MarlinHAL::set_pwm_duty(const pin_t pin, const uint16_t v, const uint16_t v
     }
 }
 
+void removePWMOnPin(const pin_t pin){  
+      const int8_t cid = channel_for_pin(pin);
+      if (cid >= 0) { // has an assignment
+        ledcDetachPin(chan_pin[cid]);
+        chan_pin[cid] = 0;              // remove old freq channel
+      }
+}
 int8_t MarlinHAL::set_pwm_frequency(const pin_t pin, const uint32_t f_desired) {
   #if ENABLED(I2S_STEPPER_STREAM)
     if (pin > 127) {

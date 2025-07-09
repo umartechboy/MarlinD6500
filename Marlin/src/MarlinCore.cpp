@@ -1133,7 +1133,11 @@ inline void tmc_standby_setup() {
  *  - Open Touch Screen Calibration screen, if not calibrated
  *  - Set Marlin to RUNNING State
  */
+extern void InitIOExpanders();
+extern void LoadCellLoop();
 void setup() {
+  InitIOExpanders(); // Turn it on as soon as possible
+  
   #ifdef FASTIO_INIT
     FASTIO_INIT();
   #endif
@@ -1267,7 +1271,6 @@ void setup() {
   #endif
 
   SETUP_RUN(hal.init_board());
-
   SETUP_RUN(esp_wifi_init());
 
   // Report Reset Reason
@@ -1317,6 +1320,7 @@ void setup() {
   SERIAL_IMPL.println("calling ui.init()");
   SETUP_RUN(ui.init());
 
+  
   #if PIN_EXISTS(SAFE_POWER)
     #if HAS_DRIVER_SAFE_POWER_PROTECT
       SETUP_RUN(stepper_driver_backward_check());
@@ -1352,14 +1356,18 @@ void setup() {
 
   TERN_(HAS_M206_COMMAND, current_position += home_offset); // Init current position based on home_offset
 
+  // Glitch happens after this
   sync_plan_position();               // Vital to init stepper/planner equivalent for current_position
 
+  // Glitch happens after this
   SETUP_RUN(thermalManager.init());   // Initialize temperature loop
 
+  // Glitch happens before this
   SETUP_RUN(print_job_timer.init());  // Initial setup of print job timer
 
   SETUP_RUN(endstops.init());         // Init endstops and pullups
 
+  // Glitch happens before this
   #if ENABLED(DELTA) && !HAS_SOFTWARE_ENDSTOPS
     SETUP_RUN(refresh_delta_clip_start_height()); // Init safe delta height without soft endstops
   #endif

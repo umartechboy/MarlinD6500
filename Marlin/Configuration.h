@@ -130,7 +130,7 @@
 
 // Enabling this will start a BLE server that broadcasts printer telemetry. 
 // This is required for M3D PrintVue in case board is an ESP32
-#define M3DPrintVueSupport
+// #define M3DPrintVueSupport
 
 #if EITHER(WIFISUPPORT, ESP3D_WIFISUPPORT)
   #define WEBSUPPORT          // Start a webserver (which may include auto-discovery)
@@ -1207,7 +1207,8 @@
 // Rack has 42.73mm per 17 steps/per rev of pinion.
 // So the ratio is 42.73/17 / 43*17 /43*17/43*17  per revolution of the motor, 
 // So the ratio is 42.73 / 43 /43*17/43*17  per revolution of the motor, 0.155 mm per rev, i.e. 6.438 rev/mm, 
-#define DEFAULT_AXIS_STEPS_PER_UNIT   { 50, 50, 96.6838, 196.7 }
+#define DEFAULT_AXIS_STEPS_PER_UNIT_Z 605.96
+#define DEFAULT_AXIS_STEPS_PER_UNIT   { 50, 50, DEFAULT_AXIS_STEPS_PER_UNIT_Z, 196.7 }
 #endif
 
 //#define DEFAULT_AXIS_STEPS_PER_UNIT   { 32.0512, 32.0512, 15.409, 54.35 }
@@ -1632,7 +1633,7 @@
 #define PROBING_HEATERS_OFF       // Turn heaters off when probing
 #if ENABLED(PROBING_HEATERS_OFF)
   //#define WAIT_FOR_BED_HEATER     // Wait for bed to heat back up between probes (to improve accuracy)
-  #define WAIT_FOR_HOTEND         // Wait for hotend to heat back up between probes (to improve accuracy & prevent cold extrude)
+  //#define WAIT_FOR_HOTEND         // Wait for hotend to heat back up between probes (to improve accuracy & prevent cold extrude)
 #endif
 #define PROBING_FANS_OFF          // Turn fans off when probing
 #define PROBING_ESTEPPERS_OFF     // Turn all extruder steppers off when probing

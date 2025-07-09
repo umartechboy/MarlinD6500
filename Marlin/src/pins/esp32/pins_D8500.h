@@ -55,15 +55,15 @@
 #define Y_ENABLE_PIN                          206   // Done PCB
 
 // Swapping Z and E because the positions for the motors have changed
-#define Z_STEP_PIN                           2      // Done PCB
+#define Z_STEP_PIN                           27      // Done PCB
 #define Z_DIR_PIN                            204    // Done PCB
 #define Z_ENABLE_PIN                         209    // Done PCB
 
-#define E0_STEP_PIN                            27   // Done PCB
+#define E0_STEP_PIN                            16   // Done PCB
 #define E0_DIR_PIN                             202  // Done PCB
 #define E0_ENABLE_PIN                          207  // Done PCB
 
-#define E1_STEP_PIN                           16    // Done PCB
+#define E1_STEP_PIN                           2    // Done PCB
 #define E1_DIR_PIN                            203   // Done PCB
 #define E1_ENABLE_PIN                         208   // Done PCB
 

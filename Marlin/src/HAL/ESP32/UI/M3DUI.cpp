@@ -45,8 +45,10 @@ long lastUpdate = 0;
 
 
 int pinMap [] = {14, 13, 0, 12};
+float pinTouchMax [] = {0.8F, 0.4F, 0.24F, 0.5F};
 int baseValues [4];
-#define readPad(i) (min(100, (min(100, (max(0, (baseValues[(((uint32_t)i) % 4)] - touchRead(pinMap[(((uint32_t)i) % 4)]))) * 100 / baseValues[(((uint32_t)i) % 4)]) * 2))) / 100.0F)
+#define _readPad_(i) (min(100, (min(100, (max(0, (baseValues[(((uint32_t)i) % 4)] - touchRead(pinMap[(((uint32_t)i) % 4)]))) * 100 / baseValues[(((uint32_t)i) % 4)]) * 2))) / 100.0F)
+#define readPad(i)  max(0.0F, min(1.0F, _readPad_(i) / pinTouchMax[(((uint32_t)i) % 4)]))
 
 bool first = true;
 Keys touchOnADCKeyPad_getKey(){
@@ -55,6 +57,8 @@ Keys touchOnADCKeyPad_getKey(){
           for (int ri = 0; ri < 10; ri ++){
             baseValues [i] += touchRead(pinMap[i]);
             delay(1);
+
+        
           }
           baseValues[i] /= 10;
         }
@@ -66,7 +70,7 @@ Keys touchOnADCKeyPad_getKey(){
       all[i] = readPad(i);
     }
 #if DebugKeys
-    Serial.printf("Cache values: %f %f %f %f", all[0], all[1], all[2], all[3]);
+    SERIAL_IMPL.printf("Cache values: %f %f %f %f", all[0], all[1], all[2], all[3]);
 #endif
     // Check if its the middle button
     int aboveZero = 0;
@@ -77,10 +81,10 @@ Keys touchOnADCKeyPad_getKey(){
     }
     
 #if DebugKeys
-    Serial.printf(", Above zero 1: %d", aboveZero);
+    SERIAL_IMPL.printf(", Above zero 1: %d", aboveZero);
 #endif
     if (aboveZero >= 4){      
-      Serial.println();
+      SERIAL_IMPL.println();
       return Keys::KEYPAD_MIDDLE;
     }
     // Check if its a diagonal button
@@ -92,7 +96,7 @@ Keys touchOnADCKeyPad_getKey(){
     }
     
 #if DebugKeys
-    Serial.printf(", Above zero 2: %d", aboveZero);
+    SERIAL_IMPL.printf(", Above zero 2: %d", aboveZero);
 #endif
     if (aboveZero == 2){
       // find the first ind
@@ -105,7 +109,7 @@ Keys touchOnADCKeyPad_getKey(){
             }
           }
 #if DebugKeys
-          Serial.printf(", %d\n", i * 2 + 2 );
+          SERIAL_IMPL.printf(", %d\n", i * 2 + 2 );
 #endif
           return (Keys)(i * 2 + 2);
         }
@@ -121,14 +125,14 @@ Keys touchOnADCKeyPad_getKey(){
     if (all[maxI] < 0.5){
       
 #if DebugKeys
-      Serial.printf(", No key\n");
+      SERIAL_IMPL.printf(", No key\n");
 #endif
       return Keys::KEYPAD_NONE;
     }
     else{
       
 #if DebugKeys
-      Serial.printf(", One Key %d\n", maxI * 2 + 1 );
+      SERIAL_IMPL.printf(", One Key %d\n", maxI * 2 + 1 );
 #endif
       return (Keys)(maxI * 2 + 1);
     }
@@ -277,26 +281,23 @@ void PNGDraw(PNGDRAW *pDraw)
 
 
 void UISetup() {  
-  Serial.begin(115200);
-    for (int i = 0; i < 5; i++){
-        delay(1000);
-        Serial.print(".");
-    }
-  Serial.println("Starting up...");
+  SERIAL_IMPL.println("UI Starting up...");
   digitalWrite(TFT_RST, 0);
   delay(1);
   digitalWrite(TFT_RST, 1);
   delay(1);
 
+  for (int i = 0; i < 4; i++)
+    pinMode(pinMap[i], INPUT);
   tft.initR(INITR_144GREENTAB);
   tft.fillScreen(ST77XX_WHITE);
   tft.setRotation(3);
   bTft = new BufferedDisplay(tft, TFT_startWrite, TFT_setAddressWindow, TFT_writePixels, TFT_endWrite);
   
-  Serial.println("Starting SD");
+  SERIAL_IMPL.println("Starting SD");
   sdMenuStep.BeginSD();
   
-  Serial.println("Goto menu pushed");
+  SERIAL_IMPL.println("Goto menu pushed");
   menuHost.GotoStep(&idleScreenStep);
   lastUpdate = millis();
 
@@ -308,54 +309,54 @@ void UISetup() {
   printPositionStep.PreviousStep = &fileOverViewStep;
   printPositionStep.NextStep = &printStep;
   printStep.PreviousStep = &printPositionStep;
-  //Serial.println("Begin with uint16");    
-  // Serial.print("Red: 0b");
-  // Serial.print(Color(ST7735_RED).toColor16(), 2);
-  // Serial.printf(", r: %d, g: %d, b: %d\n", Color(ST7735_RED).R(), Color(ST7735_RED).B(), Color(ST7735_RED).A());
-  // Serial.print("Green: 0b");
-  // Serial.print(Color(ST7735_GREEN).toColor16(), 2);
-  // Serial.printf(", r: %d, g: %d, b: %d\n", Color(ST7735_GREEN).R(), Color(ST7735_GREEN).B(), Color(ST7735_GREEN).A());
-  // Serial.print("Blue: 0b");
-  // Serial.println(Color(ST7735_BLUE).toColor16(), 2);
-  // Serial.printf(", r: %d, g: %d, b: %d\n", Color(ST7735_BLUE).R(), Color(ST7735_BLUE).B(), Color(ST7735_BLUE).A());
-  // Serial.print("Cyan: 0b");
-  // Serial.println(Color(ST7735_CYAN).toColor16(), 2);
-  // Serial.printf(", r: %d, g: %d, b: %d\n", Color(ST7735_CYAN).R(), Color(ST7735_CYAN).B(), Color(ST7735_CYAN).A());
-  // Serial.println("Color test rgb() and cast to uint16");  
-  // Serial.print("Red: 0b");
-  // Serial.print(rgb(255,0,0).toColor16(), 2);
-  // Serial.printf(", r: %d, g: %d, b: %d\n", rgb(255,0,0).R(), rgb(255,0,0).B(), rgb(255,0,0).A());
-  // Serial.print("Green: 0b");
-  // Serial.print(rgb(0,255,0).toColor16(), 2);
-  // Serial.printf(", r: %d, g: %d, b: %d\n", rgb(255,0,0).R(), rgb(255,0,0).B(), rgb(255,0,0).A());
-  // Serial.print("Blue: 0b");
-  // Serial.println(rgb(0, 0, 255).toColor16(), 2);
-  // Serial.printf(", r: %d, g: %d, b: %d\n", rgb(255,0,0).R(), rgb(255,0,0).B(), rgb(255,0,0).A());  
-  // Serial.println("Blend test");  
+  //SERIAL_IMPL.println("Begin with uint16");    
+  // SERIAL_IMPL.print("Red: 0b");
+  // SERIAL_IMPL.print(Color(ST7735_RED).toColor16(), 2);
+  // SERIAL_IMPL.printf(", r: %d, g: %d, b: %d\n", Color(ST7735_RED).R(), Color(ST7735_RED).B(), Color(ST7735_RED).A());
+  // SERIAL_IMPL.print("Green: 0b");
+  // SERIAL_IMPL.print(Color(ST7735_GREEN).toColor16(), 2);
+  // SERIAL_IMPL.printf(", r: %d, g: %d, b: %d\n", Color(ST7735_GREEN).R(), Color(ST7735_GREEN).B(), Color(ST7735_GREEN).A());
+  // SERIAL_IMPL.print("Blue: 0b");
+  // SERIAL_IMPL.println(Color(ST7735_BLUE).toColor16(), 2);
+  // SERIAL_IMPL.printf(", r: %d, g: %d, b: %d\n", Color(ST7735_BLUE).R(), Color(ST7735_BLUE).B(), Color(ST7735_BLUE).A());
+  // SERIAL_IMPL.print("Cyan: 0b");
+  // SERIAL_IMPL.println(Color(ST7735_CYAN).toColor16(), 2);
+  // SERIAL_IMPL.printf(", r: %d, g: %d, b: %d\n", Color(ST7735_CYAN).R(), Color(ST7735_CYAN).B(), Color(ST7735_CYAN).A());
+  // SERIAL_IMPL.println("Color test rgb() and cast to uint16");  
+  // SERIAL_IMPL.print("Red: 0b");
+  // SERIAL_IMPL.print(rgb(255,0,0).toColor16(), 2);
+  // SERIAL_IMPL.printf(", r: %d, g: %d, b: %d\n", rgb(255,0,0).R(), rgb(255,0,0).B(), rgb(255,0,0).A());
+  // SERIAL_IMPL.print("Green: 0b");
+  // SERIAL_IMPL.print(rgb(0,255,0).toColor16(), 2);
+  // SERIAL_IMPL.printf(", r: %d, g: %d, b: %d\n", rgb(255,0,0).R(), rgb(255,0,0).B(), rgb(255,0,0).A());
+  // SERIAL_IMPL.print("Blue: 0b");
+  // SERIAL_IMPL.println(rgb(0, 0, 255).toColor16(), 2);
+  // SERIAL_IMPL.printf(", r: %d, g: %d, b: %d\n", rgb(255,0,0).R(), rgb(255,0,0).B(), rgb(255,0,0).A());  
+  // SERIAL_IMPL.println("Blend test");  
   // Color r = rgb(255, 0, 0);
   // Color g = rgb(0, 255, 0);
   // Color b = rgb(0, 0, 255);
-  // Serial.print("r + g 100%: ");
+  // SERIAL_IMPL.print("r + g 100%: ");
   // r.BlendBelow(g);
-  // Serial.println(r, 2);  
+  // SERIAL_IMPL.println(r, 2);  
   // r = rgb(255, 0, 0);
-  // Serial.printf(", r: %d, g: %d, b: %d, a: %d\n", r.R(), r.G(), r.B(), r.A());
-  // Serial.println("r + g 50%: ");  
+  // SERIAL_IMPL.printf(", r: %d, g: %d, b: %d, a: %d\n", r.R(), r.G(), r.B(), r.A());
+  // SERIAL_IMPL.println("r + g 50%: ");  
   // g.A(127);  
-  // Serial.printf("Green , r: %d, g: %d, b: %d, a: %d\n", g.R(), g.G(), g.B(), g.A());
+  // SERIAL_IMPL.printf("Green , r: %d, g: %d, b: %d, a: %d\n", g.R(), g.G(), g.B(), g.A());
   // r.BlendBelow(g);
-  // Serial.print(r, 2);
-  // Serial.printf(", New Red: r: %d, g: %d, b: %d, a: %d\n", r.R(), r.G(), r.B(), r.A());
+  // SERIAL_IMPL.print(r, 2);
+  // SERIAL_IMPL.printf(", New Red: r: %d, g: %d, b: %d, a: %d\n", r.R(), r.G(), r.B(), r.A());
   // g.A(10);  
   // r = rgb(255, 0, 0);
-  // Serial.printf("Green , r: %d, g: %d, b: %d, a: %d\n", g.R(), g.G(), g.B(), g.A());
+  // SERIAL_IMPL.printf("Green , r: %d, g: %d, b: %d, a: %d\n", g.R(), g.G(), g.B(), g.A());
   // r.BlendBelow(g);
-  // Serial.print(r, 2);
-  // Serial.printf(", New Red: r: %d, g: %d, b: %d, a: %d\n", r.R(), r.G(), r.B(), r.A());
-  // Serial.print("r + g 0%: ");
+  // SERIAL_IMPL.print(r, 2);
+  // SERIAL_IMPL.printf(", New Red: r: %d, g: %d, b: %d, a: %d\n", r.R(), r.G(), r.B(), r.A());
+  // SERIAL_IMPL.print("r + g 0%: ");
   // g.A(0);
-  // Serial.println(r.Blend(g));
-  // Serial.printf(", r: %d, g: %d, b: %d\n", r.Blend(g).R(), r.Blend(g).B(), r.Blend(g).A());
+  // SERIAL_IMPL.println(r.Blend(g));
+  // SERIAL_IMPL.printf(", r: %d, g: %d, b: %d\n", r.Blend(g).R(), r.Blend(g).B(), r.Blend(g).A());
   //while(true) delay(1);
 }
 int lastKey = 0;
@@ -380,7 +381,7 @@ void UILoop() {
       Keys key = touchOnADCKeyPad_getKey();
       if (key){ // we just need to wait for it to go up
         if (key != lastKeyDown && lastKeyDown != Keys::KEYPAD_NONE){ // dial rotate or swipe
-          Serial.printf("Dial Rotate: %d > %d\n", lastKeyDown, key);
+          SERIAL_IMPL.printf("Dial Rotate: %d > %d\n", lastKeyDown, key);
 
           if (key == AddKey(lastKeyDown, 1)) {
             if (menuHost.CurrentStep){ 
@@ -411,10 +412,10 @@ void UILoop() {
         lastKeyDown = Keys::KEYPAD_NONE;
         possibleSwipFrom = Keys::KEYPAD_NONE;
         if(keyToSend){
-          Serial.printf("Key proessed: %d\n", keyToSend);
+          SERIAL_IMPL.printf("Key proessed: %d\n", keyToSend);
           if (menuHost.TargetStep == 0){
             if (keyToSend == KEYPAD_MIDDLE || keyToSend == KEYPAD_UP_RIGHT){
-              Serial.println("Middle or up right key pressed");
+              SERIAL_IMPL.println("Middle or up right key pressed");
               // begin buttons overlay
               if(menuHost.stepAnimationStage == StepAnimationStage::MainStep && keyToSend == KEYPAD_MIDDLE){
                 menuHost.stepAnimationStage = StepAnimationStage::GoingToOverLay;
@@ -428,7 +429,7 @@ void UILoop() {
               }
             }
             else if (keyToSend == KEYPAD_UP_LEFT && menuHost.CurrentStep->PreviousStep && menuHost.stepAnimationStage == StepAnimationStage::InOverlay){
-              Serial.println("Going to previous step");
+              SERIAL_IMPL.println("Going to previous step");
               // begin Next menu transition
               menuHost.stepAnimationStage = StepAnimationStage::GoingToStep;
               menuHost.moveToMenuAfterStepAnim = menuHost.CurrentStep->PreviousStep;
@@ -436,7 +437,7 @@ void UILoop() {
               menuHost.ResetAnimationProgress(250);
             }
             else if (keyToSend == KEYPAD_DOWN_RIGHT && menuHost.CurrentStep->NextStep && menuHost.stepAnimationStage == StepAnimationStage::InOverlay){
-              Serial.println("Going to next step");
+              SERIAL_IMPL.println("Going to next step");
               // begin Next menu transition
               menuHost.stepAnimationStage = StepAnimationStage::GoingToStep;
               menuHost.moveToMenuAfterStepAnim = menuHost.CurrentStep->NextStep;

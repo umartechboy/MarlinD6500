@@ -21,12 +21,13 @@
  bool ProbeEnable = true; // on by default for tarring
  float lastReading = 0;
  int exampleReadingCount = 0;
- float threshold = 1;
+ float threshold = 5;
  float rawValueFilterFactor = 0.1F;
- float FloatingFactor = 0.008F;
+ float FloatingFactor = 0.08F;
  #define FilterOutSeriesOfErraticValue 5
  int lastReturn  = 0;
  float lastAnalogReturn = 0;
+ float lastRawReturn = 0;
  long lastProbe = 1000; // will force a tare
  float readProbeAnalog(){
     return lastAnalogReturn;
@@ -41,7 +42,7 @@
  void LoadCellLoop(){
 
     //debugOn = (millis() - lastProbe) < 1000;
-    debugOn = ProbeEnable;
+    debugOn = true;
     if (load.getTareAsyncStatus()){
         //SERIAL_IMPL.println("Taring.");
         load.tareAsyncLoop();
@@ -60,57 +61,57 @@
         if (load.update()){
             // Serial.print(millis());
             // Serial.print(": ");
-            float reading = load.getData();
+            lastRawReturn = load.getData();
             //reading = lastReading * (1 - rawValueFilterFactor) + reading * rawValueFilterFactor;
             // SERIAL_IMPL.print(reading);
             // SERIAL_IMPL.print("\t");
-            // Remove chances of false triggers. 
-            if (abs(reading - lastReading) > 1){
-                exampleReadingCount--;
-                lastUpdateAt = millis() + 50; // Skip the next few cycles
-                    if (exampleReadingCount < 0)
-                exampleReadingCount = 0;
+
+            // // Remove chances of false triggers. 
+            // if (abs(reading - lastReading) > 1){
+            //     exampleReadingCount--;
+            //     lastUpdateAt = millis() + 50; // Skip the next few cycles
+            //         if (exampleReadingCount < 0)
+            //     exampleReadingCount = 0;
                     
-                if (exampleReadingCount <= 0)
-                    lastReading = reading; // change the ref this this for the next time, accepting this data
-                else
-                    reading = lastReading; // use previous data
-            }
-            else
-            {
-                lastReading = reading;	
-                exampleReadingCount++;
-                    if (exampleReadingCount > FilterOutSeriesOfErraticValue)
-                exampleReadingCount = FilterOutSeriesOfErraticValue;
-            }
+            //     if (exampleReadingCount <= 0)
+            //         lastReading = reading; // change the ref this this for the next time, accepting this data
+            //     else
+            //         reading = lastReading; // use previous data
+            // }
+            // else
+            // {
+            //     lastReading = reading;	
+            //     exampleReadingCount++;
+            //         if (exampleReadingCount > FilterOutSeriesOfErraticValue)
+            //     exampleReadingCount = FilterOutSeriesOfErraticValue;
+            // }
 
             // SERIAL_IMPL.print(reading);
             // SERIAL_IMPL.print("\t");
             
-            debug("PE: ");
-            debug(ProbeEnable);
-            debug(", Pr: ");
-            debug(exampleReadingCount);
-            debug(", ");
+            SERIAL_IMPL.print("PE: ");
+            SERIAL_IMPL.print(ProbeEnable);
+            SERIAL_IMPL.print(", Pr: ");
+            SERIAL_IMPL.print(exampleReadingCount);
+            SERIAL_IMPL.print(", ");
             float floatingFactor = FloatingFactor;
             if (firstAfterTare){
-            floatingFactor = 1; 
-            firstAfterTare = false;
+                floatingFactor = 1; 
+                firstAfterTare = false;
             }
 
-            floatingAverage = reading * floatingFactor + floatingAverage * (1 - floatingFactor);
-            float offsetCorrected = floatingAverage - reading;
-            lastAnalogReturn = offsetCorrected;
-            debug(floatingAverage);
-            debug("(fAvg) -");
-            debug(reading);
-            debug("(reading) = ");
-            debug(offsetCorrected);
-            debug("(used) ");
-            debug(offsetCorrected > threshold ? ">":(offsetCorrected < -threshold ? "<":"~="));
-            debug(threshold);
-            debug(" => ");
-            debug(offsetCorrected > threshold ? 1:0);
+            floatingAverage = lastRawReturn * floatingFactor + floatingAverage * (1 - floatingFactor);
+            lastAnalogReturn = floatingAverage - lastRawReturn;
+            SERIAL_IMPL.print(floatingAverage);
+            SERIAL_IMPL.print("(fAvg) -");
+            SERIAL_IMPL.print(lastRawReturn);
+            SERIAL_IMPL.print("(reading) = ");
+            SERIAL_IMPL.print(lastAnalogReturn);
+            SERIAL_IMPL.print("(used) ");
+            SERIAL_IMPL.print(lastAnalogReturn > threshold ? ">":(lastAnalogReturn < -threshold ? "<":"~="));
+            SERIAL_IMPL.print(threshold);
+            SERIAL_IMPL.print(" => ");
+            SERIAL_IMPL.print(lastAnalogReturn > threshold ? 1:0);
             
             // SERIAL_IMPL.print("\t");
             // SERIAL_IMPL.print(10);
@@ -119,12 +120,81 @@
             // Serial.print("\t");
             // Serial.print(offsetCorrected);
             // SERIAL_IMPL.println();
-            debug("\r\n");
+            SERIAL_IMPL.print("\r\n");
 
-            lastReturn = offsetCorrected > threshold ? 1:0;
+            lastReturn = lastAnalogReturn > threshold ? 1:0;
         }
         // }
     // else if (!ProbeEnable){
     //     //debug("Probe Disabled\r\n");
     // }
+ }
+ 
+ #define steps_per_mm DEFAULT_AXIS_STEPS_PER_UNIT_Z // 6.0596F exactly
+ void move_mm(float mm, float speed){
+    int dir = mm > 0;
+    if (mm < 0)
+        mm *= -1.0F;
+    digitalWrite(Z_DIR_PIN, INVERT_Z_DIR ? (1 - dir):dir);
+
+    long stepsToMove = round((float)mm * steps_per_mm);
+    int usPerStep = round(1.0F / speed / steps_per_mm * 1000000.0F); // int can be a bit inaccurate but the distance will still be accurate
+    //SERIAL_IMPL.printf("Move: steps = %f, delay = %d\n", stepsToMove, usPerStep);
+    for (long i = 0; i < stepsToMove; i++){
+        
+        digitalWrite(Z_STEP_PIN, 1);
+        digitalWrite(Z_STEP_PIN, 0);
+        delayMicroseconds(usPerStep);
+    }
+ }
+ void removeLoadCellOffset(){
+    SERIAL_IMPL.println("Averaging");
+    for (int i = 0; i < 5; i++){
+        LoadCellLoop();
+        safe_delay(12);
+    }
+    floatingAverage = lastRawReturn;
+    SERIAL_IMPL.println("RemovedOffset");
+    for (int i = 0; i < 2; i++){
+        LoadCellLoop();
+        safe_delay(12);
+    }
+ }
+extern void removePWMOnPin(const pin_t pin);
+extern void disableESPMarlinTimers();
+extern void enableESPMarlinTimers();
+extern void enableHeaterPins();
+extern void disableHeaterPins();
+void do_blocking_move_to_dz_D8500(float dz, float fr_mm_s){
+    
+    SERIAL_IMPL.printf("Probe Test: dz = %f, fr_mm_s = %f\n", dz, fr_mm_s);
+    removePWMOnPin(Z_STEP_PIN);
+    SERIAL_IMPL.println("pin pwm removed"); delay(1);
+    disableESPMarlinTimers();
+    //disableHeaterPins();
+    SERIAL_IMPL.println("timer disabled"); delay(1);
+    pinMode(Z_STEP_PIN, OUTPUT);
+    threshold = 0.3;
+    // Test
+    removeLoadCellOffset();
+    SERIAL_IMPL.println("offset removed"); delay(1);
+    float distanceGone = 0;
+    float stepSize = -0.05F;
+    while(distanceGone > dz){
+        //move_mm(stepSize, 1);
+        //distanceGone += stepSize;
+        LoadCellLoop();
+        // if (lastAnalogReturn > threshold){
+        //     SERIAL_IMPL.println("Bed Touch");
+        //     break;
+        // }
+    }
+    SERIAL_IMPL.printf("Distance Gone: %f\n", distanceGone);
+    // delay(1000);
+    // move_mm(-distanceGone, 5);
+
+    SERIAL_IMPL.println("Move Done");
+    // No need to attach the pwm again. It will automatically get set on next timer setting
+    //enableHeaterPins();
+    enableESPMarlinTimers();
  }

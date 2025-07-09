@@ -571,7 +571,10 @@ bool Probe::set_deployed(const bool deploy) {
  *
  * @return TRUE if the probe failed to trigger.
  */
+
+extern void do_blocking_move_to_dz_D8500(float z, float fr_mm_s);
 bool Probe::probe_down_to_z(const_float_t z, const_feedRate_t fr_mm_s) {
+  SERIAL_IMPL.printf("probe_down_to_z(%f, %f)\n", z, fr_mm_s);
   DEBUG_SECTION(log_probe, "Probe::probe_down_to_z", DEBUGGING(LEVELING));
 
   #if BOTH(HAS_HEATED_BED, WAIT_FOR_BED_HEATER)
@@ -598,10 +601,16 @@ bool Probe::probe_down_to_z(const_float_t z, const_feedRate_t fr_mm_s) {
     endstops.enable(true);
   #endif
 
+  SERIAL_IMPL.println("set_probing_paused()");
   TERN_(HAS_QUIET_PROBING, set_probing_paused(true));
 
   // Move down until the probe is triggered
-  do_blocking_move_to_z(z, fr_mm_s);
+  // do_blocking_move_to_z(z, fr_mm_s); // we just need to override this for D8500
+  
+  float deltaZ = z - current_position.z;
+  
+  SERIAL_IMPL.printf("current_position.z = %f, z = %f\n", current_position.z, z);
+  do_blocking_move_to_dz_D8500(deltaZ, fr_mm_s);
 
   // Check to see if the probe was triggered
   const bool probe_triggered =
@@ -705,18 +714,14 @@ float Probe::run_z_probe(const bool sanity_check/*=true*/) {
     stepper.disable_axis(X_AXIS);
     stepper.disable_axis(Y_AXIS);
     #endif
-    // wait for the probe to stablize
-    while (abs(readProbeAnalog()) > 0.5F)
-      safe_delay(500);
-    SERIAL_IMPL.printf("Probe stable: %f\r\n", readProbeAnalog());
+    
+    SERIAL_IMPL.println("wait after stepper disable");
+    safe_delay(300);
+    SERIAL_IMPL.println("Calling probe_down_to_z");
     // Do a first probe at the fast speed
     const bool probe_fail = probe_down_to_z(z_probe_low_point, fr_mm_s),            // No probe trigger?
                early_fail = (scheck && current_position.z > -offset.z + clearance); // Probe triggered too high?
-               
-    #if ENABLED(PROBING_STEPPERS_OFF)
-    stepper.enable_axis(X_AXIS);
-    stepper.enable_axis(Y_AXIS);
-    #endif
+        
     #if ENABLED(DEBUG_LEVELING_FEATURE)
       if (DEBUGGING(LEVELING) && (probe_fail || early_fail)) {
         DEBUG_ECHOPGM_P(plbl);
