@@ -572,7 +572,7 @@ bool Probe::set_deployed(const bool deploy) {
  * @return TRUE if the probe failed to trigger.
  */
 
-extern void do_blocking_move_to_dz_D8500(float z, float fr_mm_s);
+//extern float do_blocking_move_to_dz_D8500(float z, float fr_mm_s);
 bool Probe::probe_down_to_z(const_float_t z, const_feedRate_t fr_mm_s) {
   SERIAL_IMPL.printf("probe_down_to_z(%f, %f)\n", z, fr_mm_s);
   DEBUG_SECTION(log_probe, "Probe::probe_down_to_z", DEBUGGING(LEVELING));
@@ -605,14 +605,16 @@ bool Probe::probe_down_to_z(const_float_t z, const_feedRate_t fr_mm_s) {
   TERN_(HAS_QUIET_PROBING, set_probing_paused(true));
 
   // Move down until the probe is triggered
-  // do_blocking_move_to_z(z, fr_mm_s); // we just need to override this for D8500
+  do_blocking_move_to_z(z, fr_mm_s); // we just need to override this for D8500
   
   float deltaZ = z - current_position.z;
   
-  SERIAL_IMPL.printf("current_position.z = %f, z = %f\n", current_position.z, z);
-  do_blocking_move_to_dz_D8500(deltaZ, fr_mm_s);
-
+  // SERIAL_IMPL.printf("Before Probe current_position.z = %f, z = %f\n", current_position.z, z);
+  // float distanceGone = do_blocking_move_to_dz_D8500(deltaZ, fr_mm_s); // always -ive
+  // float probeZ = current_position.z + distanceGone; // We bypassed the planner, got to inject it now.
+  // SERIAL_IMPL.printf("probeZ = %f\n", probeZ);
   // Check to see if the probe was triggered
+  //const bool probe_triggered = true;
   const bool probe_triggered =
     #if HAS_DELTA_SENSORLESS_PROBING
       endstops.trigger_state() & (_BV(X_MAX) | _BV(Y_MAX) | _BV(Z_MAX))
@@ -651,6 +653,7 @@ bool Probe::probe_down_to_z(const_float_t z, const_feedRate_t fr_mm_s) {
   set_current_from_steppers_for_axis(Z_AXIS);
 
   // Tell the planner where we actually are
+  //current_position.z = probeZ;
   sync_plan_position();
 
   return !probe_triggered;
@@ -703,6 +706,7 @@ bool Probe::probe_down_to_z(const_float_t z, const_feedRate_t fr_mm_s) {
  */
 
 extern float readProbeAnalog();
+extern void removeLoadCellOffset();
 
 float Probe::run_z_probe(const bool sanity_check/*=true*/) {
   DEBUG_SECTION(log_probe, "Probe::run_z_probe", DEBUGGING(LEVELING));
@@ -716,7 +720,8 @@ float Probe::run_z_probe(const bool sanity_check/*=true*/) {
     #endif
     
     SERIAL_IMPL.println("wait after stepper disable");
-    safe_delay(300);
+    safe_delay(100);
+    removeLoadCellOffset();
     SERIAL_IMPL.println("Calling probe_down_to_z");
     // Do a first probe at the fast speed
     const bool probe_fail = probe_down_to_z(z_probe_low_point, fr_mm_s),            // No probe trigger?
@@ -758,8 +763,7 @@ float Probe::run_z_probe(const bool sanity_check/*=true*/) {
 
     // Raise to give the probe clearance
     do_blocking_move_to_z(current_position.z + Z_CLEARANCE_MULTI_PROBE, z_probe_fast_mm_s);
-    SERIAL_IMPL.println("Raised. Stabilizing...");
-    
+    SERIAL_IMPL.println("Raised. Stabilizing...");    
     safe_delay(100); // Stabilize the probe
 
   #elif Z_PROBE_FEEDRATE_FAST != Z_PROBE_FEEDRATE_SLOW

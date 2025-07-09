@@ -289,10 +289,10 @@ long lastLoadCellLoop = 0;
 void MarlinHAL::idletask() {
   //SERIAL_IMPL.println("update_buttons Idle()");
   //ui.update_buttons();
-  // if (millis() - lastLoadCellLoop > 13) {// < 80hz
-  //   lastLoadCellLoop = millis();
-  //   LoadCellLoop();
-  // }
+  if (millis() - lastLoadCellLoop > 13) {// < 80hz
+    lastLoadCellLoop = millis();
+    LoadCellLoop();
+  }
   UILoop();
   #if BOTH(WIFISUPPORT, OTASUPPORT)
     OTA_handle();
@@ -391,8 +391,11 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
     }
     return;
   }
-
-  __digitalWrite(pin, val);
+  else if (pin == 217){ // Probe enable disable
+    ProbeEnable = val;
+  }
+  else
+    __digitalWrite(pin, val);
 }
 
     
@@ -431,8 +434,12 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
     }
     return val;
   }
-
-  return __digitalRead(pin);
+  else if (pin == 216) {
+    // Loadcell
+    return LoadCellProbe();
+  }
+  else
+    return __digitalRead(pin);
 }
 
   

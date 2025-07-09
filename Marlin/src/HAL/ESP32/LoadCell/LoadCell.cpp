@@ -21,9 +21,9 @@
  bool ProbeEnable = true; // on by default for tarring
  float lastReading = 0;
  int exampleReadingCount = 0;
- float threshold = 5;
+ float threshold = 0.3;
  float rawValueFilterFactor = 0.1F;
- float FloatingFactor = 0.08F;
+ float FloatingFactor = 0.008F;
  #define FilterOutSeriesOfErraticValue 5
  int lastReturn  = 0;
  float lastAnalogReturn = 0;
@@ -54,7 +54,7 @@
     // delay(1000);
     // digitalWrite(HxData, LOW);
     // delay(1000);
-    //if (ProbeEnable){
+    if (ProbeEnable){
         if (millis() - lastUpdateAt < 12)
             return;
         lastUpdateAt = millis();
@@ -124,7 +124,7 @@
 
             lastReturn = lastAnalogReturn > threshold ? 1:0;
         }
-        // }
+    }
     // else if (!ProbeEnable){
     //     //debug("Probe Disabled\r\n");
     // }
@@ -165,7 +165,7 @@ extern void disableESPMarlinTimers();
 extern void enableESPMarlinTimers();
 extern void enableHeaterPins();
 extern void disableHeaterPins();
-void do_blocking_move_to_dz_D8500(float dz, float fr_mm_s){
+float do_blocking_move_to_dz_D8500(float dz, float fr_mm_s){
     
     SERIAL_IMPL.printf("Probe Test: dz = %f, fr_mm_s = %f\n", dz, fr_mm_s);
     removePWMOnPin(Z_STEP_PIN);
@@ -181,13 +181,13 @@ void do_blocking_move_to_dz_D8500(float dz, float fr_mm_s){
     float distanceGone = 0;
     float stepSize = -0.05F;
     while(distanceGone > dz){
-        //move_mm(stepSize, 1);
-        //distanceGone += stepSize;
+        move_mm(stepSize, 1);
+        distanceGone += stepSize;
         LoadCellLoop();
-        // if (lastAnalogReturn > threshold){
-        //     SERIAL_IMPL.println("Bed Touch");
-        //     break;
-        // }
+        if (lastAnalogReturn > threshold){
+            SERIAL_IMPL.println("Bed Touch");
+            break;
+        }
     }
     SERIAL_IMPL.printf("Distance Gone: %f\n", distanceGone);
     // delay(1000);
@@ -197,4 +197,5 @@ void do_blocking_move_to_dz_D8500(float dz, float fr_mm_s){
     // No need to attach the pwm again. It will automatically get set on next timer setting
     //enableHeaterPins();
     enableESPMarlinTimers();
+    return distanceGone;
  }
