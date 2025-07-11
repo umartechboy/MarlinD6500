@@ -34,6 +34,7 @@
 #include "../../../module/planner.h"
 #include "../../../module/probe.h"
 #include "../../queue.h"
+#include "../../../hal/esp32/UI/M3DUI.h"
 
 #if ENABLED(AUTO_BED_LEVELING_LINEAR)
   #include "../../../libs/least_squares_fit.h"
@@ -228,6 +229,7 @@ public:
 G29_TYPE GcodeSuite::G29() {
   DEBUG_SECTION(log_G29, "G29", DEBUGGING(LEVELING));
 
+  TERN_(M3DUI_H, ABLStarted());
   // Leveling state is persistent when done manually with multiple G29 commands
   TERN_(PROBE_MANUALLY, static) G29_State abl;
 
@@ -713,6 +715,7 @@ G29_TYPE GcodeSuite::G29() {
 
           if (isnan(abl.measured_z)) {
             set_bed_leveling_enabled(abl.reenable);
+            TERN_(M3D_D8500_UI, ABLFailed());
             break; // Breaks out of both loops
           }
 
@@ -731,6 +734,7 @@ G29_TYPE GcodeSuite::G29() {
             const float z = abl.measured_z + abl.Z_offset;
             abl.z_values[abl.meshCount.x][abl.meshCount.y] = z;
             TERN_(EXTENSIBLE_UI, ExtUI::onMeshUpdate(abl.meshCount, z));
+            TERN_(M3D_D8500_UI, ABLMeshUpdate(abl.meshCount));
 
           #endif
 
@@ -936,6 +940,7 @@ G29_TYPE GcodeSuite::G29() {
 
     #endif
 
+    TERN_(M3DUI_H, ABLDone());
   } // !isnan(abl.measured_z)
 
   // Restore state after probing

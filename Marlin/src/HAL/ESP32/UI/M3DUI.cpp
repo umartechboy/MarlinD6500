@@ -20,6 +20,18 @@ Color MediumRed = rgb(242, 95, 92);
 Color LightRed = rgb(250, 200, 198);
 Color GoGreen = rgb(77, 194, 30);
 
+void ABLMeshUpdate(const xy_int8_t &pos){
+  SERIAL_IMPL.printf("ABLMeshUpdate: %d, %d\n", pos.x, pos.y, pos);
+}
+void ABLDone(){
+  SERIAL_IMPL.println("ABL Done");
+}
+void ABLFailed(){
+  SERIAL_IMPL.println("ABL Failed");
+}
+void ABLStarted(){
+  SERIAL_IMPL.println("ABL Started");
+}
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC,TFT_RST);
 void TFT_startWrite()
 {

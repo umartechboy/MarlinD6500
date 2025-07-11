@@ -103,11 +103,6 @@ class TFT {
 
     static uint16_t buffer[TFT_BUFFER_SIZE];
 
-  #if ENABLED(M3D_D8500_UI)
-    int ScaleX = TFT_ScaleX;
-    int ScaleY = TFT_ScaleY;
-  #endif
-
   static void init();
   static void set_font(const uint8_t *Font) { string.set_font(Font); }
   static void add_glyphs(const uint8_t *Font) { string.add_glyphs(Font); }

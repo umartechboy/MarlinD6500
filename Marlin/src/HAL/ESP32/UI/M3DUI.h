@@ -10,14 +10,11 @@
 #include <SD.h>
 #include "base64Stream.h"
 #include <PNGdec.h>
-#include "../../../MarlinCore.h"
-#include "../../../gcode/queue.h"
-#include "../../../module/printcounter.h"
+#include "MarlinSpecific.h"
 
 void centerString(BufferedDisplay* g, const char* str,  int16_t x, int16_t y, int16_t* wOut = 0, int16_t* hOut = 0);
 void centerRightString(BufferedDisplay* g, const char* str,  int16_t x, int16_t y, int16_t* wOut = 0, int16_t* hOut = 0);
 void centerLeftString(BufferedDisplay* g, const char* str,  int16_t x, int16_t y, int16_t* wOut = 0, int16_t* hOut = 0);
-
 
 void UISetup();
 void UILoop();
@@ -115,12 +112,6 @@ class IdleScreenStep: public MenuStep {
         }
         void Tick() override {
             NeedsRedraw = true;
-        }
-        float readTemp1(){
-            return 24.0 + (millis() % 10) / 10.0F;
-        }
-        float readTemp2(){
-            return 210.0 + (millis() % 10) / 10.0F;
         }
         void Paint(BufferedDisplay* g) override {
             

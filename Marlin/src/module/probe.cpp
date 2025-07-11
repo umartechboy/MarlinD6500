@@ -1071,7 +1071,7 @@ float Probe::probe_at_point(const_float_t rx, const_float_t ry, const ProbePtRai
   #endif
 
   float measured_z = NAN;
-  int retriesLeft = 3;
+  int retriesLeft = 5;
   do {
     if (!deploy()) {
       measured_z = run_z_probe(sanity_check) + offset.z;
