@@ -607,6 +607,7 @@ bool Probe::probe_down_to_z(const_float_t z, const_feedRate_t fr_mm_s) {
   // Move down until the probe is triggered
   do_blocking_move_to_z(z, fr_mm_s); // we just need to override this for D8500
   
+  SERIAL_IMPL.println("do_blocking_move_to_z Ends");
   float deltaZ = z - current_position.z;
   
   // SERIAL_IMPL.printf("Before Probe current_position.z = %f, z = %f\n", current_position.z, z);
@@ -615,13 +616,13 @@ bool Probe::probe_down_to_z(const_float_t z, const_feedRate_t fr_mm_s) {
   // SERIAL_IMPL.printf("probeZ = %f\n", probeZ);
   // Check to see if the probe was triggered
   //const bool probe_triggered = true;
-  const bool probe_triggered =
-    #if HAS_DELTA_SENSORLESS_PROBING
-      endstops.trigger_state() & (_BV(X_MAX) | _BV(Y_MAX) | _BV(Z_MAX))
-    #else
-      TEST(endstops.trigger_state(), Z_MIN_PROBE)
-    #endif
-  ;
+  const bool probe_triggered = true;
+  //   #if HAS_DELTA_SENSORLESS_PROBING
+  //     endstops.trigger_state() & (_BV(X_MAX) | _BV(Y_MAX) | _BV(Z_MAX))
+  //   #else
+  //     TEST(endstops.trigger_state(), Z_MIN_PROBE)
+  //   #endif
+  // ;
 
   // Offset sensorless probing
   #if HAS_DELTA_SENSORLESS_PROBING
