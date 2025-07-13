@@ -23,11 +23,16 @@ void FilamentChangeStep::Tick()
 
 void FilamentChangeStep::LoadComplete(){
     SERIAL_IMPL.printf("Begin Change Filament %d\n", filamentIndex);
+    enqueueComs({"G91", "G1 Z5", "G90"});
     writeTemp(filamentIndex, preHeatTemp);
+    donePreHeating = false;
+    doneExtruding = false;
+    doneRetracting = false;
 }
 
 void FilamentChangeStep::UnloadBegin(){
     SERIAL_IMPL.println("Drop 5mm");
+    enqueueComs({"G91", "G1 Z-5", "G90"});
     writeTemp(filamentIndex, 0);
 }
 
@@ -43,7 +48,8 @@ void FilamentChangeStep::Paint(BufferedDisplay* g){
     BackColor = red;
     g->fillScreen(BackColor);
     g->setTextColor(TextColor);
-    if (readTemp(filamentIndex) < preHeatTemp){
+    int opBkp = g->GetOpacity();
+    if (readTemp(filamentIndex) < preHeatTemp && !donePreHeating){
         
         g->setFont(&FreeSans9pt7b);
         centerString(g, "Heating up...", g->width() / 2, g->height() / 2 - 10);
@@ -52,9 +58,14 @@ void FilamentChangeStep::Paint(BufferedDisplay* g){
         centerString(g, tempStatus.c_str(), g->width() / 2, g->height() / 2 + 10);
     }
     else {
+        donePreHeating = true; // latch preheat check
         int trSz = 12;
         int yo = -20;
         g->setFont(&FreeSans12pt7b);
+        if (doneRetracting)
+            g->SetOpacity(50);
+        else
+            g->SetOpacity(100);
         centerLeftString(g, "Unload", 5, g->height() / 2 + yo);
         g->fillTriangle(
             g->width() - 5 - trSz / 2, g->height() / 2 + yo - trSz / 2, 
@@ -63,6 +74,10 @@ void FilamentChangeStep::Paint(BufferedDisplay* g){
             TextColor
         );
         
+        if (doneExtruding)
+            g->SetOpacity(50);
+        else
+            g->SetOpacity(100);
         yo = +20;
         centerLeftString(g, "Load", 5, g->height() / 2 + yo);
         g->fillTriangle(
@@ -74,14 +89,23 @@ void FilamentChangeStep::Paint(BufferedDisplay* g){
         
     }
     g->setFont();
+    g->SetOpacity(opBkp);
 }
 
 void FilamentChangeStep::HandleKeyUp(Keys key) {
     if (key == Keys::KEYPAD_UP){
-        SERIAL_IMPL.println("Retract");
+        if (donePreHeating && !doneRetracting){
+            SERIAL_IMPL.println("Retract");        
+            enqueueComs({"M83", "G1 E5 F500", "G1 E-100 F4000", "G1 E-100", "G1 E-100", "G1 E-100", "G1 E-100", "G1 E-100", "M82"});
+            doneRetracting = true;
+        }
     }
     else if (key == Keys::KEYPAD_DOWN){
-        SERIAL_IMPL.println("Extrude");
+        if (donePreHeating && !doneExtruding){
+            SERIAL_IMPL.println("Extrude");
+            enqueueComs({"M83", "G1 E100 F4000", "G1 E100", "G1 E100", "G1 E100", "G1 E10", "G1 E100 F100", "M82"});
+            doneExtruding = true;
+        }
     }
     else if (key == Keys::KEYPAD_RIGHT){
         Host->GotoNextStep(); // back to filament settings

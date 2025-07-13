@@ -67,11 +67,16 @@ SERIAL_IMPL.println("UI Starting up...");
   BeginApp(); 
 }
 
+static bool inLoop = false;
 #ifdef __MARLIN_FIRMWARE__
 void UILoop()
 #else
 void loop() 
 #endif
 {  
+  if (inLoop)
+    return;
+  inLoop = true;
   menuHost.Loop(bTft);
+  inLoop = false;
 }

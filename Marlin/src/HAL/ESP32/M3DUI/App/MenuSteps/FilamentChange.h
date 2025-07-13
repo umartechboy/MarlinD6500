@@ -8,6 +8,9 @@ class FilamentChangeStep:public MenuStep
 private:
     int filamentIndex = 0;
     float preHeatTemp = 200;
+    bool donePreHeating = false;
+    bool doneExtruding = false;
+    bool doneRetracting = false;
 public:
     FilamentChangeStep(MenuHost* host, int index);
     ~FilamentChangeStep();

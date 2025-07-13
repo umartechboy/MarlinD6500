@@ -3,6 +3,15 @@
 #include "..\..\..\..\gcode\queue.h"
 
 static int target [2] = {30, 30};
+
+void enqueueComs(String commands) {
+    queue.enqueue_one(commands.c_str());
+}
+void enqueueComs(std::initializer_list<String> commands) {
+    for (const auto& com : commands) {
+        queue.enqueue_one(com.c_str());
+    }
+}
 void writeTemp(int index, float temp){
     String com = String("M104 S") + String(temp, 0) + String(" T") + String(index);
     queue.enqueue_one_now(com.c_str());

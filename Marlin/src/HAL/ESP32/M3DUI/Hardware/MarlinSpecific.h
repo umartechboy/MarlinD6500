@@ -15,6 +15,9 @@ extern float readTemp2();
 extern void writeTemp(int index, float temp);
 extern float readTemp(int index);
 
+extern void enqueueComs(String commands);
+extern void enqueueComs(std::initializer_list<String> commands);
+
 
 
 #endif

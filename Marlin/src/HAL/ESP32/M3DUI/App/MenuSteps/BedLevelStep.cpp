@@ -50,7 +50,7 @@ void BedLevelStep::Paint(BufferedDisplay* g){
     BackColor = red;
     g->fillScreen(BackColor);
     g->setTextColor(TextColor);
-    if (readTemp(0) < preHeatTemp || readTemp(1) < preHeatTemp){        
+    if ((readTemp(0) < preHeatTemp || readTemp(1) < preHeatTemp) && !donePreHeating){        
         g->setFont(&FreeSans9pt7b);
         centerString(g, "Heating up...", g->width() / 2, g->height() / 2 - 10);
         g->setFont();
