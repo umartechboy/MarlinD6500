@@ -34,7 +34,7 @@
 #include "../../../module/planner.h"
 #include "../../../module/probe.h"
 #include "../../queue.h"
-#include "../../../hal/esp32/UI/M3DUI.h"
+#include "../../../hal/esp32/M3DUI/Hardware/MarlinSpecific.h"
 
 #if ENABLED(AUTO_BED_LEVELING_LINEAR)
   #include "../../../libs/least_squares_fit.h"
@@ -734,7 +734,7 @@ G29_TYPE GcodeSuite::G29() {
             const float z = abl.measured_z + abl.Z_offset;
             abl.z_values[abl.meshCount.x][abl.meshCount.y] = z;
             TERN_(EXTENSIBLE_UI, ExtUI::onMeshUpdate(abl.meshCount, z));
-            TERN_(M3D_D8500_UI, ABLMeshUpdate(abl.meshCount));
+            TERN_(M3D_D8500_UI, ABLMeshUpdate());
 
           #endif
 

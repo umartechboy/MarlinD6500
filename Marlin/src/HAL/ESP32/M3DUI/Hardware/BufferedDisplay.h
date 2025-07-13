@@ -1,7 +1,7 @@
 #ifndef BUFFERED_DISPLAY_H
 #define BUFFERED_DISPLAY_H
 #include <Adafruit_GFX.h>
-#include "color.h"
+#include "..\Components\color.h"
 #define ForceFullWidthUpdate
 
 class BufferedDisplay : public Adafruit_GFX

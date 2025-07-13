@@ -24,7 +24,10 @@ uint8_t Bitmap::height(){
     return 0;
 
 }
-void Bitmap::Draw(BufferedDisplay* g, int x, int y, bool invertOffset){
+void Bitmap::DrawCentered(BufferedDisplay* g, int x, int y){
+    Draw(g, x - width() / 2 - xo, y - height() / 2 - yo, false, true);
+}
+void Bitmap::Draw(BufferedDisplay* g, int x, int y, bool invertOffset, bool useDisplayOffset){
     int w = width();
     int h = height();
     x += invertOffset?-xo:xo;
@@ -34,6 +37,10 @@ void Bitmap::Draw(BufferedDisplay* g, int x, int y, bool invertOffset){
     int yofBkp = g->yOffset;
     g->xOffset = x;
     g->yOffset = y;
+    if (useDisplayOffset){
+        g->xOffset += xofBkp;
+        g->yOffset += yofBkp;
+    }
     int opBkp = g->GetOpacity();
     for (int j = 0; j < h; j++)
         for (int i = 0; i < w; i++)

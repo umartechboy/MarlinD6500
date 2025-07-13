@@ -1,7 +1,11 @@
+#ifndef __BITMAP__
+#define __BITMAP__
+
 #include <Arduino.h>
-#include "BufferedDisplay.h"
+#include "..\Hardware\BufferedDisplay.h"
 
 class Bitmap
+
 {
     private:
         const uint8_t* data;
@@ -13,5 +17,8 @@ class Bitmap
         uint8_t height();
         int16_t xOffset();
         int16_t yOffset();
-        void Draw(BufferedDisplay* g, int x, int y, bool invertOffset = false);
+        void Draw(BufferedDisplay* g, int x, int y, bool invertOffset = false, bool useDisplayOffset = false);
+        void DrawCentered(BufferedDisplay* g, int x, int y);
 };
+
+#endif

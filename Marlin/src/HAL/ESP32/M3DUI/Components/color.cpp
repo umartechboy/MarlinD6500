@@ -51,3 +51,16 @@ void Color::BlendBelow(Color cToBlend) {
     // Blend the alpha channel
     this->a(static_cast<uint8_t>(255.f * (fOverlayAlpha + fColorAlpha * (1 - fOverlayAlpha))));
 }
+
+Color DarkPaleYellow= rgb(255, 180, 0);
+Color LightPaleYellow = rgb(255, 231, 173);
+Color DarkOceanBlue = rgb(15, 113, 115);
+Color LightOceanBlue = rgb(219, 250, 250);
+Color DarkPurple = rgb(107, 45, 92);
+Color LightPurple = rgb(237, 212, 231);
+Color DarkRed = rgb(113, 11, 9);
+Color MediumRed = rgb(242, 95, 92);
+Color LightRed = rgb(250, 200, 198);
+Color GoGreen = rgb(77, 194, 30);
+Color OffWhite = rgb(221, 221, 218);
+Color Charcoal = rgb(27, 37, 37);

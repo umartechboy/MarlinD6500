@@ -31,7 +31,7 @@
 #include <ESP32_SoftWire.h>
 #include "SoftWireLibs/PCF8574/PCF8574.h"
 #include "LoadCell/LoadCell.h"
-#include "UI/M3DUI.h"
+#include "M3DUI/App/MenuApp.h"
 //#include "SoftWireLibs/ADS1x15/Adafruit_ADS1X15.h"
 
 
@@ -225,7 +225,6 @@ void InitIOExpanders(){
 }
 
 void MarlinHAL::init_board() {
-  
   UISetup();
   LoadCellSetup();
 

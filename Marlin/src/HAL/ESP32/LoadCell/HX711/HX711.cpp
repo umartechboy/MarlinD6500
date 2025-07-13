@@ -266,13 +266,13 @@ uint8_t HX711_ADC::conversion24bit()  //read 24 bit data and start the next conv
 	}
 	// Serial.print(", time: ");
 	// Serial.print(totalus / ((24 + GAIN)));
-	Serial.print("raw: ");
+	//Serial.print("raw: ");
 	if (SCK_DISABLE_INTERRUPTS) interrupts();
 	data = data ^ 0x800000; // if out of range (min), change to 0
 							//if (readIndex == DATA_SET - 1) {
 							
-	Serial.print(data, 2);
-	Serial.print(", ");
+	//Serial.print(data, 2);
+	//Serial.print(", ");
 	// Serial.print(", ");
 	// if (!doTare){
 	// 	if (abs((int32_t)data - lastData) > 10000){

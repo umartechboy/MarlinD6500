@@ -7,7 +7,7 @@
  HX711_ADC load(HxData, HxClk); 
  
  void LoadCellSetup(){
-  Serial.println("Starting HX711");
+  //Serial.println("Starting HX711");
   
   digitalWrite(HxData, 1); // make sure its floating to let us read
   digitalWrite(200, 1); // default to high Z coz now we are using pin 15 for testing.

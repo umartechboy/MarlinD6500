@@ -52,4 +52,17 @@ class Color{
     void BlendBelow(Color c);
 };
 
+extern Color DarkPaleYellow;
+extern Color LightPaleYellow;
+extern Color DarkOceanBlue;
+extern Color LightOceanBlue;
+extern Color DarkPurple;
+extern Color LightPurple;
+extern Color DarkRed;
+extern Color MediumRed;
+extern Color LightRed;
+extern Color GoGreen;
+extern Color OffWhite;
+extern Color Charcoal;
+
 #endif // COLOR_H

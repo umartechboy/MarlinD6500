@@ -22,7 +22,7 @@ BufferedDisplay::BufferedDisplay(
     HW_setAddressWindow = setAddressWindow;
     HW_writePixels = writePixels;
     HW_endWrite = endWrite;
-    Serial.printf("BufferedDisplay constructor: %d x %d\n", hw.width(), hw.height());
+    //SERIAL_IMPL.printf("BufferedDisplay constructor: %d x %d\n", hw.width(), hw.height());
     screenBuffer = new uint16_t[hw.width() * hw.height()];
     for (int i = 0; i < hw.width() * hw.height(); i++)
     {
