@@ -40,8 +40,7 @@ PCF8574 pcf1(0x20, &sWire);
 PCF8574 pcf2(0x21, &sWire); // Closer to ESP32 (U6)
 SemaphoreHandle_t xPCFIOMutex;
 TaskHandle_t pcfTaskHandle = NULL;
-volatile uint8_t pcf1_cache = 0xFF;
-volatile uint8_t pcf2_cache = 0xFF;
+volatile uint16_t pcfReadCache = 0xFFFF;
 volatile bool pcf1_write_pending = false;
 volatile bool pcf2_write_pending = false;
 volatile bool pcf1_read_pending = false;
@@ -143,50 +142,60 @@ struct {
   extern void M3DPrintVueSetup();
   extern void M3DPrintVueLoop();
 #endif
+bool pcfIsSyncing = false;
+bool PCFIsBusy = false;
+uint16_t lockedBits = 0;
+bool PCFSync(bool force = false);
+bool LockPCF(uint16_t lockedPins){
+  if (pcfIsSyncing)
+  // Can't get a lock because the PCF are already busy.
+    return false;
+    
+  lockedBits = lockedPins;
+  PCFIsBusy = true;
+  return true;
+}
+void ReleasePCF(){
+  PCFIsBusy = false;
+  lockedBits = 0;
+  PCFSync();
+}
+bool PCFSync(bool force){
+  if (PCFIsBusy && !force)
+    return false;
+  if (pcfIsSyncing)
+    return false;
+  pcfIsSyncing = true;
+  if (pcf1_write_pending) {
+    pcf1.write8(pcfMap & 0xFF);
+    pcf1_write_pending = false;
+  }
+
+  if (pcf2_write_pending) {
+    pcf2.write8((pcfMap >> 8) & 0xFF);
+    pcf2_write_pending = false;
+  }
+
+  if (pcf1_read_pending) {
+    pcfReadCache &= 0xFF00;
+    pcfReadCache |= pcf1.read8();
+    pcf1_read_pending = false;
+  }
+
+  if (pcf2_read_pending) {
+    pcfReadCache &= 0x00FF;
+    pcfReadCache |= pcf2.read8() << 8;
+    pcf2_read_pending = false;
+  }
+  pcfIsSyncing = false;
+  return true;
+}
 void pcfServiceTask(void *param) {
   for (;;) {
     // Block until notified
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);  // clears notification automatically
-
     if (xSemaphoreTake(xPCFIOMutex, portMAX_DELAY)) {
-      if (pcf1_write_pending) {
-        for (uint8_t i = 0; i < 8; ++i) {
-          bool val = (pcfMap >> i) & 1;
-          pcf1.write(i, val);
-          if (val) pcf1_cache |= (1 << i);
-          else     pcf1_cache &= ~(1 << i);
-        }
-        pcf1_write_pending = false;
-      }
-
-      if (pcf2_write_pending) {
-        for (uint8_t i = 0; i < 8; ++i) {
-          bool val = (pcfMap >> (i + 8)) & 1;
-          pcf2.write(i, val);
-          if (val) pcf2_cache |= (1 << i);
-          else     pcf2_cache &= ~(1 << i);
-        }
-        pcf2_write_pending = false;
-      }
-
-      if (pcf1_read_pending) {
-        for (uint8_t i = 0; i < 8; ++i) {
-          int val = pcf1.read(i);
-          if (val) pcf1_cache |= (1 << i);
-          else     pcf1_cache &= ~(1 << i);
-        }
-        pcf1_read_pending = false;
-      }
-
-      if (pcf2_read_pending) {
-        for (uint8_t i = 0; i < 8; ++i) {
-          int val = pcf2.read(i);
-          if (val) pcf2_cache |= (1 << i);
-          else     pcf2_cache &= ~(1 << i);
-        }
-        pcf2_read_pending = false;
-      }
-
+      PCFSync();
       xSemaphoreGive(xPCFIOMutex);
     }
   }
@@ -354,19 +363,31 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
   void digitalWrite(uint8_t pin, uint8_t val) {
   if (pin >= 200 && pin < 216) {
     uint8_t bit = pin - 200;
-    uint8_t chip = (bit < 8) ? 1 : 2;
-    uint8_t chipBit = bit % 8;
 
-    if (((pcfMap >> bit) & 1) == val) return;
+    if (((pcfMap >> bit) & 1) == val) return; // already up to date
 
-    if (val) pcfMap |= (1 << bit);
-    else     pcfMap &= ~(1 << bit);
+    if (val) {
+      pcfMap |= (1 << bit);
+    }
+    else {
+      pcfMap &= ~(1 << bit);
+    }
+    if (bit < 8)
+      pcf1_write_pending = true;
+    else
+      pcf2_write_pending = true;
 
+    if (PCFIsBusy){
+      // we can let it go through only if we have a lock on the bits
+      if ((1 << bit) & lockedBits){        
+        PCFSync(true);
+      }
+      // can't sync in any way
+      // We have already set the flags, priority user will sync when the lock is released
+      return;
+    }
     if (xPortInIsrContext()) {
-      if (chip == 1) pcf1_write_pending = true;
-      else           pcf2_write_pending = true;
-      
-      
+      // We can trigger a sync in the io task
       if (pcfTaskHandle != NULL) {
         BaseType_t xHigherPriorityTaskWoken = pdFALSE;
         vTaskNotifyGiveFromISR(pcfTaskHandle, &xHigherPriorityTaskWoken);
@@ -375,17 +396,9 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
       return;
     }
 
-    // Not in ISR: update immediately
+    // Not in ISR, not busy, sync now
     if (xSemaphoreTake(xPCFIOMutex, portMAX_DELAY)) {
-      if (chip == 1) {
-        pcf1.write(chipBit, val);
-        if (val) pcf1_cache |= (1 << chipBit);
-        else     pcf1_cache &= ~(1 << chipBit);
-      } else {
-        pcf2.write(chipBit, val);
-        if (val) pcf2_cache |= (1 << chipBit);
-        else     pcf2_cache &= ~(1 << chipBit);
-      }
+     PCFSync();
       xSemaphoreGive(xPCFIOMutex);
     }
     return;
@@ -399,39 +412,38 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
 
     
   // Override digitalRead
-  int digitalRead(uint8_t pin) {
+int digitalRead(uint8_t pin) {
   if (pin >= 200 && pin < 216) {
     uint8_t bit = pin - 200;
-    uint8_t chip = (bit < 8) ? 1 : 2;
-    uint8_t chipBit = bit % 8;
 
-    if (xPortInIsrContext()) {
-      if (chip == 1) pcf1_read_pending = true;
-      else           pcf2_read_pending = true;
-
-      if (pcfTaskHandle != NULL) {
-        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-        vTaskNotifyGiveFromISR(pcfTaskHandle, &xHigherPriorityTaskWoken);
-        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+    if (bit < 8)
+      pcf1_read_pending = true;
+    else
+      pcf2_read_pending = true;
+    if (PCFIsBusy){ // can't sync now. We have set the flags, priority user will sync when the lock is released      
+      if ((1 << bit) & lockedBits){        
+        PCFSync(true);
       }
-      // Return last known value
-      return (chip == 1 ? (pcf1_cache >> chipBit) : (pcf2_cache >> chipBit)) & 1;
+      return (pcfReadCache >> bit) & 1; // can't sync just return the last
     }
-
-    int val = 0;
-    if (xSemaphoreTake(xPCFIOMutex, portMAX_DELAY)) {
-      if (chip == 1) {
-        val = pcf1.read(chipBit);
-        if (val) pcf1_cache |= (1 << chipBit);
-        else     pcf1_cache &= ~(1 << chipBit);
-      } else {
-        val = pcf2.read(chipBit);
-        if (val) pcf2_cache |= (1 << chipBit);
-        else     pcf2_cache &= ~(1 << chipBit);
+    if (xPortInIsrContext()) {
+      if (!PCFSync()){ // try to sync now. If not possible, que the task    
+        //SERIAL_IMPL.printf("ri%d\n", pin);
+        if (pcfTaskHandle != NULL) { // trigger sync in parallel
+          BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+          vTaskNotifyGiveFromISR(pcfTaskHandle, &xHigherPriorityTaskWoken);
+          portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+        }
       }
+    } else if (xSemaphoreTake(xPCFIOMutex, portMAX_DELAY)) { // we can sync now      
+      //SERIAL_IMPL.printf("rs%d\n", pin);
+      PCFSync();
       xSemaphoreGive(xPCFIOMutex);
     }
-    return val;
+    else {      
+      //SERIAL_IMPL.printf("rn%d\n", pin);
+    }
+    return (pcfReadCache >> bit) & 1;
   }
   else if (pin == 216) {
     // Loadcell
@@ -440,51 +452,6 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
   else
     return __digitalRead(pin);
 }
-
-  
-  // Override analogRead
-  // uint16_t analogRead(uint8_t pin) {
-  //   // This gets called. ADS pin 0 for 216
-  //   if (pin >= 216 && pin < 220) {
-  //     pin -= 216; // remove the offset for good
-
-  //     // // At least mark that this channel needs conversion
-  //     // needsConversion[pin] = true;
-  //     // if (ads.conversionComplete()) {// we can trigger the next conversion
-  //     //   for (int i = 0; i < 4; i++){ // find a channel that we need to convert
-  //     //     adcChannelInReading = (adcChannelInReading + 1) % 4; // lets poll with a new value
-  //     //     if (needsConversion[adcChannelInReading]){ // we have a channel that needs conversion
-  //     //       needsConversion[adcChannelInReading] = false; // doesn't need conversion anymore
-  //     //       ads.startADCReading(MUX_BY_CHANNEL[adcChannelInReading], false); // trigger the conversion
-  //     //       mayHaveNewData[adcChannelInReading] = true; // mark that this register needs to be read
-  //     //       break;
-  //     //     }
-  //     //   }
-  //     // }
-  //     // else {// we can atleast read it.
-  //     //   if (mayHaveNewData[adcChannelInReading]){
-  //     //     mayHaveNewData[adcChannelInReading] = false;
-  //     //     adcCache[adcChannelInReading] = ads.getLastConversionResults();
-  //     //   }
-  //     // }
-
-  //     // For now, just return what we previously had.
-  //     needsConversion[pin] = true; // and trust that the loop will update it soon
-  //     return adcCache[pin];
-  //     // return counts;
-  //     // isr_float_t V = ads.computeVolts(val);
-  //     //return (V / 3.3F) * 1023;
-  //     //int val = 970;
-  //     //SERIAL_IMPL.print("analogRead on ADS (");
-  //     //SERIAL_IMPL.print(pin - 216);
-  //     //SERIAL_IMPL.print(") = ");
-  //     //SERIAL_IMPL.print(val);
-  //     //SERIAL_IMPL.println();
-  //     //return val;
-  //   } else {
-  //     return __analogRead(pin);        // Call the original
-  //   }
-  // }  
 } // extern "C"
   
 

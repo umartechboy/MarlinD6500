@@ -179,6 +179,8 @@ float HX711_ADC::getCalFactor() //raw data is divided by this value to convert t
 	return calFactor;
 }
 
+extern void ReleasePCF();
+extern bool LockPCF(uint16_t);
 //call function update() in loop
 //if conversion is ready; read out 24 bit data and add to data set, returns 1
 //if tare operation is complete, returns 2
@@ -186,6 +188,8 @@ float HX711_ADC::getCalFactor() //raw data is divided by this value to convert t
 uint8_t HX711_ADC::update()
 {
 	//Serial.println("update()");
+	if (!LockPCF(1 << (doutPin - 200))) // PCFs are already busy syncing
+		return 0;
 	byte dout = digitalRead(doutPin); //check if conversion is ready
 	if (!dout)
 	{
@@ -193,7 +197,7 @@ uint8_t HX711_ADC::update()
 		//if(s) Serial.print(s);
 	}
 	else convRslt = 0;
-
+	ReleasePCF();
 	// Serial.print("return update: ");	
 	// Serial.println(convRslt);
 	if (doTare)

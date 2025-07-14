@@ -57,8 +57,8 @@
     if (ProbeEnable){
         if (millis() - lastUpdateAt < 12)
             return;
-        lastUpdateAt = millis();
-        if (load.update()){
+        if (load.update()){ // reset the timer only in case the update was successful, otherwise, retry as soon as possible
+            lastUpdateAt = millis();
             // Serial.print(millis());
             // Serial.print(": ");
             lastRawReturn = load.getData();
