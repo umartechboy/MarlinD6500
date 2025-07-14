@@ -675,10 +675,12 @@ G29_TYPE GcodeSuite::G29() {
 
       bool zig = PR_OUTER_SIZE & 1;  // Always end at RIGHT and BACK_PROBE_BED_POSITION
 
+      int pointsDone = 0;
+      ABLMeshUpdate(pointsDone);
       // Outer loop is X with PROBE_Y_FIRST enabled
       // Outer loop is Y with PROBE_Y_FIRST disabled
       for (PR_OUTER_VAR = 0; PR_OUTER_VAR < PR_OUTER_SIZE && !isnan(abl.measured_z); PR_OUTER_VAR++) {
-
+        
         int8_t inStart, inStop, inInc;
 
         if (zig) {                      // Zig away from origin
@@ -701,6 +703,12 @@ G29_TYPE GcodeSuite::G29() {
         // Inner loop is X with PROBE_Y_FIRST disabled
         for (PR_INNER_VAR = inStart; PR_INNER_VAR != inStop; pt_index++, PR_INNER_VAR += inInc) {
 
+        while (checkABLPaused())
+        {
+          SERIAL_IMPL.println("ABL is paused");
+          safe_delay(30);
+          UILoop();
+        }
           abl.probePos = abl.probe_position_lf + abl.gridSpacing * abl.meshCount.asFloat();
 
           TERN_(AUTO_BED_LEVELING_LINEAR, abl.indexIntoAB[abl.meshCount.x][abl.meshCount.y] = ++abl.abl_probe_index); // 0...
@@ -713,7 +721,7 @@ G29_TYPE GcodeSuite::G29() {
 
           abl.measured_z = faux ? 0.001f * random(-100, 101) : probe.probe_at_point(abl.probePos, raise_after, abl.verbose_level);
 
-          if (isnan(abl.measured_z)) {
+          if (isnan(abl.measured_z) || !CanContinueDoingG29()) {
             set_bed_leveling_enabled(abl.reenable);
             TERN_(M3D_D8500_UI, ABLFailed());
             break; // Breaks out of both loops
@@ -734,8 +742,8 @@ G29_TYPE GcodeSuite::G29() {
             const float z = abl.measured_z + abl.Z_offset;
             abl.z_values[abl.meshCount.x][abl.meshCount.y] = z;
             TERN_(EXTENSIBLE_UI, ExtUI::onMeshUpdate(abl.meshCount, z));
-            TERN_(M3D_D8500_UI, ABLMeshUpdate());
-
+            pointsDone++;
+            ABLMeshUpdate(pointsDone);
           #endif
 
           abl.reenable = false; // Don't re-enable after modifying the mesh
@@ -940,7 +948,7 @@ G29_TYPE GcodeSuite::G29() {
 
     #endif
 
-    TERN_(M3DUI_H, ABLDone());
+    ABLDone();
   } // !isnan(abl.measured_z)
 
   // Restore state after probing

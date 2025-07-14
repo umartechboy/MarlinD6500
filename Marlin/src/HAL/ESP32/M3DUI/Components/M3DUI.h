@@ -113,6 +113,7 @@ class MenuStep {
         virtual void LoadComplete() {}
         virtual void UnloadBegin() {}
         virtual void UnloadComplete() {}
+        virtual void FocusChanged(StepAnimationStage currentStage) {}
         void loop();
     protected: 
         long lastTick = 0;

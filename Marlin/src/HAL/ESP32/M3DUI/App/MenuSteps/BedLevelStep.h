@@ -6,9 +6,11 @@
 class BedLevelStep:public MenuStep
 {
 private:
-    float preHeatTemp = 30;
+    float preHeatTemp = 50;
     bool G29Sent = false;
     bool donePreHeating = false;
+    long levelingDoneSince = 0;
+    void notifyLevelingDone();
 public:
     BedLevelStep(MenuHost* host);
     ~BedLevelStep();
@@ -17,6 +19,7 @@ public:
     void Paint(BufferedDisplay* g) override;
     void HandleKeyUp(Keys key) override;         
     void Tick() override;
+    void FocusChanged(StepAnimationStage currentStage) override;
 };
 
 #endif

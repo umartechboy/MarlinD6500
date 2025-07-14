@@ -27,7 +27,7 @@ void BeginApp(){
   toolsMenuStep.NextStep = &idleScreenStep; 
   materialsMenuStep.NextStep = &toolsMenuStep;
   printerInfoStep.NextStep = &toolsMenuStep;
-  bedLevelStep.NextStep = 0; // Bed level step decides when it is finished
+  bedLevelStep.NextStep = &toolsMenuStep;
 
   sdMenuStep.PreviousStep = &idleScreenStep;
   sdMenuStep.NextStep = &fileOverViewStep; 

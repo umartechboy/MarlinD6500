@@ -21,7 +21,7 @@
  bool ProbeEnable = true; // on by default for tarring
  float lastReading = 0;
  int exampleReadingCount = 0;
- float threshold = 0.3;
+ float threshold = 1;
  float rawValueFilterFactor = 0.1F;
  float FloatingFactor = 0.008F;
  #define FilterOutSeriesOfErraticValue 5
@@ -66,25 +66,25 @@
             // SERIAL_IMPL.print(reading);
             // SERIAL_IMPL.print("\t");
 
-            // // Remove chances of false triggers. 
-            // if (abs(reading - lastReading) > 1){
-            //     exampleReadingCount--;
-            //     lastUpdateAt = millis() + 50; // Skip the next few cycles
-            //         if (exampleReadingCount < 0)
-            //     exampleReadingCount = 0;
+            // Remove chances of false triggers. 
+            if (abs(lastRawReturn - lastReading) > 3){ // too big a jump in one iteration
+                exampleReadingCount--;
+                lastUpdateAt = millis() + 50; // Skip the next few cycles
+                    if (exampleReadingCount < 0)
+                exampleReadingCount = 0;
                     
-            //     if (exampleReadingCount <= 0)
-            //         lastReading = reading; // change the ref this this for the next time, accepting this data
-            //     else
-            //         reading = lastReading; // use previous data
-            // }
-            // else
-            // {
-            //     lastReading = reading;	
-            //     exampleReadingCount++;
-            //         if (exampleReadingCount > FilterOutSeriesOfErraticValue)
-            //     exampleReadingCount = FilterOutSeriesOfErraticValue;
-            // }
+                if (exampleReadingCount <= 0)
+                    lastReading = lastRawReturn; // change the ref this this for the next time, accepting this data
+                else
+                    lastRawReturn = lastReading; // use previous data
+            }
+            else
+            {
+                lastReading = lastRawReturn;	
+                exampleReadingCount++;
+                    if (exampleReadingCount > FilterOutSeriesOfErraticValue)
+                exampleReadingCount = FilterOutSeriesOfErraticValue;
+            }
 
             // SERIAL_IMPL.print(reading);
             // SERIAL_IMPL.print("\t");
@@ -174,7 +174,6 @@ float do_blocking_move_to_dz_D8500(float dz, float fr_mm_s){
     //disableHeaterPins();
     SERIAL_IMPL.println("timer disabled"); delay(1);
     pinMode(Z_STEP_PIN, OUTPUT);
-    threshold = 0.3;
     // Test
     removeLoadCellOffset();
     SERIAL_IMPL.println("offset removed"); delay(1);

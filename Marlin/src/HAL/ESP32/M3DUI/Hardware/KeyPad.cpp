@@ -138,11 +138,15 @@ void KeyPad::Loop(MenuHost* host){
                 // begin buttons overlay
                 if(host->stepAnimationStage == StepAnimationStage::MainStep && keyToSend == KEYPAD_MIDDLE){
                     host->stepAnimationStage = StepAnimationStage::GoingToOverLay;
+                    if (host->CurrentStep)
+                      host->CurrentStep->FocusChanged(StepAnimationStage::GoingToOverLay);
                     host->moveToMenuAfterStepAnim = 0;
                     host->ResetAnimationProgress(250);
                 }
                 else if (host->stepAnimationStage == StepAnimationStage::InOverlay){
                     host->stepAnimationStage = StepAnimationStage::GoingToStep;
+                    if (host->CurrentStep)
+                      host->CurrentStep->FocusChanged(StepAnimationStage::GoingToStep);
                     host->moveToMenuAfterStepAnim = 0;
                     host->ResetAnimationProgress(250);
                 }

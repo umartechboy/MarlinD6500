@@ -19,25 +19,41 @@ BedLevelStep::~BedLevelStep()
 void BedLevelStep::Tick()
 {
     NeedsRedraw = true;
-    // Lets simulate failure;
-    if (getABLIndex() > 6)
-        ABLFailed();
+    if (millis() - levelingDoneSince > 3000 && levelingDoneSince != 0){
+        TickPeriod = 0; // remove the tick
+        Host->GotoNextStep();
+    }
 }
 
 void BedLevelStep::LoadComplete(){
     SERIAL_IMPL.printf("Begin Bed Level\n");
     // Lift and heat up
-    writeTemp(0, 200);
-    writeTemp(1, 200);
+    writeTemp(0, preHeatTemp);
+    writeTemp(1, preHeatTemp);
+    enqueueComs({"G28"});
+    enqueueComs({"G91", "G1 Z5", "G90"});
     G29Sent = false;
     donePreHeating = false;
+    levelingDoneSince = 0;
+    TickPeriod = 50;
 }
 
 void BedLevelStep::UnloadBegin(){
-    SERIAL_IMPL.println("End");
-    // Send G29 A
+    SERIAL_IMPL.println("End ABL");
+    AbortABL();
+
+    writeTemp(0, 0);
+    writeTemp(1, 0);
 }
 
+void BedLevelStep::notifyLevelingDone(){
+    if (levelingDoneSince == 0){
+        TickPeriod = 100;
+        levelingDoneSince = millis();
+        writeTemp(0, 0);
+        writeTemp(1, 0);
+    }
+}
 void BedLevelStep::Paint(BufferedDisplay* g){            
     //Serial.printf("Idle Screen Step Paint called @ %d, %d\n", g->xOffset, g->yOffset);
     // Draw the idle screen
@@ -61,16 +77,13 @@ void BedLevelStep::Paint(BufferedDisplay* g){
         donePreHeating = true; // latch preheat check
         if (!G29Sent){
             G29Sent = true; 
-            // Send G28, G29
-            ABLStarted(); // resets the flags
-            NextStep = 0; // cant go back now
+            StartABL(); // resets the flags
         }
         if (checkABLComplete() && !checkABLFailed()){
-            NextStep = &toolsMenuStep;   
             g->setFont(&FreeSans9pt7b);
             centerString(g, "Leveling", g->width() / 2, g->height() / 2 - 10);
             centerString(g, "Successful", g->width() / 2, g->height() / 2 + 10);
-            TickPeriod = 1000;
+            notifyLevelingDone();
         }
         else { // Going on or done with failure
             // Draw the bed
@@ -113,11 +126,15 @@ void BedLevelStep::Paint(BufferedDisplay* g){
                 }
             }
             if (checkABLFailed()){
-                NextStep = &toolsMenuStep;   
                 g->setFont(&FreeSans9pt7b);
                 centerString(g, "Leveling", g->width() / 2, g->height() / 2 - 10);
                 centerString(g, "Failed", g->width() / 2, g->height() / 2 + 10);
-                TickPeriod = 1000;
+                notifyLevelingDone();
+            }
+            else{           
+                g->setFont();     
+                centerString(g, "Leveling build plate", g->width() / 2, g->height() / 2 - 8);
+                centerString(g, "Please wait...", g->width() / 2, g->height() / 2 + 8);
             }
         }
     }
@@ -125,13 +142,16 @@ void BedLevelStep::Paint(BufferedDisplay* g){
 }
 
 void BedLevelStep::HandleKeyUp(Keys key) {
-    if (key == Keys::KEYPAD_UP){
-        SERIAL_IMPL.println("Retract");
+}
+void BedLevelStep::FocusChanged(StepAnimationStage stage){
+    if (stage == StepAnimationStage::InOverlay){
+        // pause
+        pauseABL();
     }
-    else if (key == Keys::KEYPAD_DOWN){
-        SERIAL_IMPL.println("Extrude");
-    }
-    else if (key == Keys::KEYPAD_RIGHT){
-        Host->GotoNextStep(); // back to filament settings
+    else if (stage == StepAnimationStage::MainStep){
+        // pause
+        if (checkABLPaused()){
+            resumeABL();
+        }
     }
 }

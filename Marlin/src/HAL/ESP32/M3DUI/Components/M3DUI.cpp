@@ -402,11 +402,16 @@ void MenuHost::Paint(BufferedDisplay* bTft){
                 IncrementAnimationProgress();
                 if (animationStepProgress >= 1){
                     if (stepAnimationStage == StepAnimationStage::GoingToOverLay) {
-                        stepAnimationStage = StepAnimationStage::InOverlay;
+                        stepAnimationStage = StepAnimationStage::InOverlay;                        
+                        if (CurrentStep)
+                            CurrentStep->FocusChanged(StepAnimationStage::InOverlay);
                         CurrentStep->NeedsRedraw = true;     
                     }
                     else if (stepAnimationStage == StepAnimationStage::GoingToStep) {
                         stepAnimationStage = StepAnimationStage::MainStep;
+                        if (CurrentStep)
+                            CurrentStep->FocusChanged(StepAnimationStage::MainStep);
+                        
                         if (moveToMenuAfterStepAnim) {// we are back to menu but need to move to the next or previous                                
                             ResetAnimationProgress(250);
                             menuTrasnsitionStage = MenuTransitionStage::TransitionaingScreens;
@@ -416,8 +421,7 @@ void MenuHost::Paint(BufferedDisplay* bTft){
                         CurrentStep->NeedsRedraw = true;     
                     }
                 }
-            }
-                
+            }                
         }
     }
     else if (menuTrasnsitionStage == MenuTransitionStage::TransitionaingScreens){
@@ -436,13 +440,13 @@ void MenuHost::Paint(BufferedDisplay* bTft){
         IncrementAnimationProgress();
         if (animationStepProgress >= 1.0f) {
             ResetAnimationProgress(250);
-            menuTrasnsitionStage = MenuTransitionStage::InStep;
+            menuTrasnsitionStage = MenuTransitionStage::InStep;            
             if (CurrentStep)
                 CurrentStep->UnloadComplete();
             CurrentStep = TargetStep;
             TargetStep = 0;
             CurrentStep->Paint(bTft); // Confirm load
-            CurrentStep->LoadComplete();
+            CurrentStep->LoadComplete();            
         }
     }
     
