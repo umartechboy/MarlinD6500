@@ -2,6 +2,7 @@
 #include <SD.h>
 #include "..\MenuApp.h"
 #include "..\Bitmaps.h"
+#include "..\MenuApp.h"
 
 #define getTrimmedAfter(str, chr) str = str.substring(line.indexOf(chr) + 1)
 #define getTrimmedBefore(str, chr) str = str.substring(0, line.indexOf(chr))
@@ -41,13 +42,13 @@ void FilePreviewStep::Paint(BufferedDisplay* g) {
     g->fillScreen(BackColor);
     g->setTextColor(TextColor);
     int y = 0;
-    int lineHeight = 14; 
+    int lineHeight = 12; 
     if (pngParams.thumbnailData.bytesDecoded){
         pngParams.g = g;
         pngParams.x = g->width() / 2;
         pngParams.y = y;
         png.decode((void*)(&pngParams), 0);
-        y += pngParams.pngHeight;
+        y += 60; // can't rely on PNG data.
     }
     else{
         centerString(g, "No file preivew", g->width() / 2, lineHeight); // some margin at the top too
@@ -59,40 +60,58 @@ void FilePreviewStep::Paint(BufferedDisplay* g) {
     y += 4;
     for (int i =0; i < 5; i++)
         g->drawLine(lineMargin + i * 2, y, g->width() - lineMargin - i * 2, y, TextColor);
-    y += 4 + lineHeight;
+    y += lineHeight / 2 + 1;
     int divider = 55;
     int margin = 2;
     g->setFont();
     g->setTextColor(TextColor);
-    if (time > 0){
-        String h  = String(printTime / 3600);
-        String m  = String((printTime / 60) % 60);
-        String s  = String((printTime / 1) % 60);
-        if (m.length() == 1)
-            m = "0" + m;
-        if (s.length() == 1)
-            s = "0" + s;
-        String timeStr = s + "s";
-        if (printTime >= 60)
-            timeStr = m + "m " + timeStr;
-        if (printTime >= 3600)
-            timeStr = h + "h, " + timeStr;
-        g->SetOpacity(100);
+    g->SetOpacity(100);
+    centerString(g, (idleScreenStep.fileName.substring(1, idleScreenStep.fileName.length() - 6)).c_str(), g->width() / 2, y);
+    y += lineHeight;
+
+    if (estimatedPrintingTime.length() > 0){
         centerRightString(g, "Time", divider - margin, y);   
-        centerLeftString(g, timeStr.c_str(), divider + margin + 1, y);
+        centerLeftString(g, estimatedPrintingTime.c_str(), divider + margin + 1, y);
         g->SetOpacity(10);
         g->drawLine(divider, y - lineHeight / 2, divider, y - lineHeight / 2 + lineHeight, TextColor);
         y += lineHeight;
     }
-    if (filamentUsed > 0){
-        String fu  = String(filamentUsed) + "m";
+    if (filamentUsed_mm > 0 || filamentUsed_g > 0){
+        String fu  = String(filamentUsed_mm / 1000.0F, 1) + "m";
+        if (filamentUsed_mm <= 0)
+            fu = "";
+        if (filamentUsed_g > 0){
+            if (filamentUsed_mm > 0)
+                fu += " (";
+            fu += String(filamentUsed_g , 0) + "g";
+            if (filamentUsed_mm > 0)
+                fu += ")";
+        }
         g->SetOpacity(100);
         centerRightString(g, "Material", divider - margin, y);   
-        centerLeftString(g, fu.c_str(), divider + margin + 1, y);
+        centerLeftString(g, fu.c_str(), divider + margin + 1, y);        
         g->SetOpacity(10);
         g->drawLine(divider, y - lineHeight / 2, divider, y - lineHeight / 2 + lineHeight, TextColor);
         y += lineHeight;
     }
+    if (filament0Used || filament1Used){
+        g->SetOpacity(100);
+        if (filamentUsed_mm <= 0 && filamentUsed_g <= 0) {// We already haven't written Material
+            centerRightString(g, "Material", divider - margin, y);   
+        }
+        int x = divider + margin;
+        if (filament0Used) {
+            g->fillRoundRect(x, y - 4, 8, 8, 1, e0Color);
+            x += 12;
+        }
+        if (filament1Used) {
+            g->fillRoundRect(x, y - 4, 8, 8, 1, e1Color);
+        } 
+        g->SetOpacity(10);
+        g->drawLine(divider, y - lineHeight / 2, divider, y - lineHeight / 2 + lineHeight, TextColor);
+        y += lineHeight;
+    }
+    
     if (layerCount > 0){
         String lc  = String(layerCount);
         g->SetOpacity(100);
@@ -106,16 +125,37 @@ void FilePreviewStep::Paint(BufferedDisplay* g) {
 }
 void FilePreviewStep::LoadBegin() {
     // Read the file and load data
-    SERIAL_IMPL.printf("Begin SD Read: %s\n",  printStep.fileName.c_str());
+    SERIAL_IMPL.printf("Begin SD Read: %s\n",  idleScreenStep.fileName.c_str());
     pngParams.thumbnailData.Reset();
-    File f = SD.open(printStep.fileName);
+    File f = SD.open(idleScreenStep.fileName);
     bool inThumbnail = false;
+    bool isMarlin = false;
     if (f.available()){
-        SERIAL_IMPL.printf("File opened for thumbnail: %s\n", printStep.fileName.c_str());
+        SERIAL_IMPL.printf("File opened for thumbnail: %s\n", idleScreenStep.fileName.c_str());
     }
+    bool weAreNearTheEnd = false;
     while (f.available())
     {
+        bool parsed = true;
         String line = f.readStringUntil('\n');
+        if (line.startsWith("G1"))
+        {
+            if(isMarlin){                
+                SERIAL_IMPL.println("G1. Skipping the rest.");
+                break;
+            }
+            if (!weAreNearTheEnd){
+                weAreNearTheEnd = true;
+                // Lets seek near the end
+                SERIAL_IMPL.println("Seeking near the end");
+                if (f.size() < 20000){
+                    SERIAL_IMPL.printf("File not big enough: %d\n", f.size());
+                    break;
+                }
+                f.seek(f.size() - 20000, SeekMode::SeekSet);
+                continue;
+            }
+        }
         if (line.startsWith(";")){ // its a comment.
             line = line.substring(1);
             if (line.startsWith(" ") || line.startsWith("\t"))
@@ -123,13 +163,12 @@ void FilePreviewStep::LoadBegin() {
             if (line.startsWith("thumbnail begin")){
                 
                 SERIAL_IMPL.printf("Thumbnail found @: %s\n", line.c_str());
-                getTrimmedAfter(line, " "); // begin 120 60 5892
-                getTrimmedAfter(line, " "); // 120 60 5892
-                pngParams.pngWidth = line.substring(0, line.indexOf(" ")).toInt();
+                getTrimmedAfter(line, " "); // begin 120x60 5892
+                getTrimmedAfter(line, " "); // 120x60 5892
+                pngParams.pngWidth = line.substring(0, line.indexOf("x")).toInt();
                 getTrimmedAfter(line, " "); // 60 5892
-                pngParams.pngHeight = line.substring(0, line.indexOf(" ")).toInt();
+                pngParams.pngHeight = line.substring(0, line.indexOf("x")).toInt();
                 inThumbnail = true;
-                continue;
             }
             else if (line.startsWith("thumbnail end")){                
                 SERIAL_IMPL.printf("Thumbnail end @: %s, decoded: %d\n", line.c_str(), pngParams.thumbnailData.bytesDecoded);
@@ -146,68 +185,106 @@ void FilePreviewStep::LoadBegin() {
                 //         num = "0" + num;
                 //     Serial.print(num + ", ");
                 // }
-                continue;
             }
-            else if (inThumbnail){
+            else if (inThumbnail) {
                 // Serial.print("Feeding thumbnail data: ");
                 // Serial.println(line);
                 for (int i = 0; i < line.length(); i++){
                     pngParams.thumbnailData.Feed(line[i]);
                 }
             }
-            else{
+            else {
                 line.toLowerCase();
-
-                if (line.startsWith("time")){
-                    getTrimmedAfter(line, ":");
-                    printTime = line.toInt();
-                    continue;
-                }
-                else if (line.startsWith("filament used")){
-                    getTrimmedAfter(line, ":");
-                    getTrimmedAfter(line, " ");
-                    getTrimmedBefore(line, "m");
-                    filamentUsed = line.toFloat();
-                    continue;
+                if (line.startsWith("flavor:marlin")){
+                    isMarlin = true;
                 }
                 else if (line.startsWith("minx")){
                     getTrimmedAfter(line, ":");
-                    printStep.minX = line.toInt();
-                    continue;
+                    idleScreenStep.minX = line.toInt();
                 }
                 else if (line.startsWith("maxx")){
                     getTrimmedAfter(line, ":");
-                    printStep.maxX = line.toInt();
-                    continue;
+                    idleScreenStep.maxX = line.toInt();
                 }
                 else if (line.startsWith("miny")){
                     getTrimmedAfter(line, ":");
-                    printStep.minY = line.toInt();
-                    continue;
+                    idleScreenStep.minY = line.toInt();
                 }
                 else if (line.startsWith("maxy")){
                     getTrimmedAfter(line, ":");
-                    printStep.maxY = line.toInt();
-                    continue;
+                    idleScreenStep.maxY = line.toInt();
                 }
-                else if (line.startsWith("maxz")){
+                else if (line.startsWith("max_z_height") || line.startsWith("maxz:")){
                     getTrimmedAfter(line, ":");
                     maxZ = line.toInt();
-                    continue;
                 }
-                else if (line.startsWith("layer_count")){
+                else if (line.startsWith("total layer number") || line.startsWith("layer_count")){
                     getTrimmedAfter(line, ":");
                     layerCount = line.toInt();
-                    continue;
                 }
-                else if (line.startsWith("layer:0")){
-                    Serial.println("Header end");
+                else if (line.startsWith("time")){ // Cura
+                    getTrimmedAfter(line, ":");
+                    long printTime = line.toInt();
+                    
+                    String h  = String(printTime / 3600);
+                    String m  = String((printTime / 60) % 60);
+                    String s  = String((printTime / 1) % 60);
+                    if (m.length() == 1)
+                        m = "0" + m;
+                    if (s.length() == 1)
+                        s = "0" + s;
+                    String timeStr = s + "s";
+                    if (printTime >= 60)
+                        timeStr = m + "m " + timeStr;
+                    if (printTime >= 3600)
+                        timeStr = h + "h, " + timeStr;
+                    estimatedPrintingTime = timeStr;
+                }
+                else if (line.startsWith("filament used [mm]")){ // Orca
+                    getTrimmedAfter(line, "=");
+                    filamentUsed_mm = line.toFloat();
+                }
+                else if (line.startsWith("total filament used [g]")){ // Orca
+                    getTrimmedAfter(line, "=");
+                    filamentUsed_g = line.toFloat();
+                }
+                else if (line.startsWith("used_0")){ // Orca
+                    getTrimmedAfter(line, ":");
+                    filament0Used = line == "true";
+                }
+                else if (line.startsWith("used_1")){ // Orca
+                    getTrimmedAfter(line, ":");
+                    filament1Used = line == "true";
+                }
+                else if (line.startsWith("filament used:")){ // Cura
+                    getTrimmedAfter(line, ":");
+                    getTrimmedAfter(line, " ");
+                    getTrimmedBefore(line, "m");
+                    filamentUsed_mm = line.toFloat() * 1000.0F;
+                }
+                else if (line.startsWith("estimated printing time")){   // Orca
+                    //SERIAL_IMPL.printf("estimated printing time: %s\n", line.c_str());
+                    getTrimmedAfter(line, "=");
+                    line.trim();
+                    estimatedPrintingTime = line;
+                }
+                else if (line.startsWith("config_block_start")){        
+                    Serial.println("Orca header end");
                     break;
+                }
+                else {
+                    //SERIAL_IMPL.printf("Unparsed (1): %s\n", line.c_str());
+                    parsed = false;
                 }
             }
         }
-    }
-    
+        else {
+            //SERIAL_IMPL.printf("Unparsed (2): %s\n", line.c_str());
+            parsed = false;
+        }
+        if (parsed)
+            SERIAL_IMPL.printf("Parsed: %s\n", line.c_str());
+    }    
     f.close();
 }
 void FilePreviewStep::HandleKeyUp(Keys key){    
@@ -215,4 +292,13 @@ void FilePreviewStep::HandleKeyUp(Keys key){
         Host->GotoNextStep();
     else if (key == Keys::KEYPAD_LEFT)
         Host->GotoPreviousStep();
+}
+void FilePreviewStep::LoadComplete(){
+    // in case the menu is coming back from the print position step, we need to notify the home screen
+    idleScreenStep.printStatus = PrintStatus::Idle;
+    Preferences prefs;
+    prefs.begin("material");
+    e0Color = AvailableColors[prefs.getInt("e1_c", 0)];
+    e1Color = AvailableColors[prefs.getInt("e2_c", 1)];
+    prefs.end();
 }

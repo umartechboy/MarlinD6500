@@ -3,7 +3,6 @@
 MenuHost menuHost;
 FilePreviewStep fileOverViewStep(&menuHost);
 PrintPositionStep printPositionStep(&menuHost);
-PrintStep printStep(&menuHost);
 IdleScreenStep idleScreenStep(&menuHost);
 SDMenuStep sdMenuStep(&menuHost);
 OptionsStep toolsMenuStep(&menuHost);
@@ -14,9 +13,6 @@ PrinterInfoStep printerInfoStep(&menuHost);
 BedLevelStep bedLevelStep(&menuHost);
 
 void BeginApp(){    
-  SERIAL_IMPL.println("Starting SD");
-  sdMenuStep.BeginSD();
-  
   SERIAL_IMPL.println("Goto menu pushed");
   menuHost.GotoStepFromNull(&idleScreenStep);
 
@@ -34,6 +30,5 @@ void BeginApp(){
   fileOverViewStep.PreviousStep = &sdMenuStep;
   fileOverViewStep.NextStep = &printPositionStep;
   printPositionStep.PreviousStep = &fileOverViewStep;
-  printPositionStep.NextStep = &printStep;
-  printStep.PreviousStep = &printPositionStep;
+  printPositionStep.NextStep = &idleScreenStep; // If it gets triggered, the menu locks the screen
 }

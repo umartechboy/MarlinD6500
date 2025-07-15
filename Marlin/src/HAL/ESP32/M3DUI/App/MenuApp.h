@@ -2,7 +2,6 @@
 #define __MENU_APP__
 
 #include "..\Components\M3DUI.h" // For the host
-#include "MenuSteps\PrintStep.h"
 #include "MenuSteps\PrintPositionStep.h"
 #include "MenuSteps\FilePreviewStep.h"
 #include "MenuSteps\IdleScreenStep.h"
@@ -16,7 +15,6 @@
 extern MenuHost menuHost;
 extern FilePreviewStep fileOverViewStep;
 extern PrintPositionStep printPositionStep;
-extern PrintStep printStep;
 extern IdleScreenStep idleScreenStep;
 extern SDMenuStep sdMenuStep;
 extern OptionsStep toolsMenuStep;

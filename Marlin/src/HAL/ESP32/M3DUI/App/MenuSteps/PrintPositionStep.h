@@ -17,6 +17,7 @@ class PrintPositionStep : public MenuStep{
     static int transformY(int v);
     void Paint(BufferedDisplay* g) override;
     void HandleKeyUp(Keys key) override;
+    void UnloadBegin() override;
 };
 
 #endif

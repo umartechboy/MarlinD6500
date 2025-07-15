@@ -3,6 +3,7 @@
 #include "..\Bitmaps.h"
 #include "Fonts\FreeMono12pt7b.h"
 #include "Fonts\FreeMono9pt7b.h"
+#include "..\..\..\..\..\module\printcounter.h"
 #include <WiFi.h>
 
 PrinterInfoStep::PrinterInfoStep(MenuHost* host):MenuStep(host)
@@ -13,6 +14,7 @@ PrinterInfoStep::PrinterInfoStep(MenuHost* host):MenuStep(host)
     TickPeriod = 1000;
 }
 #define printInfoPair(a, b) { g->SetOpacity(60); centerRightString(g, (a), div - px, y); g->SetOpacity(100); centerLeftString(g, (b), div + px, y); y += 11; }
+
 void PrinterInfoStep::Paint(BufferedDisplay* g){            
     //Serial.printf("Idle Screen Step Paint called @ %d, %d\n", g->xOffset, g->yOffset);
     // Draw the idle screen
@@ -37,8 +39,11 @@ void PrinterInfoStep::Paint(BufferedDisplay* g){
     printInfoPair("Host" ,  WiFi.getHostname());
     printInfoPair("IP", WiFi.isConnected() ? WiFi.localIP().toString().c_str():"--");
     printInfoPair("AP", WiFi.softAPSSID().c_str());
-    printInfoPair("Print" ,  "06:01:01");
-    printInfoPair("Jobs", "27");
+
+    char str[30] = "";
+    duration_t(print_job_timer.getStats().printTime).toDigital(str, true);
+    printInfoPair("Life" ,  str);
+    printInfoPair("Jobs", String(print_job_timer.getStats().totalPrints).c_str());
 
     g->SetOpacity(opBkp);
 

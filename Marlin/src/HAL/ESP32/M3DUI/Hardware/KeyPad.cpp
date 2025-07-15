@@ -133,8 +133,8 @@ void KeyPad::Loop(MenuHost* host){
             if(keyToSend){
             SERIAL_IMPL.printf("Key proessed: %d\n", keyToSend);
             if (host->TargetStep == 0){
-                if (keyToSend == KEYPAD_MIDDLE || keyToSend == KEYPAD_UP_RIGHT){
-                SERIAL_IMPL.println("Middle or up right key pressed");
+                if (keyToSend == KEYPAD_MIDDLE){
+                SERIAL_IMPL.println("Middle key pressed");
                 // begin buttons overlay
                 if(host->stepAnimationStage == StepAnimationStage::MainStep && keyToSend == KEYPAD_MIDDLE){
                     host->stepAnimationStage = StepAnimationStage::GoingToOverLay;

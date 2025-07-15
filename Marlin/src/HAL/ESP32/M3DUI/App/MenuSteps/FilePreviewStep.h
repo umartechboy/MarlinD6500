@@ -15,16 +15,22 @@ struct pngDecodeParams{
 
 
 class FilePreviewStep: public MenuStep {
+    private:
+    uint16_t e0Color = 0;
+    uint16_t e1Color = 0;
     public:
     pngDecodeParams pngParams;
-    int printTime = -1;
-    float filamentUsed = -1;
+    float filamentUsed_mm = 0;
+    float filamentUsed_g = 0;    
+    String estimatedPrintingTime;
     int maxZ = -1;
     int layerCount = -1;
+    bool filament0Used = false, filament1Used = false;
     FilePreviewStep(MenuHost* host);
     void Paint(BufferedDisplay* g) override;
     void LoadBegin() override;
     void HandleKeyUp(Keys key) override;
+    void LoadComplete() override;
 };
 
 

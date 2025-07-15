@@ -1536,7 +1536,7 @@
 #define XY_PROBE_FEEDRATE (100*60)
 
 // Feedrate (mm/min) for the first approach when double-probing (MULTIPLE_PROBING == 2)
-#define Z_PROBE_FEEDRATE_FAST 80
+#define Z_PROBE_FEEDRATE_FAST 100
 
 // Feedrate (mm/min) for the "accurate" probe of each point
 #define Z_PROBE_FEEDRATE_SLOW Z_PROBE_FEEDRATE_FAST / 2
@@ -1605,7 +1605,7 @@
  */
 #define Z_CLEARANCE_DEPLOY_PROBE   4 // Z Clearance for Deploy/Stow
 #define Z_CLEARANCE_BETWEEN_PROBES  2 // Z Clearance between probe points
-#define Z_CLEARANCE_MULTI_PROBE     2 // Z Clearance between multiple probes
+#define Z_CLEARANCE_MULTI_PROBE     1 // Z Clearance between multiple probes
 //#define Z_AFTER_PROBING           5 // Z position after probing is done
 
 #define Z_PROBE_LOW_POINT          -3 // Farthest distance below the trigger-point to go before stopping
@@ -1744,8 +1744,8 @@
 // The size of the printable area
 // #define X_BED_SIZE 200
 // #define Y_BED_SIZE 156
-#define X_BED_SIZE 150
-#define Y_BED_SIZE 140
+#define X_BED_SIZE 180
+#define Y_BED_SIZE 145
 
 // Travel limits (linear=mm, rotational=°) after homing, corresponding to endstop positions.
 #define X_MIN_POS 0

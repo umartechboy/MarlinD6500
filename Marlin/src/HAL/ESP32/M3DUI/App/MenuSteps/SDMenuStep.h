@@ -8,9 +8,9 @@ class SDMenuStep: public MenuStep {
     bool hasSDCard = false;
     VerticalList list = VerticalList(14, 128, "No SD Card");
     SDMenuStep(MenuHost* host);
+    void LoadComplete() override;
     void Tick() override;
     void Paint(BufferedDisplay* g) override;
-    void BeginSD();
     void IncrementValue() override;
     void DecrementValue() override;
     void HandleKeyUp(Keys key) override;

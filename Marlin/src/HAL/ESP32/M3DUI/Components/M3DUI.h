@@ -89,9 +89,9 @@ enum MenuTransitionStage{
 };
 enum PrintStatus{
     Idle,
-    Paused,
-    Printing,
-    ToResume
+    FileToPrint,
+    PrintToResume,
+    ChangingFilament
 };
 class MenuHost;
 class MenuStep {
