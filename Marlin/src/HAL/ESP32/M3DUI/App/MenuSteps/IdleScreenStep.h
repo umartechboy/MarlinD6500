@@ -11,6 +11,7 @@ private:
     float materialAtStart = 0;
 public:
     String fileName;
+    String DOSFileName;
     PrintStatus printStatus = PrintStatus::Idle;
     int minX = -1, maxX = -1, minY = -1, maxY = -1, maxZ = -1;
     int xOffset = 0;

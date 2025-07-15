@@ -3,6 +3,9 @@
 #include "..\MenuApp.h"
 #include "..\Bitmaps.h"
 
+std::vector<String> seen;
+String toDOSNameFixed(const String& longName, const std::vector<String>& seenNames);
+
 SDMenuStep::SDMenuStep(MenuHost* host):MenuStep(host) {
     ButtonColor = DarkPaleYellow;
     BackColor = DarkPaleYellow;
@@ -56,7 +59,8 @@ void SDMenuStep::updateSelection(){
     else {
         SERIAL_IMPL.printf("Selected index changed: %d\n", list.getSelectedIndex());
         NextStep = &fileOverViewStep;
-        idleScreenStep.fileName = String("/") + ((StringListItem*)list.getSelected())->ItemText;
+        idleScreenStep.fileName = String("/") + ((FileNameListItem*)list.getSelected())->ItemText;
+        idleScreenStep.DOSFileName = String("/") + ((FileNameListItem*)list.getSelected())->DOSName;
         NeedsRedraw = true;
     }
 }
@@ -64,6 +68,8 @@ void SDMenuStep::LoadComplete(){
   SERIAL_IMPL.println("Starting SD");
     list.EmptyString = "Loading..."; 
     hasSDCard = SD.begin();
+    seen.clear();
+
     if (!hasSDCard){
         SERIAL_IMPL.println("SD card not found");
         list.EmptyString = "No SD card"; 
@@ -82,7 +88,7 @@ void SDMenuStep::LoadComplete(){
         fName.toUpperCase();
         if (fName.endsWith(".GCODE")){
             
-            SERIAL_IMPL.printf("G code: %s\n", fName.c_str());
+            // SERIAL_IMPL.printf("G code: %s\n", fName.c_str());
             // See if the first 150 lines contain the printer stamp
             // bool isCompatible = false;
             // for (int i; i < 200; i++){
@@ -96,8 +102,9 @@ void SDMenuStep::LoadComplete(){
             // }
             // f.close();
             // if (isCompatible){
-                // SERIAL_IMPL.printf("Compatible G code: %s\n", fName.c_str());
-            list.Add(new StringListItem(fName, 6));                
+            String dosName = toDOSNameFixed(fName, seen);
+            SERIAL_IMPL.printf("Compatible G code: {%s}, {%s}\n", fName.c_str(), dosName.c_str());
+            list.Add(new FileNameListItem(fName, dosName, 6));                
             // }
             // else{                
             //     SERIAL_IMPL.printf("Incompatible G code: %s\n", fName.c_str());
@@ -116,4 +123,45 @@ void SDMenuStep::LoadComplete(){
     //     list.files[i] = String("File ") + String(rand(), 16) + " " + String(i);
     // }
     updateSelection();
+}
+
+String toDOSNameFixed(const String& longName, const std::vector<String>& seenNames) {
+  // Strip path
+  int lastSlash = longName.lastIndexOf('/');
+  String name = (lastSlash >= 0) ? longName.substring(lastSlash + 1) : longName;
+
+  // Uppercase it
+  name.toUpperCase();
+
+  // Split extension
+  int dotIndex = name.lastIndexOf('.');
+  String base = (dotIndex >= 0) ? name.substring(0, dotIndex) : name;
+  String ext = (dotIndex >= 0) ? name.substring(dotIndex + 1) : "";
+
+  // Remove spaces and invalid chars from base
+  String cleanBase = "";
+  for (char c : base) {
+    if (isalnum(c) || c == '_') {
+      cleanBase += c;
+    }
+  }
+
+  // Truncate to 6 characters for base
+  if (cleanBase.length() > 6)
+    cleanBase = cleanBase.substring(0, 6);
+
+  // Count duplicates
+  int suffix = 1;
+  String testName;
+  do {
+    testName = cleanBase + "~" + String(suffix);
+    suffix++;
+  } while (std::find(seenNames.begin(), seenNames.end(), testName) != seenNames.end());
+
+  // Truncate extension to 3
+  if (ext.length() > 3)
+    ext = ext.substring(0, 3);
+
+  // Compose final name
+  return ext.length() ? testName + "." + ext : testName;
 }

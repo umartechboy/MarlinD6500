@@ -101,8 +101,10 @@ void IdleScreenStep::LoadComplete(){
 
     // Get the status and set the mode
     if (printStatus == PrintStatus::FileToPrint) { // This must be set by the file selection menus.
-        SERIAL_IMPL.printf("Home screen with print file: %s\n", fileName.c_str());
-        //card.openAndPrintFile(fileName.c_str());
+        SERIAL_IMPL.printf("Home screen with print file: %s, %s\n", fileName.c_str(), DOSFileName.c_str());
+        String m23 = String("M23 ") + DOSFileName;
+        enqueueComs({"M21", m23, "M24"});
+        
         materialAtStart = print_job_timer.getStats().filamentUsed;
         // Remove the steps to restrict access to the print alone
         NextStep = 0;
@@ -110,7 +112,7 @@ void IdleScreenStep::LoadComplete(){
     } else if (printStatus == PrintStatus::ChangingFilament) { // Back from changing the filament
         materialsMenuStep.NextStep = &toolsMenuStep; // reset the route
         SERIAL_IMPL.println("Back to print");
-        //card.startOrResumeFilePrinting();
+        card.startOrResumeFilePrinting();
     }
     else {
         SERIAL_IMPL.println("Idle home screen.");
@@ -146,7 +148,7 @@ void IdleScreenStep::HandleKeyUp(Keys key){
             SERIAL_IMPL.println("Resume print");
             printStatus = PrintStatus::FileToPrint;
             // Trigger the resume too
-            //card.startOrResumeFilePrinting();
+            card.startOrResumeFilePrinting();
         }
         else if (key == KEYPAD_RIGHT){                
             SERIAL_IMPL.println("Don't resume print");
@@ -173,7 +175,7 @@ void IdleScreenStep::FocusChanged(StepAnimationStage stage){
          {
             if (stage == StepAnimationStage::GoingToOverLay){
                 // Pause the print
-                //card.pauseSDPrint();
+                card.pauseSDPrint();
                 SERIAL_IMPL.println("Pause the print");
                 // Show the in-print utilities
                 PreviousStep = &materialsMenuStep;
@@ -184,7 +186,7 @@ void IdleScreenStep::FocusChanged(StepAnimationStage stage){
             }
             else if (stage == StepAnimationStage::MainStep){
                 // resume the print
-                //card.startOrResumeFilePrinting();
+                card.startOrResumeFilePrinting();
                 SERIAL_IMPL.println("Resume the print");
             }
         }

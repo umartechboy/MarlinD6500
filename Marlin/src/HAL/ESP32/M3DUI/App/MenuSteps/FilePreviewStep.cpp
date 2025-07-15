@@ -3,6 +3,7 @@
 #include "..\MenuApp.h"
 #include "..\Bitmaps.h"
 #include "..\MenuApp.h"
+#include "..\..\..\..\..\sd\cardreader.h"
 
 #define getTrimmedAfter(str, chr) str = str.substring(line.indexOf(chr) + 1)
 #define getTrimmedBefore(str, chr) str = str.substring(0, line.indexOf(chr))

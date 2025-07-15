@@ -40,6 +40,11 @@ public:
 private:
     int endTrimLength;
 };
+class FileNameListItem: public StringListItem{
+public:
+    String DOSName;
+    FileNameListItem(String str, String dosName, int _endTrimLength);
+};
 
 class ColorSelectorListItem: public ListItem{
 public:

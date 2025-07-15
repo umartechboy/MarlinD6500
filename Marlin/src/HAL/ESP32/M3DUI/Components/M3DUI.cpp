@@ -28,6 +28,10 @@ void StringListItem::Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, i
     }
     g->SetOpacity(opBkp);
 }
+
+FileNameListItem::FileNameListItem(String str, String dosName, int _endTrimLength):StringListItem(str, _endTrimLength) {
+    DOSName = dosName;
+}
 void ListSeparatorItem::Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, int y, bool selected) {
     
     uint8_t opBkp = g->GetOpacity();
