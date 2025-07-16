@@ -62,7 +62,7 @@ void PrintPositionStep::UnloadBegin(){
     // Apply the offset
     // This happen even if the step is to the previous step
     // We need to take care of this limitation in File preview
-    String offsetCom = String("M206 X") + String(-idleScreenStep.xOffset) + String("Y") + String(-idleScreenStep.yOffset);
+    String offsetCom = String("M206 X") + String(-idleScreenStep.xOffset) + String(" Y") + String(-idleScreenStep.yOffset);
     idleScreenStep.printStatus = PrintStatus::FileToPrint;
     enqueueComs({offsetCom});
 }

@@ -21,6 +21,7 @@ public:
     void Paint(BufferedDisplay* g) override;
     void HandleKeyUp(Keys key) override;
     void LoadComplete() override;
+    void UnloadBegin() override;
     void FocusChanged(StepAnimationStage stage) override;
 };
 #endif

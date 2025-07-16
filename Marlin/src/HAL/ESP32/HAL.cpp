@@ -386,6 +386,16 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
       // We have already set the flags, priority user will sync when the lock is released
       return;
     }
+    if (pin == Z_DIR_PIN) {// 2nd priority by default
+      if (PCFSync()) // Done! Return
+        return;
+      else { // Give it one more try. Most probably will fail too. Its a soft failure, not a hard one.
+        if (PCFSync())
+          return;
+        //else
+          // At least let us queue it up.
+      }
+    }
     if (xPortInIsrContext()) {
       // We can trigger a sync in the io task
       if (pcfTaskHandle != NULL) {
@@ -533,6 +543,7 @@ void MarlinHAL::adc_init() {
 #ifndef ADC_REFERENCE_VOLTAGE
   #define ADC_REFERENCE_VOLTAGE 3.3
 #endif
+
 
 void MarlinHAL::adc_start(const pin_t pin) {
   // if (pin >= 216 && pin < 220){

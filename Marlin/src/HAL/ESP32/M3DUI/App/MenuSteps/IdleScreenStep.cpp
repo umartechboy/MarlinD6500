@@ -92,46 +92,6 @@ void IdleScreenStep::Paint(BufferedDisplay* g) {
     }
 }
 
-void IdleScreenStep::LoadComplete(){
-    // Get colors
-    prefs.begin("material");
-    e0Color = AvailableColors[prefs.getInt("e1_c", 0)];
-    e1Color = AvailableColors[prefs.getInt("e2_c", 1)];
-    prefs.end();
-
-    // Get the status and set the mode
-    if (printStatus == PrintStatus::FileToPrint) { // This must be set by the file selection menus.
-        SERIAL_IMPL.printf("Home screen with print file: %s, %s\n", fileName.c_str(), DOSFileName.c_str());
-        String m23 = String("M23 ") + DOSFileName;
-        enqueueComs({"M21", m23, "M24"});
-        
-        materialAtStart = print_job_timer.getStats().filamentUsed;
-        // Remove the steps to restrict access to the print alone
-        NextStep = 0;
-        PreviousStep = 0;
-    } else if (printStatus == PrintStatus::ChangingFilament) { // Back from changing the filament
-        materialsMenuStep.NextStep = &toolsMenuStep; // reset the route
-        SERIAL_IMPL.println("Back to print");
-        card.startOrResumeFilePrinting();
-    }
-    else {
-        SERIAL_IMPL.println("Idle home screen.");
-        if(card.jobRecoverFileExists())
-        {
-            SERIAL_IMPL.println("Recovery file exists");
-            printStatus = PrintStatus::PrintToResume;
-            // Remove the steps to restrict access to the print alone
-            NextStep = 0;
-            PreviousStep = 0;
-        }
-        else {
-            NextStep = &sdMenuStep;
-            PreviousStep = &toolsMenuStep;
-            printStatus = PrintStatus::Idle;
-        }
-    } 
-}
-
 void IdleScreenStep::HandleKeyUp(Keys key){
     if (printStatus == PrintStatus::Idle){
         if (key == KEYPAD_LEFT){
@@ -169,6 +129,54 @@ void IdleScreenStep::HandleKeyUp(Keys key){
         }
     }
 }
+
+void IdleScreenStep::LoadComplete(){
+    // Get colors
+    prefs.begin("material");
+    e0Color = AvailableColors[prefs.getInt("e1_c", 0)];
+    e1Color = AvailableColors[prefs.getInt("e2_c", 1)];
+    prefs.end();
+
+    // Get the status and set the mode
+    if (printStatus == PrintStatus::FileToPrint) { // This must be set by the file selection menus.
+        SERIAL_IMPL.printf("Home screen with print file: %s, %s\n", fileName.c_str(), DOSFileName.c_str());
+        String m23 = String("M23 ") + DOSFileName;
+        enqueueComs({"M21", m23, "M24"});
+        
+        materialAtStart = print_job_timer.getStats().filamentUsed;
+        // Remove the steps to restrict access to the print alone
+        NextStep = 0;
+        PreviousStep = 0;
+    } else if (printStatus == PrintStatus::ChangingFilament) { // Back from changing the filament
+        materialsMenuStep.NextStep = &toolsMenuStep; // reset the route
+        SERIAL_IMPL.println("Back to print (1)");
+        card.startOrResumeFilePrinting();
+    }
+    else {
+        SERIAL_IMPL.println("Idle home screen.");
+        if(card.jobRecoverFileExists())
+        {
+            SERIAL_IMPL.println("Recovery file exists");
+            printStatus = PrintStatus::PrintToResume;
+            // Remove the steps to restrict access to the print alone
+            NextStep = 0;
+            PreviousStep = 0;
+        }
+        else {
+            NextStep = &sdMenuStep;
+            PreviousStep = &toolsMenuStep;
+            printStatus = PrintStatus::Idle;
+        }
+    } 
+}
+void IdleScreenStep::UnloadBegin(){
+    if (printStatus == PrintStatus::FileToPrint) {
+        if (card.isPaused()) {// going to in-print utilities            
+            printStatus = PrintStatus::ChangingFilament;
+            Host->GotoPreviousStep();
+        }
+    }
+}
 void IdleScreenStep::FocusChanged(StepAnimationStage stage){
     if (printStatus == PrintStatus::FileToPrint) {
         if (card.isPrinting() || card.isPaused())
@@ -176,18 +184,16 @@ void IdleScreenStep::FocusChanged(StepAnimationStage stage){
             if (stage == StepAnimationStage::GoingToOverLay){
                 // Pause the print
                 card.pauseSDPrint();
+                enqueueComs({"G91", "G1 Z5 F1000", "G90", "G1 Y150 F3000"});
                 SERIAL_IMPL.println("Pause the print");
                 // Show the in-print utilities
                 PreviousStep = &materialsMenuStep;
                 materialsMenuStep.NextStep = this; 
-                // this will disturbe the logic in idle mode. Make the options screen reset the next step for material
-                printStatus = PrintStatus::ChangingFilament;
-                Host->GotoPreviousStep();
             }
             else if (stage == StepAnimationStage::MainStep){
                 // resume the print
+                SERIAL_IMPL.println("Back to print (2)");
                 card.startOrResumeFilePrinting();
-                SERIAL_IMPL.println("Resume the print");
             }
         }
         else { // Ended. Return to idle
