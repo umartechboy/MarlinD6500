@@ -33,8 +33,9 @@
 #include "LoadCell/LoadCell.h"
 #include "M3DUI/App/MenuApp.h"
 //#include "SoftWireLibs/ADS1x15/Adafruit_ADS1X15.h"
+#include <map>
 
-
+std::map<int, uint16_t> adcMap;
 SoftWire sWire;
 PCF8574 pcf1(0x20, &sWire);
 PCF8574 pcf2(0x21, &sWire); // Closer to ESP32 (U6)
@@ -566,8 +567,21 @@ void MarlinHAL::adc_start(const pin_t pin) {
     mvToReturn = map(mv, 505, 3195, 370, 3197);
   }
 
-  adc_result = mvToReturn * isr_float_t(1023) / isr_float_t(ADC_REFERENCE_VOLTAGE) / isr_float_t(1000);
+  uint16_t this_adc_result = mvToReturn * isr_float_t(1023) / isr_float_t(ADC_REFERENCE_VOLTAGE) / isr_float_t(1000);
+  
+  // Check if pin already has an entry
+  auto it = adcMap.find(pin);
 
+  if (it == adcMap.end()) {
+      // First time seeing this pin — insert as-is
+      adcMap[pin] = this_adc_result;
+  } else {
+      // Average with previous value
+      uint16_t oldValue = it->second;
+      uint16_t averaged = (oldValue * 96 + this_adc_result * 4) / 100;
+      adcMap[pin] = averaged;
+  }
+  adc_result = adcMap[pin];
   // Change the attenuation level based on the new reading
   adc_atten_t atten;
   if (mv < thresholds[ADC_ATTEN_DB_0] - 100)

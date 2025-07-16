@@ -684,6 +684,7 @@
   //#define PID_DEBUG             // Print PID debug data to the serial port. Use 'M303 D' to toggle activation.
   //#define PID_PARAMS_PER_HOTEND // Use separate PID parameters for each extruder (useful for mismatched extruders)
                                   // Set/get with G-code: M301 E[extruder number, 0-2]
+                                  // Set/get with G-code: M301 E[extruder number, 0-2]
 
   #if ENABLED(PID_PARAMS_PER_HOTEND)
     // Specify up to one value per hotend here, according to your setup.
@@ -693,9 +694,9 @@
     #define DEFAULT_Kd_LIST { 114.00, 114.00 }
   #else
   // V5
-  #define DEFAULT_Kp 25.04
-  #define DEFAULT_Ki 4.88
-  #define DEFAULT_Kd 32.14
+  #define DEFAULT_Kp 32.59
+  #define DEFAULT_Ki 6.44
+  #define DEFAULT_Kd 41.24
   #endif
 #endif
 
@@ -1235,7 +1236,7 @@
 
 #define LIMITED_MAX_ACCEL_EDITING     // Limit edit via M201 or LCD to DEFAULT_MAX_ACCELERATION * 2
 #if ENABLED(LIMITED_MAX_ACCEL_EDITING)
-  #define MAX_ACCEL_EDIT_VALUES       { 2000, 10000, 400, 10000 } // ...or, set your own edit limits
+  #define MAX_ACCEL_EDIT_VALUES       { 2000, 2000, 400, 10000 } // ...or, set your own edit limits
 #endif
 
 /**
