@@ -157,8 +157,13 @@ void KeyPad::Loop(MenuHost* host){
                 else if (keyToSend == KEYPAD_DOWN_RIGHT && host->CurrentStep->NextStep && host->stepAnimationStage == StepAnimationStage::InOverlay){
                   host->GotoNextStep();
                 }
-                else { // Let the step handle this key 
-                host->CurrentStep->HandleKeyUp(keyToSend);
+                else if (keyToSend == KEYPAD_UP_RIGHT && host->CurrentStep->NextStep && host->stepAnimationStage == StepAnimationStage::InOverlay){                  
+                  host->stepAnimationStage = StepAnimationStage::GoingToStep;
+                  host->ResetAnimationProgress(250);
+                }
+                else { // Let the step handle this key if not in overlay
+                  if (host->stepAnimationStage == StepAnimationStage::MainStep)
+                    host->CurrentStep->HandleKeyUp(keyToSend);
                 }
             }
             // else just discard this button

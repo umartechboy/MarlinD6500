@@ -24,6 +24,7 @@ extern void UILoop();
 
 extern void enqueueComs(String commands);
 extern void enqueueComs(std::initializer_list<String> commands);
+extern bool hasComsQueued();
 
 
 #endif

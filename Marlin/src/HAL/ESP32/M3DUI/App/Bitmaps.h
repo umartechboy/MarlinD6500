@@ -17,5 +17,13 @@ extern Bitmap bmp_Tools;
 extern Bitmap bmp_M3D;
 extern Bitmap bmp_Settings;
 extern Bitmap bmp_BedLevel;
+extern Bitmap bmp_Load0Filament;
+extern Bitmap bmp_Unload0Filament;
+extern Bitmap bmp_Load1Filament;
+extern Bitmap bmp_Unload1Filament;
+extern Bitmap bmp_ArrowUp;
+extern Bitmap bmp_ArrowDown;
+extern Bitmap bmp_ArrowIn;
+extern Bitmap bmp_Extruder;
 
 #endif

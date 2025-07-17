@@ -4,6 +4,9 @@
 
 static int target [2] = {30, 30};
 
+bool hasComsQueued() {
+    return queue.has_commands_queued();
+}
 void enqueueComs(String commands) {
     queue.enqueue_one(commands.c_str());
 }

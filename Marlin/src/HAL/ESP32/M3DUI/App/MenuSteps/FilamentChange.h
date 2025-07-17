@@ -3,14 +3,27 @@
 
 #include "..\..\Components\M3DUI.h"
 
+enum FilamentChangeStage: uint8_t {
+    Preheat = 0,
+    ProcessSelection,
+    Warning,
+    Demo,
+    Action,
+    Wait
+};
+enum FilamentChangeActionType{
+    Undecided = 0,
+    Load,
+    Unload,
+};
 class FilamentChangeStep:public MenuStep
 {
 private:
+    FilamentChangeStage stage = FilamentChangeStage::Preheat;
     int filamentIndex = 0;
     float preHeatTemp = 200;
-    bool donePreHeating = false;
-    bool doneExtruding = false;
-    bool doneRetracting = false;
+    FilamentChangeActionType action;
+    uint16_t eColors[2];
 public:
     FilamentChangeStep(MenuHost* host, int index);
     ~FilamentChangeStep();
