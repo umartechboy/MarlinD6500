@@ -182,9 +182,8 @@ void IdleScreenStep::FocusChanged(StepAnimationStage stage){
         if (card.isPrinting() || card.isPaused())
          {
             if (stage == StepAnimationStage::GoingToOverLay){
-                // Pause the print
-                card.pauseSDPrint();
-                enqueueComs({"G91", "G1 Z5 F1000", "G90", "G1 Y150 F3000"});
+                // Pause the print                
+                enqueueComs({"M25", "G91", "G1 Z5 F1000", "G90", "G1 Y150 F3000"});
                 SERIAL_IMPL.println("Pause the print");
                 // Show the in-print utilities
                 PreviousStep = &materialsMenuStep;
@@ -193,7 +192,7 @@ void IdleScreenStep::FocusChanged(StepAnimationStage stage){
             else if (stage == StepAnimationStage::MainStep){
                 // resume the print
                 SERIAL_IMPL.println("Back to print (2)");
-                card.startOrResumeFilePrinting();
+                enqueueComs({"M24"});
             }
         }
         else { // Ended. Return to idle

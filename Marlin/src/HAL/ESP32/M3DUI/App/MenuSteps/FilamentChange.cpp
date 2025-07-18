@@ -223,7 +223,11 @@ void FilamentChangeStep::HandleKeyUp(Keys key) {
         if (key == Keys::KEYPAD_UP){
             stage = FilamentChangeStage::ProcessSelection;
         }
-        else if (key == Keys::KEYPAD_DOWN){
+        else if (key == Keys::KEYPAD_DOWN){             
+            if (filamentIndex == 0)
+                enqueueComs("T0");
+            else
+                enqueueComs ("T1");
             if (action == FilamentChangeActionType::Load){
                 stage = FilamentChangeStage::Demo;
                 enqueueComs({"M83", "G1 E20 F100", "M82"});
