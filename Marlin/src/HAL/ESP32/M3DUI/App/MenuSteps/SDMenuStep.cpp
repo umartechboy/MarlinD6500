@@ -1,7 +1,7 @@
 #include "SDMenuStep.h"
 #include <SD.h>
 #include "..\MenuApp.h"
-#include "..\Bitmaps.h"
+#include "..\Images.h"
 
 std::vector<String> seen;
 String toDOSNameFixed(const String& longName, const std::vector<String>& seenNames);
@@ -10,8 +10,9 @@ SDMenuStep::SDMenuStep(MenuHost* host):MenuStep(host) {
     ButtonColor = DarkPaleYellow;
     BackColor = DarkPaleYellow;
     TextColor = ST7735_BLACK;
-    Icon = &bmp_SD;
+    Icon = &img_SD;
     TickPeriod = 50;
+    list = VerticalList(Host, 14, 128, "No SD Card");
 }
 void SDMenuStep::Tick() {
     NeedsRedraw = true;
@@ -25,7 +26,7 @@ void SDMenuStep::Paint(BufferedDisplay* g) {
         list.Paint(g, TextColor);
         updateSelection();
     } else {
-        centerString(g, "No SD Card", g->width() / 2, g->height() / 2);
+        centerString(g, "No SD Card", Host->appWidth() / 2, Host->appHeight() / 2);
     }
 }
 void SDMenuStep::IncrementValue() {
@@ -104,7 +105,7 @@ void SDMenuStep::LoadComplete(){
             // if (isCompatible){
             String dosName = toDOSNameFixed(fName, seen);
             SERIAL_IMPL.printf("Compatible G code: {%s}, {%s}\n", fName.c_str(), dosName.c_str());
-            list.Add(new FileNameListItem(fName, dosName, 6));                
+            list.Add(new FileNameListItem(Host, fName, dosName, 6));                
             // }
             // else{                
             //     SERIAL_IMPL.printf("Incompatible G code: %s\n", fName.c_str());

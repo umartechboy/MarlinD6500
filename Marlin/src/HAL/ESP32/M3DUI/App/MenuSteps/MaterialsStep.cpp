@@ -1,33 +1,35 @@
 #include "MaterialsStep.h"
-#include "..\Bitmaps.h"
+#include "..\Images.h"
 #include "..\MenuApp.h"
 
 MaterialsStep::MaterialsStep(MenuHost* host):MenuStep(host) {
     ButtonColor = ST7735_WHITE;
     BackColor = ST7735_WHITE;
     TextColor = ST7735_BLACK;            
-    Icon = &bmp_ChangeFilament;
+    Icon = &img_ChangeFilament;
 
-    extruder0Color = new ColorSelectorListItem("Extruder 1", 0);
-    extruder1Color = new ColorSelectorListItem("Extruder 2", 1);
-    change0 = new StringListItem("Change Filament", 0);
-    change1 = new StringListItem("Change Filament", 0);
+    options = VerticalList(Host, 24, 128);
+
+    extruder0Color = new ColorSelectorListItem(Host, "Extruder 1", 0);
+    extruder1Color = new ColorSelectorListItem(Host,"Extruder 2", 1);
+    change0 = new StringListItem(Host,"Change Filament", 0);
+    change1 = new StringListItem(Host, "Change Filament", 0);
 
     extruder0Color->selectedColorIndex = 0;
     extruder1Color->selectedColorIndex = 1;
     extruderColors[0] = extruder0Color;
     extruderColors[1] = extruder1Color;
-    defaultExtruderColor = new ColorSelectorListItem("Default", extruderColors[defaultExtruder]->selectedColorIndex);
+    defaultExtruderColor = new ColorSelectorListItem(Host, "Default", extruderColors[defaultExtruder]->selectedColorIndex);
     defaultExtruderColor->selectedColorIndex = extruderColors[defaultExtruder]->selectedColorIndex;
     defaultExtruderColor->Label = String(defaultExtruder + 1);
 
     // Filament Load/Unload
     options.Add(extruder0Color);
     options.Add(change0);
-    options.Add(new ListSeparatorItem());
+    options.Add(new ListSeparatorItem(Host));
     options.Add(extruder1Color);
     options.Add(change1);
-    options.Add(new ListSeparatorItem());
+    options.Add(new ListSeparatorItem(Host));
     options.Add(defaultExtruderColor);
     TickPeriod = 50;
 }

@@ -16,25 +16,28 @@ enum TransitionDirection{
 };
 
 class ListItem{
-    public:
-        virtual void Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, int y, bool selected);; // Must be overriden
-        bool IsDummyItem(){
-            return isDummyItem;
-        }
-    protected:
-        bool isDummyItem = false;
+public:
+    ListItem(){}
+    ~ListItem(){}
+    ListItem(MenuHost* host);
+    MenuHost* Host = 0;
+    virtual void Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, int y, bool selected){} // Must be overriden
+    bool IsDummyItem(){
+        return isDummyItem;
+    }
+protected:
+    bool isDummyItem = false;
 };
 class ListSeparatorItem: public ListItem{
     public:
-    ListSeparatorItem(){
+    ListSeparatorItem(MenuHost* host):ListItem(host){
         isDummyItem = true;
     }
     virtual void Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, int y, bool selected);; // Must be overriden
 };
 class StringListItem: public ListItem{
 public:
-    StringListItem();
-    StringListItem(String str, int _endTrimLength);
+    StringListItem(MenuHost* host, String str, int _endTrimLength);
     String ItemText;
     void Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, int y, bool selected) override;
 private:
@@ -43,13 +46,13 @@ private:
 class FileNameListItem: public StringListItem{
 public:
     String DOSName;
-    FileNameListItem(String str, String dosName, int _endTrimLength);
+    FileNameListItem(MenuHost* host, String str, String dosName, int _endTrimLength);
 };
 
 class ColorSelectorListItem: public ListItem{
 public:
-    ColorSelectorListItem();
-    ColorSelectorListItem(String str, int colorIndex);
+    ColorSelectorListItem(){};
+    ColorSelectorListItem(MenuHost* host, String str, int colorIndex);
     String ItemText;
     String Label;
     int selectedColorIndex = 0;
@@ -64,10 +67,12 @@ class VerticalList{
         int targetScrollOffset = 0;
         int lineHeight = 0;
         int displayHeight = 0;
+        MenuHost* Host = 0;
     public:
         int selected = -1;
         String EmptyString;
-        VerticalList(int lineHeight, int _displayHeight, String emptyString = "");
+        VerticalList() {}
+        VerticalList(MenuHost* host, int lineHeight, int _displayHeight, String emptyString = "");
         ~VerticalList();
         int getSelectedIndex();
         ListItem* getSelected();
@@ -108,7 +113,7 @@ class MenuStep {
         Color ButtonColor;
         Color BackColor;
         Color TextColor;
-        Bitmap* Icon = 0;
+        Image* Icon = 0;
         MenuStep(MenuHost* host);
         virtual void Paint(BufferedDisplay* g) {}
         virtual void HandleKeyUp(Keys key) {}
@@ -128,7 +133,7 @@ class MenuStep {
 };
 
 class MenuHost{
-    public:
+public:
     MenuStep* CurrentStep = 0;
     MenuStep* TargetStep = 0;
     MenuTransitionStage menuTrasnsitionStage = MenuTransitionStage::TransitionaingScreens;
@@ -156,11 +161,14 @@ class MenuHost{
     void DrawButton3(MenuStep* step, BufferedDisplay* g, float progress);
     void Paint(BufferedDisplay* bTft);
     void Loop(BufferedDisplay* bTft);
-    private:
-        float animationStepProgress = 0.0f;
-        long animationStartTime = 0;
-        long animationEndTime = 0;
-        KeyPad* keypad;
+    bool Retro = false;
+private:
+    float animationStepProgress = 0.0f;
+    long animationStartTime = 0;
+    long animationEndTime = 0;
+    KeyPad* keypad;
+    int _appHeight = 0;
+    int _appWidth = 0;
 };
 
 

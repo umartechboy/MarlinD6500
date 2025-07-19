@@ -1,13 +1,13 @@
 #include "PrintPositionStep.h"
 #include "..\MenuApp.h"
-#include "..\Bitmaps.h"
+#include "..\Images.h"
 #include "..\..\Hardware\MarlinSpecific.h"
 
 PrintPositionStep::PrintPositionStep(MenuHost* host):MenuStep(host) {
     ButtonColor = DarkPurple;
     BackColor = DarkPurple;
     TextColor = ST7735_WHITE;
-    Icon = &bmp_MovePrint;
+    Icon = &img_MovePrint;
 }
 int PrintPositionStep::scaleX(int v) {
     return round((127.0F * v) / (float)bedWidth);
@@ -26,8 +26,8 @@ void PrintPositionStep::Paint(BufferedDisplay* g) {
     g->fillScreen(BackColor);
     g->setFont();
     g->setTextColor(TextColor);
-    centerString(g, "Use movement keys to", g->width() / 2, 7);
-    centerString(g, "adjust print position", g->width() / 2, 121);
+    centerString(g, "Use movement keys to", Host->appWidth() / 2, 7);
+    centerString(g, "adjust print position", Host->appWidth() / 2, 121);
     g->drawRect(transformX(0), transformY(bedHeight), scaleX(bedWidth), scaleY(bedHeight), ST7735_RED);
     g->drawRect(transformX(sideMargin), transformY(bedHeight - sideMargin), scaleX(bedWidth - 2 * sideMargin), scaleY(bedHeight - 2 * sideMargin), ST7735_YELLOW);
     Serial.printf("fill: %dx%d, %dx%d\n",

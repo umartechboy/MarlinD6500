@@ -6,7 +6,7 @@
 class SDMenuStep: public MenuStep {
     public:
     bool hasSDCard = false;
-    VerticalList list = VerticalList(14, 128, "No SD Card");
+    VerticalList list;
     SDMenuStep(MenuHost* host);
     void LoadComplete() override;
     void Tick() override;

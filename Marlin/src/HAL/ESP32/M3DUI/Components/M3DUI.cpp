@@ -2,11 +2,14 @@
 #include "..\Hardware\BufferedDisplay.h"
 #include "..\Hardware\Keypad.h"
 #include "Utils.h"
-#include "..\App\Bitmaps.h"
+#include "..\App\Images.h"
 
-StringListItem::StringListItem(){
+
+ListItem::ListItem(MenuHost* host){
+    Host = host;
+
 }
-StringListItem::StringListItem(String str, int _endTrimLength){
+StringListItem::StringListItem(MenuHost* host, String str, int _endTrimLength):ListItem(host){
     ItemText = str;
     endTrimLength = _endTrimLength;
 }
@@ -18,18 +21,18 @@ void StringListItem::Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, i
     // }
     // else
     //     g->setTextColor(TextColor);
-    //Serial.printf("Printing SD File %d: %s @ %d, %d\n", i, files[i].c_str(), g->width() / 2, FileLineCenter(i));
+    //Serial.printf("Printing SD File %d: %s @ %d, %d\n", i, files[i].c_str(), Host->appWidth() / 2, FileLineCenter(i));
     int16_t w = 0;
-    centerString(g, ItemText.substring(0, ItemText.length() - endTrimLength).c_str(), g->width() / 2, y, &w);
+    centerString(g, ItemText.substring(0, ItemText.length() - endTrimLength).c_str(), Host->appWidth() / 2, y, &w);
     if (selected){
-        w = g->width() - w - 8;
+        w = Host->appWidth() - w - 8;
         g->drawLine(0, y, w / 2, y, TextColor);
-        g->drawLine(g->width(), y, g->width() - w / 2, y, TextColor);
+        g->drawLine(Host->appWidth(), y, Host->appWidth() - w / 2, y, TextColor);
     }
     g->SetOpacity(opBkp);
 }
 
-FileNameListItem::FileNameListItem(String str, String dosName, int _endTrimLength):StringListItem(str, _endTrimLength) {
+FileNameListItem::FileNameListItem(MenuHost* host, String str, String dosName, int _endTrimLength):StringListItem(host, str, _endTrimLength) {
     DOSName = dosName;
 }
 void ListSeparatorItem::Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, int y, bool selected) {
@@ -39,13 +42,11 @@ void ListSeparatorItem::Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor
     uint8_t tempSectionHeight = 20;
     g->SetOpacity(10);
     for (int i =0; i < 5; i++)
-        g->drawLine(lineMargin + i * 2, y - 5, g->width() - lineMargin - i * 2, y - 5, TextColor);
+        g->drawLine(lineMargin + i * 2, y - 5, Host->appWidth() - lineMargin - i * 2, y - 5, TextColor);
     g->SetOpacity(opBkp);
 }
 
-ColorSelectorListItem::ColorSelectorListItem(){
-}
-ColorSelectorListItem::ColorSelectorListItem(String str, int colorIndex){
+ColorSelectorListItem::ColorSelectorListItem(MenuHost* host, String str, int colorIndex):ListItem(host){
     ItemText = str;
     selectedColorIndex = colorIndex;
 }
@@ -67,7 +68,7 @@ void ColorSelectorListItem::Paint(BufferedDisplay* g, uint8_t op, uint16_t TextC
     // }
     // else
     //     g->setTextColor(TextColor);
-    //Serial.printf("Printing SD File %d: %s @ %d, %d\n", i, files[i].c_str(), g->width() / 2, FileLineCenter(i));
+    //Serial.printf("Printing SD File %d: %s @ %d, %d\n", i, files[i].c_str(), Host->appWidth() / 2, FileLineCenter(i));
     int16_t w = 0;
     int px = 8;
     int pxe = 2;
@@ -76,29 +77,30 @@ void ColorSelectorListItem::Paint(BufferedDisplay* g, uint8_t op, uint16_t TextC
     int aSz = 8;
     centerLeftString(g, ItemText.c_str(), px, y, &w);
     g->SetOpacity(100); // force full bright rect.
-    g->fillRoundRect(g->width() - pxe - arrowSpace - rSz, y - rSz/2, rSz, rSz, 3, AvailableColors[selectedColorIndex]);
+    g->fillRoundRect(Host->appWidth() - pxe - arrowSpace - rSz, y - rSz/2, rSz, rSz, 3, AvailableColors[selectedColorIndex]);
     g->SetOpacity(op); // revert to list opacity
-    g->drawRoundRect(g->width() - pxe - arrowSpace - rSz, y - rSz/2, rSz, rSz, 3, TextColor);
+    g->drawRoundRect(Host->appWidth() - pxe - arrowSpace - rSz, y - rSz/2, rSz, rSz, 3, TextColor);
     // Draw the label
     if (Label.length() > 0){
-        centerString(g, Label.c_str(), g->width() - pxe - arrowSpace - rSz / 2, y);
+        centerString(g, Label.c_str(), Host->appWidth() - pxe - arrowSpace - rSz / 2, y);
     }
     if (selected){
         // Show arrows with the color
         g->fillTriangle(
-            g->width() - pxe - arrowSpace - rSz - arrowSpace + aSz, y - aSz / 2, 
-            g->width() - pxe - arrowSpace - rSz - arrowSpace + aSz, y + aSz / 2, 
-            g->width() - pxe - arrowSpace - rSz - arrowSpace, y, 
+            Host->appWidth() - pxe - arrowSpace - rSz - arrowSpace + aSz, y - aSz / 2, 
+            Host->appWidth() - pxe - arrowSpace - rSz - arrowSpace + aSz, y + aSz / 2, 
+            Host->appWidth() - pxe - arrowSpace - rSz - arrowSpace, y, 
             TextColor);
         g->fillTriangle(
-            g->width() - pxe - aSz, y - aSz / 2, 
-            g->width() - pxe - aSz, y + aSz / 2, 
-            g->width() - pxe, y, 
+            Host->appWidth() - pxe - aSz, y - aSz / 2, 
+            Host->appWidth() - pxe - aSz, y + aSz / 2, 
+            Host->appWidth() - pxe, y, 
             TextColor);
     }
     g->SetOpacity(opBkp);
 }
-VerticalList::VerticalList(int lineHeight, int _displayHeight, String emptyString){
+VerticalList::VerticalList(MenuHost* host, int lineHeight, int _displayHeight, String emptyString){
+    Host = host;
     for (int i =0; i < items.size(); i++)
         items[i] = 0;
     this->lineHeight = lineHeight;
@@ -152,7 +154,7 @@ void VerticalList::Paint(BufferedDisplay* g, Color TextColor){
         scrollOffset = (scrollOffset + targetScrollOffset) / 2;
     }
     if (items.size() == 0)
-        centerString(g, emptyString.c_str(), g->width() / 2, displayHeight / 2);
+        centerString(g, emptyString.c_str(), Host->appWidth() / 2, displayHeight / 2);
     else{
 
         // Adjust underflow from the top
@@ -292,7 +294,7 @@ void MenuHost::DrawButton(int index, MenuStep* step, BufferedDisplay* g, float p
     // Draw a shadow if the progress is more than 0
     if (progress > 0){
         //g->SetOpacity(10.0F * progress);
-        //g->fillRect(0,0, g->width(), g->height(), rgb(0, 0, 0)); // backdrop // this is too much load. Gotto skip this one.
+        //g->fillRect(0,0, Host->appWidth(), Host->appHeight(), rgb(0, 0, 0)); // backdrop // this is too much load. Gotto skip this one.
         g->SetOpacity(10);
         for (int si = 0; si <= progress * 20; si += 5)
         //int si = 28;
@@ -338,7 +340,7 @@ void MenuHost::DrawButton(int index, MenuStep* step, BufferedDisplay* g, float p
     
     if (index == 3 && progress > 0){
         int x = height * width / (height + width); // anim Bounding box width and height
-        (&bmp_Back)->Draw(g, mw - x, x - (&bmp_Back)->height());
+        (&img_Back)->Draw(g, mw - x, x - (&img_Back)->height());
     }
     if(step->Icon && progress > 0){
         //int xOffset = MixFloats(width, 0, progress, MixType::EaseInEaseOut);
@@ -348,7 +350,7 @@ void MenuHost::DrawButton(int index, MenuStep* step, BufferedDisplay* g, float p
         {
             case 1: step->Icon->Draw(g, x - step->Icon->width(), x - step->Icon->height()); break;
             case 2: step->Icon->Draw(g, mw - x, mh - x, true); break;
-            //case 3: (&bmp_Back)->Draw(g, mw - x, mh - x); break;
+            //case 3: (&img_Back)->Draw(g, mw - x, mh - x); break;
         
             default:
                 break;
@@ -356,6 +358,12 @@ void MenuHost::DrawButton(int index, MenuStep* step, BufferedDisplay* g, float p
     }
 
     g->SetOpacity(opBkp);
+}
+int MenuHost::appHeight(){
+    return _appHeight;
+}
+int MenuHost::appWidth(){
+    return _appWidth;
 }
 // Top left
 void MenuHost::DrawButton1(MenuStep* step, BufferedDisplay* g, float progress){
@@ -374,6 +382,14 @@ void MenuHost::DrawButton3(MenuStep* step, BufferedDisplay* g, float progress){
 void MenuHost::Paint(BufferedDisplay* bTft){
     if (millis() - lastPaint < 20) { // limit to 50 fps
         return;
+    }
+    if (Retro){
+        _appWidth = bTft->width();
+        _appHeight = bTft->height() - 12;
+    }
+    else{
+        _appWidth = bTft->width();
+        _appHeight = bTft->height();
     }
     if (menuTrasnsitionStage == MenuTransitionStage::InStep){      
         if (CurrentStep){

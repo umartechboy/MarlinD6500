@@ -1,17 +1,17 @@
 #include "FilamentChange.h"
 #include "..\..\Hardware\MarlinSpecific.h"
-#include "..\Bitmaps.h"
+#include "..\Images.h"
 #include <Fonts/FreeSans9pt7b.h>
 #include <Fonts/FreeSans12pt7b.h>
 #include <Preferences.h>
 
-static Bitmap* loadBmps[] = {&bmp_Load0Filament, &bmp_Load1Filament};
-static Bitmap* unloadBmps[] = {&bmp_Unload0Filament, &bmp_Unload1Filament};
+static Image* loadBmps[] = {&img_Load0Filament, &img_Load1Filament};
+static Image* unloadBmps[] = {&img_Unload0Filament, &img_Unload1Filament};
 FilamentChangeStep::FilamentChangeStep(MenuHost* host, int index):MenuStep(host)
 {
     filamentIndex = index;
     TextColor = ST7735_WHITE;
-    Icon = &bmp_ChangeFilament;
+    Icon = &img_ChangeFilament;
     TickPeriod = 200;
 }
 
@@ -60,7 +60,7 @@ static void drawVThickLine(BufferedDisplay*g, int x0, int y0, int x1, int y1, in
         g->drawLine(x0, y0 - i, x1, y1 - i, color);
 }
 static int animPeriod = 6000;
-static void drawAnimatedBitmap(BufferedDisplay*g, Bitmap* bmp, int x0, int y0, int x1, int y1, long animStart, long animEnd, long showStart, long showEnd, MixType mix){
+static void drawAnimatedBitmap(BufferedDisplay*g, Image* bmp, int x0, int y0, int x1, int y1, long animStart, long animEnd, long showStart, long showEnd, MixType mix){
     int duration = animPeriod;
     int time = millis() % duration;
     float p = 0;
@@ -93,30 +93,30 @@ void FilamentChangeStep::Paint(BufferedDisplay* g){
     if (stage == FilamentChangeStage::Preheat){
         
         g->setFont(&FreeSans9pt7b);
-        centerString(g, "Heating up...", g->width() / 2, g->height() / 2 - 10);
+        centerString(g, "Heating up...", Host->appWidth() / 2, Host->appHeight() / 2 - 10);
         g->setFont();
         String tempStatus = String("(") + String(readTemp(filamentIndex), 0) + "/" + String(preHeatTemp, 0) + String(")");
-        centerString(g, tempStatus.c_str(), g->width() / 2, g->height() / 2 + 10);
+        centerString(g, tempStatus.c_str(), Host->appWidth() / 2, Host->appHeight() / 2 + 10);
     }
     else if (stage == FilamentChangeStage::ProcessSelection){
         int trSz = 12;
         int yo = -20;
         g->setFont(&FreeSans12pt7b);
         g->SetOpacity(100);
-        centerLeftString(g, "Unload", 5, g->height() / 2 + yo);
+        centerLeftString(g, "Unload", 5, Host->appHeight() / 2 + yo);
         g->fillTriangle(
-            g->width() - 5 - trSz / 2, g->height() / 2 + yo - trSz / 2, 
-            g->width() - 5 - trSz, g->height() / 2 + yo + trSz / 2, 
-            g->width() - 5, g->height() / 2 + yo + trSz / 2,
+            Host->appWidth() - 5 - trSz / 2, Host->appHeight() / 2 + yo - trSz / 2, 
+            Host->appWidth() - 5 - trSz, Host->appHeight() / 2 + yo + trSz / 2, 
+            Host->appWidth() - 5, Host->appHeight() / 2 + yo + trSz / 2,
             TextColor
         );
         
         yo = +20;
-        centerLeftString(g, "Load", 5, g->height() / 2 + yo);
+        centerLeftString(g, "Load", 5, Host->appHeight() / 2 + yo);
         g->fillTriangle(
-            g->width() - 5 - trSz / 2, g->height() / 2 + yo + trSz / 2, 
-            g->width() - 5 - trSz, g->height() / 2 + yo - trSz / 2, 
-            g->width() - 5, g->height() / 2 + yo - trSz / 2,
+            Host->appWidth() - 5 - trSz / 2, Host->appHeight() / 2 + yo + trSz / 2, 
+            Host->appWidth() - 5 - trSz, Host->appHeight() / 2 + yo - trSz / 2, 
+            Host->appWidth() - 5, Host->appHeight() / 2 + yo - trSz / 2,
             TextColor
         );
         
@@ -126,56 +126,56 @@ void FilamentChangeStep::Paint(BufferedDisplay* g){
         int lineHeight = 9;
         if (action == FilamentChangeActionType::Load){
             // Warn about having an existing filament
-            loadBmps[filamentIndex]->Draw(g, g->width() / 2 - loadBmps[filamentIndex]->width() / 2, y);
+            loadBmps[filamentIndex]->Draw(g, Host->appWidth() / 2 - loadBmps[filamentIndex]->width() / 2, y);
             g->setFont();
             y += loadBmps[filamentIndex]->height() + 6;
             String exStr = String("that the extruder ") + String(filamentIndex + 1);
-            centerString(g, "Kindly confirm", g->width() / 2, y); y += lineHeight;
-            centerString(g, exStr.c_str(), g->width() / 2, y); y += lineHeight;
-            centerString(g, "is empty", g->width() / 2, y); y += lineHeight;
+            centerString(g, "Kindly confirm", Host->appWidth() / 2, y); y += lineHeight;
+            centerString(g, exStr.c_str(), Host->appWidth() / 2, y); y += lineHeight;
+            centerString(g, "is empty", Host->appWidth() / 2, y); y += lineHeight;
         }
         else if (action == FilamentChangeActionType::Unload){
             // Warn about having an existing filament
-            unloadBmps[filamentIndex]->Draw(g, g->width() / 2 - unloadBmps[filamentIndex]->width() / 2, 2);
+            unloadBmps[filamentIndex]->Draw(g, Host->appWidth() / 2 - unloadBmps[filamentIndex]->width() / 2, 2);
             g->setFont();
             y += loadBmps[filamentIndex]->height() + 6;
-            centerString(g, "I am going to", g->width() / 2, y); y += lineHeight;
-            centerString(g, "pull out the ", g->width() / 2, y); y += lineHeight;
-            centerString(g, "filament now", g->width() / 2, y); y += lineHeight;
+            centerString(g, "I am going to", Host->appWidth() / 2, y); y += lineHeight;
+            centerString(g, "pull out the ", Host->appWidth() / 2, y); y += lineHeight;
+            centerString(g, "filament now", Host->appWidth() / 2, y); y += lineHeight;
         }
         y += lineHeight / 2;
         int tSz = 12;
-        int x = g->width() / 4;
+        int x = Host->appWidth() / 4;
         g->fillTriangle(x, y + tSz / 2, x - tSz / 2, y - tSz / 2, x + tSz / 2, y - tSz / 2, TextColor);   
         centerString(g, "Continue", x, y + lineHeight + tSz / 2);
-        x = (g->width() * 3) / 4;
+        x = (Host->appWidth() * 3) / 4;
         g->fillTriangle(x, y - tSz / 2, x - tSz / 2, y + tSz / 2, x + tSz / 2, y + tSz / 2, TextColor);     
         centerString(g, "Back", x, y + lineHeight + tSz / 2);
 
     }
     else if (stage == FilamentChangeStage::Demo){ // Only in Load
         // The extruder bmp will be there at the bottom
-        bmp_Extruder.Draw(g, g->width()/2 - bmp_Extruder.width() / 2, 6);
-        drawAnimatedBitmap(g, &bmp_ArrowDown, 65, -15, 65, -5, 0, 200, 0, 3500, MixType::EaseInEaseOut);
-        drawAnimatedBitmap(g, &bmp_ArrowUp, 42, 30, 42, 15, 0, 400, 0, 3500, MixType::EaseInEaseOut);
-        drawAnimatedBitmap(g, &bmp_ArrowIn, 18, 75, 42, 59, 1200, 2000, 1200, 2000, MixType::EaseInEaseOut); 
-        drawAnimatedBitmap(g, &bmp_ArrowIn, 18, 75, 42, 59, 2000, 2800, 2000, 4500, MixType::EaseInEaseOut);
-        drawAnimatedBitmap(g, &bmp_ArrowUp, 65, 0, 65, -10, 3500, 4100, 3500, 4500, MixType::EaseInEaseOut);
-        drawAnimatedBitmap(g, &bmp_ArrowDown, 42, 5, 42, 20, 3500, 4100, 3500, 4500, MixType::EaseInEaseOut);
-        // bmp_ArrowIn.Draw(g, 22, 65);
+        img_Extruder.Draw(g, Host->appWidth()/2 - img_Extruder.width() / 2, 6);
+        drawAnimatedBitmap(g, &img_ArrowDown, 65, -15, 65, -5, 0, 200, 0, 3500, MixType::EaseInEaseOut);
+        drawAnimatedBitmap(g, &img_ArrowUp, 42, 30, 42, 15, 0, 400, 0, 3500, MixType::EaseInEaseOut);
+        drawAnimatedBitmap(g, &img_ArrowIn, 18, 75, 42, 59, 1200, 2000, 1200, 2000, MixType::EaseInEaseOut); 
+        drawAnimatedBitmap(g, &img_ArrowIn, 18, 75, 42, 59, 2000, 2800, 2000, 4500, MixType::EaseInEaseOut);
+        drawAnimatedBitmap(g, &img_ArrowUp, 65, 0, 65, -10, 3500, 4100, 3500, 4500, MixType::EaseInEaseOut);
+        drawAnimatedBitmap(g, &img_ArrowDown, 42, 5, 42, 20, 3500, 4100, 3500, 4500, MixType::EaseInEaseOut);
+        // img_ArrowIn.Draw(g, 22, 65);
         int lx0 = 35, ly0 = 90;
         int lx1 = 75, ly1 = 63;
         if (millis()%animPeriod > 1200 && millis() % animPeriod < 4500)
             drawVThickLine(g, lx0, ly0, lx1, ly1, 3, eColors[filamentIndex]);
 
-        int y = g->height() - 22;
+        int y = Host->appHeight() - 22;
         int lineHeight = 9;
         int tSz = 12;
-        int x = g->width() / 4;
+        int x = Host->appWidth() / 4;
         g->fillTriangle(x, y + tSz / 2, x - tSz / 2, y - tSz / 2, x + tSz / 2, y - tSz / 2, TextColor);   
         centerString(g, "Continue", x, y + lineHeight + tSz / 2);
         //centerString(g, String(millis() % 5000).c_str(), x, y + lineHeight + tSz / 2);
-        x = (g->width() * 3) / 4;
+        x = (Host->appWidth() * 3) / 4;
         g->fillTriangle(x, y - tSz / 2, x - tSz / 2, y + tSz / 2, x + tSz / 2, y + tSz / 2, TextColor);     
         centerString(g, "Back", x, y + lineHeight + tSz / 2);
     }
@@ -183,17 +183,17 @@ void FilamentChangeStep::Paint(BufferedDisplay* g){
         int y = 2;
         if (action == FilamentChangeActionType::Load){
             // Warn about having an existing filament
-            loadBmps[filamentIndex]->Draw(g, g->width() / 2 - loadBmps[filamentIndex]->width() / 2, y);
+            loadBmps[filamentIndex]->Draw(g, Host->appWidth() / 2 - loadBmps[filamentIndex]->width() / 2, y);
             g->setFont();
-            y += (g->height() - loadBmps[filamentIndex]->height()) / 2 + loadBmps[filamentIndex]->height() - 5;
-            centerString(g, "Please wait...", g->width() / 2, y);
+            y += (Host->appHeight() - loadBmps[filamentIndex]->height()) / 2 + loadBmps[filamentIndex]->height() - 5;
+            centerString(g, "Please wait...", Host->appWidth() / 2, y);
         }
         else if (action == FilamentChangeActionType::Unload){
             // Warn about having an existing filament
-            unloadBmps[filamentIndex]->Draw(g, g->width() / 2 - unloadBmps[filamentIndex]->width() / 2, 2);
+            unloadBmps[filamentIndex]->Draw(g, Host->appWidth() / 2 - unloadBmps[filamentIndex]->width() / 2, 2);
             g->setFont();
-            y += (g->height() - loadBmps[filamentIndex]->height()) / 2 + loadBmps[filamentIndex]->height() - 5;
-            centerString(g, "Please wait...", g->width() / 2, y);
+            y += (Host->appHeight() - loadBmps[filamentIndex]->height()) / 2 + loadBmps[filamentIndex]->height() - 5;
+            centerString(g, "Please wait...", Host->appWidth() / 2, y);
         }
     }
     g->setFont();

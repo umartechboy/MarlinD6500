@@ -1,6 +1,6 @@
 #include "BedLevelStep.h"
 #include "..\..\Hardware\MarlinSpecific.h"
-#include "..\Bitmaps.h"
+#include "..\Images.h"
 #include <Fonts/FreeSans9pt7b.h>
 #include <Fonts/FreeSans12pt7b.h>
 #include "..\MenuApp.h"
@@ -8,7 +8,7 @@
 BedLevelStep::BedLevelStep(MenuHost* host):MenuStep(host)
 {
     TextColor = ST7735_WHITE;
-    Icon = &bmp_Tools;
+    Icon = &img_Tools;
     TickPeriod = 50;
 }
 
@@ -68,10 +68,10 @@ void BedLevelStep::Paint(BufferedDisplay* g){
     g->setTextColor(TextColor);
     if ((readTemp(0) < preHeatTemp || readTemp(1) < preHeatTemp) && !donePreHeating){        
         g->setFont(&FreeSans9pt7b);
-        centerString(g, "Heating up...", g->width() / 2, g->height() / 2 - 10);
+        centerString(g, "Heating up...", Host->appWidth() / 2, Host->appHeight() / 2 - 10);
         g->setFont();
         String tempStatus = String("(") + String(readTemp(0) * 0.5F + readTemp(1) * 0.5F, 0) + "/" + String(preHeatTemp, 0) + String(")");
-        centerString(g, tempStatus.c_str(), g->width() / 2, g->height() / 2 + 10);
+        centerString(g, tempStatus.c_str(), Host->appWidth() / 2, Host->appHeight() / 2 + 10);
     }
     else {
         donePreHeating = true; // latch preheat check
@@ -81,8 +81,8 @@ void BedLevelStep::Paint(BufferedDisplay* g){
         }
         if (checkABLComplete() && !checkABLFailed()){
             g->setFont(&FreeSans9pt7b);
-            centerString(g, "Leveling", g->width() / 2, g->height() / 2 - 10);
-            centerString(g, "Successful", g->width() / 2, g->height() / 2 + 10);
+            centerString(g, "Leveling", Host->appWidth() / 2, Host->appHeight() / 2 - 10);
+            centerString(g, "Successful", Host->appWidth() / 2, Host->appHeight() / 2 + 10);
             notifyLevelingDone();
         }
         else { // Going on or done with failure
@@ -127,14 +127,14 @@ void BedLevelStep::Paint(BufferedDisplay* g){
             }
             if (checkABLFailed()){
                 g->setFont(&FreeSans9pt7b);
-                centerString(g, "Leveling", g->width() / 2, g->height() / 2 - 10);
-                centerString(g, "Failed", g->width() / 2, g->height() / 2 + 10);
+                centerString(g, "Leveling", Host->appWidth() / 2, Host->appHeight() / 2 - 10);
+                centerString(g, "Failed", Host->appWidth() / 2, Host->appHeight() / 2 + 10);
                 notifyLevelingDone();
             }
             else{           
                 g->setFont();     
-                centerString(g, "Leveling build plate", g->width() / 2, g->height() / 2 - 8);
-                centerString(g, "Please wait...", g->width() / 2, g->height() / 2 + 8);
+                centerString(g, "Leveling build plate", Host->appWidth() / 2, Host->appHeight() / 2 - 8);
+                centerString(g, "Please wait...", Host->appWidth() / 2, Host->appHeight() / 2 + 8);
             }
         }
     }

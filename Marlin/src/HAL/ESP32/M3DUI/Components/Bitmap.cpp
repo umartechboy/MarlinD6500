@@ -1,7 +1,7 @@
 #include "Bitmap.h"
 
 
-Bitmap::Bitmap(const uint8_t* bitmapDataPGM, int16_t xOffset, int16_t yOffset):data((byte*)bitmapDataPGM){
+Image::Image(const uint8_t* bitmapDataPGM, int16_t xOffset, int16_t yOffset):data((byte*)bitmapDataPGM){
     this->xo = xOffset;
     this->yo = yOffset;
     if (data == 0)
@@ -13,21 +13,21 @@ Bitmap::Bitmap(const uint8_t* bitmapDataPGM, int16_t xOffset, int16_t yOffset):d
         pallete[pi] = color;
     }
 }
-uint8_t Bitmap::width(){
+uint8_t Image::width(){
     if (data)
         return pgm_read_byte(data);
     return 0;
 }
-uint8_t Bitmap::height(){
+uint8_t Image::height(){
     if (data)
         return pgm_read_byte(data + 1);
     return 0;
 
 }
-void Bitmap::DrawCentered(BufferedDisplay* g, int x, int y){
+void Image::DrawCentered(BufferedDisplay* g, int x, int y){
     Draw(g, x - width() / 2 - xo, y - height() / 2 - yo, false, true);
 }
-void Bitmap::Draw(BufferedDisplay* g, int x, int y, bool invertOffset, bool useDisplayOffset){
+void Image::Draw(BufferedDisplay* g, int x, int y, bool invertOffset, bool useDisplayOffset){
     int w = width();
     int h = height();
     x += invertOffset?-xo:xo;
@@ -56,9 +56,9 @@ void Bitmap::Draw(BufferedDisplay* g, int x, int y, bool invertOffset, bool useD
     g->yOffset = yofBkp;
     g->SetOpacity(opBkp);
 }
-int16_t Bitmap::xOffset(){
+int16_t Image::xOffset(){
     return xo;
 }
-int16_t Bitmap::yOffset(){
+int16_t Image::yOffset(){
     return yo;
 }

@@ -1,12 +1,12 @@
 #include "OptionsStep.h"
-#include "..\Bitmaps.h"
+#include "..\Images.h"
 #include "..\MenuApp.h"
 
 OptionsStep::OptionsStep(MenuHost* host):MenuStep(host) {
     ButtonColor = Charcoal;
     BackColor = Charcoal;
     TextColor = ST7735_WHITE;            
-    Icon = &bmp_Utilities;
+    Icon = &img_Utilities;
 }
 void OptionsStep::Paint(BufferedDisplay* g) {
     
@@ -20,8 +20,8 @@ void OptionsStep::Paint(BufferedDisplay* g) {
     uint8_t opBkp = g->GetOpacity();
     g->SetOpacity(15);
     for (int i =0; i < 3; i++){
-        g->drawLine(lineMargin + i * 3, g->height() / 2, g->width() - lineMargin - i * 3, g->height() / 2, TextColor);
-        g->drawLine(g->width() / 2, lineMargin + i * 3, g->height() / 2, g->width() - lineMargin - i * 3, TextColor);
+        g->drawLine(lineMargin + i * 3, Host->appHeight() / 2, Host->appWidth() - lineMargin - i * 3, Host->appHeight() / 2, TextColor);
+        g->drawLine(Host->appWidth() / 2, lineMargin + i * 3, Host->appHeight() / 2, Host->appWidth() - lineMargin - i * 3, TextColor);
     }
 
     // Draw the four icons
@@ -31,11 +31,11 @@ void OptionsStep::Paint(BufferedDisplay* g) {
     // Info
     
     g->SetOpacity(20); // disabled option
-    bmp_Settings.DrawCentered(g,        (g->width() * 3) / 4, (g->height() * 1) / 4);
+    img_Settings.DrawCentered(g,        (Host->appWidth() * 3) / 4, (Host->appHeight() * 1) / 4);
     g->SetOpacity(100);
-    bmp_ChangeFilament.DrawCentered(g,  (g->width() * 1) / 4, (g->height() * 1) / 4);
-    bmp_M3D.DrawCentered(g,             (g->width() * 1) / 4, (g->height() * 3) / 4);
-    bmp_BedLevel.DrawCentered(g,           (g->width() * 3) / 4, (g->height() * 3) / 4);
+    img_ChangeFilament.DrawCentered(g,  (Host->appWidth() * 1) / 4, (Host->appHeight() * 1) / 4);
+    img_M3D.DrawCentered(g,             (Host->appWidth() * 1) / 4, (Host->appHeight() * 3) / 4);
+    img_BedLevel.DrawCentered(g,           (Host->appWidth() * 3) / 4, (Host->appHeight() * 3) / 4);
     g->SetOpacity(opBkp);
 }
     

@@ -1,5 +1,5 @@
 #include "IdleScreenStep.h"
-#include "..\Bitmaps.h"
+#include "..\Images.h"
 #include "../../../../../module/printcounter.h"
 #include "../../../../../sd/cardreader.h"
 #include <Fonts/FreeSans12pt7b.h>
@@ -11,7 +11,7 @@ IdleScreenStep::IdleScreenStep(MenuHost* host):MenuStep(host) {
     ButtonColor = DarkRed;
     BackColor = DarkRed;
     TextColor = ST7735_WHITE;            
-    Icon = &bmp_Home;
+    Icon = &img_Home;
     TickPeriod = 50;
 }
 void IdleScreenStep::Tick() {
@@ -25,28 +25,28 @@ void IdleScreenStep::Paint(BufferedDisplay* g) {
     g->setTextColor(TextColor);
     if (printStatus == PrintStatus::PrintToResume){
         g->setFont(&FreeSans9pt7b);
-        centerString(g, "Do you want", g->width() / 2, g->height() / 2 - 50);
-        centerString(g, "to resume", g->width() / 2, g->height() / 2 - 30);
-        centerString(g, "the print?", g->width() / 2, g->height() / 2 - 10);
+        centerString(g, "Do you want", Host->appWidth() / 2, Host->appHeight() / 2 - 50);
+        centerString(g, "to resume", Host->appWidth() / 2, Host->appHeight() / 2 - 30);
+        centerString(g, "the print?", Host->appWidth() / 2, Host->appHeight() / 2 - 10);
         g->setFont(&FreeSans12pt7b);
-        centerString(g, "Yes", g->width() / 4, g->height() / 2 + 22);
-        centerString(g, "No", (g->width() * 3) / 4, g->height() / 2 + 22);
+        centerString(g, "Yes", Host->appWidth() / 4, Host->appHeight() / 2 + 22);
+        centerString(g, "No", (Host->appWidth() * 3) / 4, Host->appHeight() / 2 + 22);
         int tSz = 12;
         g->fillTriangle(
-            g->width() / 4 - tSz / 2, g->height() / 2 + 49, 
-            g->width() / 4 + tSz / 2, g->height() / 2 + 49 - tSz / 2, 
-            g->width() / 4 + tSz / 2, g->height() / 2 + 49 + tSz / 2, 
+            Host->appWidth() / 4 - tSz / 2, Host->appHeight() / 2 + 49, 
+            Host->appWidth() / 4 + tSz / 2, Host->appHeight() / 2 + 49 - tSz / 2, 
+            Host->appWidth() / 4 + tSz / 2, Host->appHeight() / 2 + 49 + tSz / 2, 
             TextColor);
         g->fillTriangle(
-            (g->width() * 3) / 4 + tSz / 2, g->height() / 2 + 49, 
-            (g->width() * 3) / 4 - tSz / 2, g->height() / 2 + 49 - tSz / 2, 
-            (g->width() * 3) / 4 - tSz / 2, g->height() / 2 + 49 + tSz / 2, 
+            (Host->appWidth() * 3) / 4 + tSz / 2, Host->appHeight() / 2 + 49, 
+            (Host->appWidth() * 3) / 4 - tSz / 2, Host->appHeight() / 2 + 49 - tSz / 2, 
+            (Host->appWidth() * 3) / 4 - tSz / 2, Host->appHeight() / 2 + 49 + tSz / 2, 
             TextColor);
     }
     else {
         if(printStatus == PrintStatus::Idle){
             g->setFont(&FreeSans12pt7b);
-            centerString(g, "Ready!", g->width() / 2, g->height() / 2);
+            centerString(g, "Ready!", Host->appWidth() / 2, Host->appHeight() / 2);
         }
         else{        
             if (card.isPrinting())
@@ -56,39 +56,39 @@ void IdleScreenStep::Paint(BufferedDisplay* g) {
             else {// Must have ended
                 centerLeftString(g, "All Done!", 2, 10);
             }
-            centerRightString(g, (String((print_job_timer.getStats().filamentUsed - materialAtStart) / 1000, 3) + String("m")).c_str(), g->width() - 2, 10);
+            centerRightString(g, (String((print_job_timer.getStats().filamentUsed - materialAtStart) / 1000, 3) + String("m")).c_str(), Host->appWidth() - 2, 10);
             
             int pbh = 8;
             g->SetOpacity(50);
             float pcCommplete = card.percentDone();
             //pcCommplete = 24.4;
-            g->drawRoundRect(1, g->height() / 2 - 5, g->width() - 2, pbh, pbh / 2, TextColor);
+            g->drawRoundRect(1, Host->appHeight() / 2 - 5, Host->appWidth() - 2, pbh, pbh / 2, TextColor);
             g->SetOpacity(100);
-            g->fillRoundRect(1, g->height() / 2 - 5, ((g->width() - 2) * pcCommplete) / 100, pbh, pbh / 2, TextColor);    
+            g->fillRoundRect(1, Host->appHeight() / 2 - 5, ((Host->appWidth() - 2) * pcCommplete) / 100, pbh, pbh / 2, TextColor);    
             g->setFont();
-            centerString(g, (String(pcCommplete, 1) + String("%")).c_str(), g->width() / 2, g->height() / 2 - 14);
+            centerString(g, (String(pcCommplete, 1) + String("%")).c_str(), Host->appWidth() / 2, Host->appHeight() / 2 - 14);
             g->setFont();
-            centerString(g, fileName.substring(1, fileName.length() - 6).c_str(), g->width() / 2, g->height() / 2 + pbh + 5);
+            centerString(g, fileName.substring(1, fileName.length() - 6).c_str(), Host->appWidth() / 2, Host->appHeight() / 2 + pbh + 5);
         }
         uint8_t opBkp = g->GetOpacity();
         uint8_t lineMargin = 10;
         uint8_t tempSectionHeight = 20;
         g->SetOpacity(10);
         for (int i =0; i < 5; i++)
-            g->drawLine(lineMargin + i * 2, g->height() - tempSectionHeight, g->width() - lineMargin - i * 2, g->height() - tempSectionHeight, TextColor);
+            g->drawLine(lineMargin + i * 2, Host->appHeight() - tempSectionHeight, Host->appWidth() - lineMargin - i * 2, Host->appHeight() - tempSectionHeight, TextColor);
         g->SetOpacity(opBkp);
-        g->drawLine(g->width() / 2, g->height() - tempSectionHeight, g->width() / 2, g->height(), g->readPixel(g->width() / 2, g->height() - tempSectionHeight));
+        g->drawLine(Host->appWidth() / 2, Host->appHeight() - tempSectionHeight, Host->appWidth() / 2, Host->appHeight(), g->readPixel(Host->appWidth() / 2, Host->appHeight() - tempSectionHeight));
         
         g->setFont();
         String temp1 = String(readTemp1(), 1) + " C";
         String temp2 = String(readTemp2(), 1) + " C";
         int16_t tw, th;
-        centerString(g, temp1.c_str(), g->width() / 4, g->height() + 1 - tempSectionHeight / 2, &tw, &th);
-        g->drawCircle(g->width() / 4 + tw / 2 - 9, g->height() + 1 - tempSectionHeight + 5, 1, TextColor);
-        centerString(g, temp2.c_str(), (3 * g->width()) / 4, g->height() + 1 - tempSectionHeight / 2, &tw, &th);
-        g->drawCircle((3 * g->width()) / 4 + tw / 2 - 9, g->height() + 1 - tempSectionHeight + 5, 1, TextColor);
-        g->fillRect(0, g->height() - 2, g->width() / 2, 2, e0Color);
-        g->fillRect(g->width() / 2 + 1, g->height() - 2, g->width() / 2, 2, e1Color);
+        centerString(g, temp1.c_str(), Host->appWidth() / 4, Host->appHeight() + 1 - tempSectionHeight / 2, &tw, &th);
+        g->drawCircle(Host->appWidth() / 4 + tw / 2 - 9, Host->appHeight() + 1 - tempSectionHeight + 5, 1, TextColor);
+        centerString(g, temp2.c_str(), (3 * Host->appWidth()) / 4, Host->appHeight() + 1 - tempSectionHeight / 2, &tw, &th);
+        g->drawCircle((3 * Host->appWidth()) / 4 + tw / 2 - 9, Host->appHeight() + 1 - tempSectionHeight + 5, 1, TextColor);
+        g->fillRect(0, Host->appHeight() - 2, Host->appWidth() / 2, 2, e0Color);
+        g->fillRect(Host->appWidth() / 2 + 1, Host->appHeight() - 2, Host->appWidth() / 2, 2, e1Color);
     }
 }
 

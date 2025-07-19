@@ -1,7 +1,7 @@
 #include "FilePreviewStep.h"
 #include <SD.h>
 #include "..\MenuApp.h"
-#include "..\Bitmaps.h"
+#include "..\Images.h"
 #include "..\MenuApp.h"
 #include "..\..\..\..\..\sd\cardreader.h"
 
@@ -35,7 +35,7 @@ FilePreviewStep::FilePreviewStep(MenuHost* host):MenuStep(host) {
     ButtonColor = DarkPurple;
     BackColor = DarkPurple;
     TextColor = ST7735_WHITE;
-    Icon = &bmp_PrintPreview;
+    Icon = &img_PrintPreview;
 }
 void FilePreviewStep::Paint(BufferedDisplay* g) {
     //Serial.printf("File Preview Step Paint called @ %d, %d\n", g->xOffset, g->yOffset);
@@ -46,13 +46,13 @@ void FilePreviewStep::Paint(BufferedDisplay* g) {
     int lineHeight = 12; 
     if (pngParams.thumbnailData.bytesDecoded){
         pngParams.g = g;
-        pngParams.x = g->width() / 2;
+        pngParams.x = Host->appWidth() / 2;
         pngParams.y = y;
         png.decode((void*)(&pngParams), 0);
         y += 60; // can't rely on PNG data.
     }
     else{
-        centerString(g, "No file preivew", g->width() / 2, lineHeight); // some margin at the top too
+        centerString(g, "No file preivew", Host->appWidth() / 2, lineHeight); // some margin at the top too
         y += lineHeight / 2;
     }
     uint8_t opBkp = g->GetOpacity();
@@ -60,14 +60,14 @@ void FilePreviewStep::Paint(BufferedDisplay* g) {
     g->SetOpacity(10);
     y += 4;
     for (int i =0; i < 5; i++)
-        g->drawLine(lineMargin + i * 2, y, g->width() - lineMargin - i * 2, y, TextColor);
+        g->drawLine(lineMargin + i * 2, y, Host->appWidth() - lineMargin - i * 2, y, TextColor);
     y += lineHeight / 2 + 1;
     int divider = 55;
     int margin = 2;
     g->setFont();
     g->setTextColor(TextColor);
     g->SetOpacity(100);
-    centerString(g, (idleScreenStep.fileName.substring(1, idleScreenStep.fileName.length() - 6)).c_str(), g->width() / 2, y);
+    centerString(g, (idleScreenStep.fileName.substring(1, idleScreenStep.fileName.length() - 6)).c_str(), Host->appWidth() / 2, y);
     y += lineHeight;
 
     if (estimatedPrintingTime.length() > 0){
