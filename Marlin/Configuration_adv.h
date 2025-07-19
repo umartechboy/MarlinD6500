@@ -558,7 +558,7 @@
 //#define FAN_KICKSTART_TIME 100
 
 // Some coolers may require a non-zero "off" state.
-//#define FAN_OFF_PWM  1
+#define FAN_OFF_PWM  100
 
 /**
  * PWM Fan Scaling
@@ -572,7 +572,7 @@
  *
  * Define one or both of these to override the default 0-255 range.
  */
-#define FAN_MIN_PWM 0
+#define FAN_MIN_PWM 100
 //#define FAN_MAX_PWM 128
 
 /**
@@ -3797,7 +3797,7 @@
  *
  * Execute certain G-code commands immediately after power-on.
  */
-#define STARTUP_COMMANDS "M106 S30;"
+#define STARTUP_COMMANDS ";"
 
 /**
  * G-code Macros

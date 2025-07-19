@@ -146,6 +146,8 @@ class MenuHost{
     void ResetAnimationProgress(long duration = 200);
     void IncrementAnimationProgress();
     void DrawButton(int index, MenuStep* step, BufferedDisplay* g, float progress);
+    int appHeight();
+    int appWidth();
     // Top left
     void DrawButton1(MenuStep* step, BufferedDisplay* g, float progress);
     // Bottom Right
