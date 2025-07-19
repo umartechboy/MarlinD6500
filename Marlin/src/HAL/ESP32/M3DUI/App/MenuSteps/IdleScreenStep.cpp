@@ -70,25 +70,30 @@ void IdleScreenStep::Paint(BufferedDisplay* g) {
             g->setFont();
             centerString(g, fileName.substring(1, fileName.length() - 6).c_str(), Host->appWidth() / 2, Host->appHeight() / 2 + pbh + 5);
         }
-        uint8_t opBkp = g->GetOpacity();
-        uint8_t lineMargin = 10;
-        uint8_t tempSectionHeight = 20;
-        g->SetOpacity(10);
-        for (int i =0; i < 5; i++)
-            g->drawLine(lineMargin + i * 2, Host->appHeight() - tempSectionHeight, Host->appWidth() - lineMargin - i * 2, Host->appHeight() - tempSectionHeight, TextColor);
-        g->SetOpacity(opBkp);
-        g->drawLine(Host->appWidth() / 2, Host->appHeight() - tempSectionHeight, Host->appWidth() / 2, Host->appHeight(), g->readPixel(Host->appWidth() / 2, Host->appHeight() - tempSectionHeight));
-        
-        g->setFont();
-        String temp1 = String(readTemp1(), 1) + " C";
-        String temp2 = String(readTemp2(), 1) + " C";
-        int16_t tw, th;
-        centerString(g, temp1.c_str(), Host->appWidth() / 4, Host->appHeight() + 1 - tempSectionHeight / 2, &tw, &th);
-        g->drawCircle(Host->appWidth() / 4 + tw / 2 - 9, Host->appHeight() + 1 - tempSectionHeight + 5, 1, TextColor);
-        centerString(g, temp2.c_str(), (3 * Host->appWidth()) / 4, Host->appHeight() + 1 - tempSectionHeight / 2, &tw, &th);
-        g->drawCircle((3 * Host->appWidth()) / 4 + tw / 2 - 9, Host->appHeight() + 1 - tempSectionHeight + 5, 1, TextColor);
-        g->fillRect(0, Host->appHeight() - 2, Host->appWidth() / 2, 2, e0Color);
-        g->fillRect(Host->appWidth() / 2 + 1, Host->appHeight() - 2, Host->appWidth() / 2, 2, e1Color);
+        if (Host->Retro){
+            retro_singleMenuOption(g, Host, &img_RetroEnter, "Options", TextColor);
+        }
+        else{            
+            uint8_t opBkp = g->GetOpacity();
+            uint8_t lineMargin = 10;
+            uint8_t tempSectionHeight = 20;
+            g->SetOpacity(10);
+            for (int i =0; i < 5; i++)
+                g->drawLine(lineMargin + i * 2, Host->appHeight() - tempSectionHeight, Host->appWidth() - lineMargin - i * 2, Host->appHeight() - tempSectionHeight, TextColor);
+            g->SetOpacity(opBkp);
+            g->drawLine(Host->appWidth() / 2, Host->appHeight() - tempSectionHeight, Host->appWidth() / 2, Host->appHeight(), g->readPixel(Host->appWidth() / 2, Host->appHeight() - tempSectionHeight));            
+            
+            g->setFont();
+            String temp1 = String(readTemp1(), 1) + " C";
+            String temp2 = String(readTemp2(), 1) + " C";
+            int16_t tw, th;
+            centerString(g, temp1.c_str(), Host->appWidth() / 4, Host->appHeight() + 1 - tempSectionHeight / 2, &tw, &th);
+            g->drawCircle(Host->appWidth() / 4 + tw / 2 - 9, Host->appHeight() + 1 - tempSectionHeight + 5, 1, TextColor);
+            centerString(g, temp2.c_str(), (3 * Host->appWidth()) / 4, Host->appHeight() + 1 - tempSectionHeight / 2, &tw, &th);
+            g->drawCircle((3 * Host->appWidth()) / 4 + tw / 2 - 9, Host->appHeight() + 1 - tempSectionHeight + 5, 1, TextColor);
+            g->fillRect(0, Host->appHeight() - 2, Host->appWidth() / 2, 2, e0Color);
+            g->fillRect(Host->appWidth() / 2 + 1, Host->appHeight() - 2, Host->appWidth() / 2, 2, e1Color);
+        }
     }
 }
 
