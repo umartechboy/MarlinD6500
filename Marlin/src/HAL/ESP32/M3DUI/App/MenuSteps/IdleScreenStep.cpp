@@ -17,6 +17,10 @@ IdleScreenStep::IdleScreenStep(MenuHost* host):MenuStep(host) {
 void IdleScreenStep::Tick() {
     NeedsRedraw = true;
 }
+void IdleScreenStep::PaintRetroTitle(BufferedDisplay* g) {
+}
+void IdleScreenStep::PaintRetroOptionsBar(BufferedDisplay* g) {
+}
 void IdleScreenStep::Paint(BufferedDisplay* g) {
     
     //Serial.printf("Idle Screen Step Paint called @ %d, %d\n", g->xOffset, g->yOffset);

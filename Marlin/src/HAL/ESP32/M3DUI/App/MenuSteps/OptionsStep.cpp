@@ -31,7 +31,7 @@ void OptionsStep::Paint(BufferedDisplay* g) {
     // Info
     
     g->SetOpacity(20); // disabled option
-    img_Settings.DrawCentered(g,        (Host->appWidth() * 3) / 4, (Host->appHeight() * 1) / 4);
+    img_Options.DrawCentered(g,        (Host->appWidth() * 3) / 4, (Host->appHeight() * 1) / 4);
     g->SetOpacity(100);
     img_ChangeFilament.DrawCentered(g,  (Host->appWidth() * 1) / 4, (Host->appHeight() * 1) / 4);
     img_M3D.DrawCentered(g,             (Host->appWidth() * 1) / 4, (Host->appHeight() * 3) / 4);

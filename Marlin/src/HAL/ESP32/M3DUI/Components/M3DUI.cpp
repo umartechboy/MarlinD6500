@@ -485,7 +485,13 @@ void MenuHost::Paint(BufferedDisplay* bTft){
                     //Serial.println("In step");
                     CurrentStep->Paint(bTft);
                     // Draw the overlay buttons and hints in normal mode
-                    if(!Retro){
+                    if(Retro){
+                        // Retro shows the overlay options hint and screen
+                        bTft->yOffset = 0;
+                        CurrentStep->PaintRetroTitle(bTft);
+                        CurrentStep->PaintRetroOptionsBar(bTft);
+                    }
+                    else {
                         if (stepAnimationStage == StepAnimationStage::InOverlay)
                             DrawButton3(CurrentStep, bTft, 1);
                         if (CurrentStep->NextStep){

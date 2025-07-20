@@ -5,8 +5,8 @@
 #include <Fonts/FreeSans12pt7b.h>
 #include <Preferences.h>
 
-static Image* loadBmps[] = {&img_Load0Filament, &img_Load1Filament};
-static Image* unloadBmps[] = {&img_Unload0Filament, &img_Unload1Filament};
+static Image* loadBmps[] = {&img_Load0, &img_Load1};
+static Image* unloadBmps[] = {&img_Unload0, &img_Unload1};
 FilamentChangeStep::FilamentChangeStep(MenuHost* host, int index):MenuStep(host)
 {
     filamentIndex = index;

@@ -135,8 +135,11 @@ class MenuStep {
         Color BackColor;
         Color TextColor;
         Image* Icon = 0;
+        Image* RetroIcon = 0;
         MenuStep(MenuHost* host);
         virtual void Paint(BufferedDisplay* g) {}
+        virtual void PaintRetroTitle(BufferedDisplay* g) {}
+        virtual void PaintRetroOptionsBar(BufferedDisplay* g) {}
         virtual void HandleKeyUp(Keys key) {}
         virtual void IncrementValue() {}
         virtual void DecrementValue() {}
