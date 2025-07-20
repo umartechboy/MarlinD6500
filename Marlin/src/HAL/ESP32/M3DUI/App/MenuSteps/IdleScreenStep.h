@@ -23,7 +23,6 @@ public:
     void LoadComplete() override;
     void UnloadBegin() override;
     void FocusChanged(StepAnimationStage stage) override;
-    void PaintRetroTitle(BufferedDisplay* g) override;
-    void PaintRetroOptionsBar(BufferedDisplay* g) override;
+    MenuStep* GetPreviousStep() override;
 };
 #endif

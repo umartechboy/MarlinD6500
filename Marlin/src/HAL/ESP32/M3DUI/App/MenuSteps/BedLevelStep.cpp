@@ -10,6 +10,7 @@ BedLevelStep::BedLevelStep(MenuHost* host):MenuStep(host)
     TextColor = ST7735_WHITE;
     Icon = &img_Tools;
     TickPeriod = 50;
+    NextStep = &toolsMenuStep;
 }
 
 BedLevelStep::~BedLevelStep()

@@ -28,7 +28,6 @@ extern Image img_RetroEnter;
 extern Image img_RetroHome;
 extern Image img_RetroHorizontal;
 extern Image img_RetroLeft;
-extern Image img_RetroM3D;
 extern Image img_RetroOptions;
 extern Image img_RetroPause;
 extern Image img_RetroPlay;
@@ -45,5 +44,9 @@ extern Image img_Tools;
 extern Image img_Unload0;
 extern Image img_Unload1;
 extern Image img_Utilities;
+extern Image img_RetroPrintPosition;
+extern Image img_RetroM3D;
+extern Image img_RetroRedM3D;
+extern Image img_RetroOptionsKey;
 
 #endif

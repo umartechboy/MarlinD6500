@@ -11,25 +11,11 @@ FilamentChangeStep filament0ChangeStep(&menuHost, 0);
 FilamentChangeStep filament1ChangeStep(&menuHost, 1);
 PrinterInfoStep printerInfoStep(&menuHost);
 BedLevelStep bedLevelStep(&menuHost);
+RetroMainMenuStep retroMainMenuStep(&menuHost);
 
 void BeginApp(){    
   SERIAL_IMPL.println("Goto menu pushed");
   menuHost.GotoStepFromNull(&idleScreenStep);
 
-  idleScreenStep.NextStep = &sdMenuStep;
-  //idleScreenStep.RetroOptionsStep = 
-  idleScreenStep.PreviousStep = &toolsMenuStep;
-
   // inverted next/back in menus behind idle because idle is at the center
-  toolsMenuStep.NextStep = &idleScreenStep; 
-  materialsMenuStep.NextStep = &toolsMenuStep;
-  printerInfoStep.NextStep = &toolsMenuStep;
-  bedLevelStep.NextStep = &toolsMenuStep;
-
-  sdMenuStep.PreviousStep = &idleScreenStep;
-  sdMenuStep.NextStep = &fileOverViewStep; 
-  fileOverViewStep.PreviousStep = &sdMenuStep;
-  fileOverViewStep.NextStep = &printPositionStep;
-  printPositionStep.PreviousStep = &fileOverViewStep;
-  printPositionStep.NextStep = &idleScreenStep; // If it gets triggered, the menu locks the screen
 }

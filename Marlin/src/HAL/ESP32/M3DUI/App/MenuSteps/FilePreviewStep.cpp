@@ -35,7 +35,9 @@ FilePreviewStep::FilePreviewStep(MenuHost* host):MenuStep(host) {
     ButtonColor = DarkPurple;
     BackColor = DarkPurple;
     TextColor = ST7735_WHITE;
-    Icon = &img_PrintPreview;
+    Icon = &img_PrintPreview;    
+    PreviousStep = &sdMenuStep;
+    NextStep = &printPositionStep;
 }
 void FilePreviewStep::Paint(BufferedDisplay* g) {
     //Serial.printf("File Preview Step Paint called @ %d, %d\n", g->xOffset, g->yOffset);

@@ -6,7 +6,8 @@ MaterialsStep::MaterialsStep(MenuHost* host):MenuStep(host) {
     ButtonColor = ST7735_WHITE;
     BackColor = ST7735_WHITE;
     TextColor = ST7735_BLACK;            
-    Icon = &img_ChangeFilament;
+    Icon = &img_ChangeFilament;    
+    NextStep = &toolsMenuStep;
 
     options = new VerticalList(Host, 24, 128);
 

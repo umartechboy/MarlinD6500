@@ -10,12 +10,15 @@ void centerStringWithImage(BufferedDisplay* g, Image* image, const char* str,  i
     int padding = 2;
     g->setTextWrap(false);
     g->getTextBounds(str, x, y, &x1, &y1, &w, &h);
-    w += padding + image->width();
+    int imgWidth = 0;
+    if (image) imgWidth = image->width();
+    w += padding + imgWidth;
     int16_t errorInX = x1 - x;
     int16_t errorInY = y1 - y;
-    g->setCursor(x - w / 2 - errorInX + image->width() + padding, y - h / 2 - errorInY);
+    g->setCursor(x - w / 2 - errorInX + imgWidth + padding, y - h / 2 - errorInY);
     g->print(str);
-    image->Draw(g, x - w / 2, y - image->height() / 2, false, true);
+    if (image)
+        image->Draw(g, x - w / 2, y - image->height() / 2, false, true);
     if (wOut)
         *wOut = w;
     if (hOut)
@@ -145,19 +148,53 @@ void centerLeftString(BufferedDisplay* g, const char* str,  int16_t x, int16_t y
         *hOut = h;
 }
 
-int retroNavSectionHeight = 10;
-void retro_singleMenuOption(BufferedDisplay* g, MenuHost* host, Image* icon, const char* text, Color color){           
+int retroNavSectionHeight = 18;
+int retroTitleSectionHeight = 16;
+void retro_optionsBar(BufferedDisplay* g, MenuHost* host, int y, Image* previousIcon, Image* icon, const char* text, Image* nextIcon, Color color){           
     uint8_t opBkp = g->GetOpacity();
     g->setFont();
     uint8_t lineMargin = 10;
     g->SetOpacity(10);
     for (int i =0; i < 5; i++)
-        g->drawLine(lineMargin + i * 2, g->height() - retroNavSectionHeight - 6, host->appWidth() - lineMargin - i * 2 - 6, g->height() - retroNavSectionHeight - 4, color);
+        g->drawLine(lineMargin + i * 2, y, host->appWidth() - lineMargin - i * 2 - 6, y, color);
+    g->SetOpacity(100);
+    int iconSpaceLeft = 0;
+    int iconSpaceRight = 0;
+    int imgPad = 2;
+    if (previousIcon){
+        previousIcon->Draw(g, imgPad, y + retroNavSectionHeight / 2 - previousIcon->height() / 2, false, true);
+        g->SetOpacity(20);
+        g->drawLine(imgPad + previousIcon->width() + 1, y, imgPad + previousIcon->width() + 1, y + retroNavSectionHeight, color);        
+        g->SetOpacity(100);
+        iconSpaceLeft += previousIcon->width() + imgPad * 2;
+        
+    }
+    if (nextIcon){
+        nextIcon->Draw(g, g->width() - imgPad * 2 - nextIcon->width(), y + retroNavSectionHeight / 2 - nextIcon->height() / 2, false, true);
+        g->SetOpacity(20);
+        g->drawLine(g->width() - imgPad - 1 - nextIcon->width(), y, g->width() - imgPad - 1 - nextIcon->width(), y + retroNavSectionHeight, color);        
+        g->SetOpacity(100);
+        iconSpaceRight += nextIcon->width() + imgPad * 2;
+    }
+    g->setTextColor(color);
+    centerStringWithImage(g, icon, text, iconSpaceLeft + (g->width() / 2 - iconSpaceLeft - iconSpaceRight), y + retroNavSectionHeight / 2);
     g->SetOpacity(opBkp);
+}
+void retro_titleBar(BufferedDisplay* g, MenuHost* host, int y, Image* icon, const char* text, Color color){              
+    uint8_t opBkp = g->GetOpacity();
+    g->setFont();
+    uint8_t lineMargin = 10;
+    g->SetOpacity(10);
+    for (int i = 0; i < 5; i++)
+        g->drawLine(lineMargin + i * 2, y + retroTitleSectionHeight, host->appWidth() - lineMargin - i * 2 - 6, y + retroTitleSectionHeight, color);
+    g->SetOpacity(100);
     //g->drawLine(host->appWidth() / 2, host->appHeight() - tempSectionHeight, host->appWidth() / 2, host->appHeight(), g->readPixel(host->appWidth() / 2, host->appHeight() - tempSectionHeight));            
-    centerStringWithImage(g, icon, text, g->width() / 2, g->height() - 2 - retroNavSectionHeight / 2);
+    g->setTextColor(color);
+    centerStringWithImage(g, icon, text, g->width() / 2, y + retroTitleSectionHeight / 2);
+    g->SetOpacity(opBkp);
 }
 
+// Zero Transitions from f1 to f2
 float MixFloats(float f1, float f2, float p, MixType mt)
 {
     simplifyMixType(p, mt);

@@ -8,6 +8,8 @@ PrintPositionStep::PrintPositionStep(MenuHost* host):MenuStep(host) {
     BackColor = DarkPurple;
     TextColor = ST7735_WHITE;
     Icon = &img_MovePrint;
+    PreviousStep = &fileOverViewStep;
+    NextStep = &idleScreenStep; // If it gets triggered, the menu locks the screen
 }
 int PrintPositionStep::scaleX(int v) {
     return round((127.0F * v) / (float)bedWidth);

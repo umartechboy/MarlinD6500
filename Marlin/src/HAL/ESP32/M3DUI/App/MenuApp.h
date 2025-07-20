@@ -1,7 +1,7 @@
 #ifndef __MENU_APP__
 #define __MENU_APP__
 
-#include "..\Components\M3DUI.h" // For the host
+#include "..\Components\M3DUI.h" // For the host and components
 #include "MenuSteps\PrintPositionStep.h"
 #include "MenuSteps\FilePreviewStep.h"
 #include "MenuSteps\IdleScreenStep.h"
@@ -11,6 +11,7 @@
 #include "MenuSteps\FilamentChange.h"
 #include "MenuSteps\PrinterInfoStep.h"
 #include "MenuSteps\BedLevelStep.h"
+#include "MenuSteps\RetroMainMenu.h"
 
 extern MenuHost menuHost;
 extern FilePreviewStep fileOverViewStep;
@@ -23,6 +24,7 @@ extern FilamentChangeStep filament0ChangeStep;
 extern FilamentChangeStep filament1ChangeStep;
 extern PrinterInfoStep printerInfoStep;
 extern BedLevelStep bedLevelStep;
+extern RetroMainMenuStep retroMainMenuStep;
 
 void BeginApp();
 #ifdef __MARLIN_FIRMWARE__

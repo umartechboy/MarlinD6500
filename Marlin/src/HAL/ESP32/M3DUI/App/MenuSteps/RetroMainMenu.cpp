@@ -6,6 +6,9 @@ RetroMainMenuStep::RetroMainMenuStep(MenuHost* host):MenuStep(host) {
     ButtonColor = DarkPaleYellow;
     BackColor = DarkPaleYellow;
     TextColor = ST7735_BLACK;
+    Title = "Menu";
+    RetroIcon = &img_RetroOptions;
+    PreviousStep = &idleScreenStep;
     Icon = &img_SD;
     TickPeriod = 50;
     list = new VerticalList(Host, 14, 128, "No SD Card");

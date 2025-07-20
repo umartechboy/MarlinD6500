@@ -5,6 +5,7 @@
 #include "Fonts\FreeMono9pt7b.h"
 #include "..\..\..\..\..\module\printcounter.h"
 #include <WiFi.h>
+#include "..\MenuApp.h"
 
 PrinterInfoStep::PrinterInfoStep(MenuHost* host):MenuStep(host)
 {
@@ -12,6 +13,7 @@ PrinterInfoStep::PrinterInfoStep(MenuHost* host):MenuStep(host)
     BackColor = DarkRed;
     Icon = &img_M3D;
     TickPeriod = 1000;
+    NextStep = &toolsMenuStep;
 }
 #define printInfoPair(a, b) { g->SetOpacity(60); centerRightString(g, (a), div - px, y); g->SetOpacity(100); centerLeftString(g, (b), div + px, y); y += 11; }
 

@@ -11,15 +11,22 @@ IdleScreenStep::IdleScreenStep(MenuHost* host):MenuStep(host) {
     ButtonColor = DarkRed;
     BackColor = DarkRed;
     TextColor = ST7735_WHITE;            
+    Title = "M3D Enabler";
+    RetroIcon = &img_RetroM3D;
+    RetroOptionsStep = &retroMainMenuStep;    
+    NextStep = &sdMenuStep;
+    PreviousStep = &toolsMenuStep;
     Icon = &img_Home;
     TickPeriod = 50;
 }
+MenuStep* IdleScreenStep::GetPreviousStep(){
+    if (Host->Retro)
+        return 0;
+    else return PreviousStep;
+
+}
 void IdleScreenStep::Tick() {
     NeedsRedraw = true;
-}
-void IdleScreenStep::PaintRetroTitle(BufferedDisplay* g) {
-}
-void IdleScreenStep::PaintRetroOptionsBar(BufferedDisplay* g) {
 }
 void IdleScreenStep::Paint(BufferedDisplay* g) {
     
@@ -75,7 +82,6 @@ void IdleScreenStep::Paint(BufferedDisplay* g) {
             centerString(g, fileName.substring(1, fileName.length() - 6).c_str(), Host->appWidth() / 2, Host->appHeight() / 2 + pbh + 5);
         }
         if (Host->Retro){
-            retro_singleMenuOption(g, Host, &img_RetroOptions, "Options", TextColor);
         }
         else{            
             uint8_t opBkp = g->GetOpacity();

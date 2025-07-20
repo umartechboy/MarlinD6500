@@ -23,6 +23,8 @@ SDMenuStep::SDMenuStep(MenuHost* host):MenuStep(host) {
     BackColor = DarkPaleYellow;
     TextColor = ST7735_BLACK;
     Icon = &img_SD;
+    PreviousStep = &idleScreenStep;
+    NextStep = &fileOverViewStep; 
     TickPeriod = 50;
     list = new VerticalList(Host, 14, 128, "No SD Card");
     list->SetOnSelectionUpdated(this, selectionUpdated);
