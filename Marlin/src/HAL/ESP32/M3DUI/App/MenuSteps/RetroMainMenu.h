@@ -1,14 +1,14 @@
-#ifndef SD_MENU_STEP
-#define SD_MENU_STEP
+#ifndef RETRO_OPTIONS_MENU_STEP
+#define RETRO_OPTIONS_MENU_STEP
 
 #include "..\..\Components\M3DUI.h"
 
-class SDMenuStep: public MenuStep {
-public:
+class RetroMainMenuStep: public MenuStep {
+    public:
     bool hasSDCard = false;
     VerticalList* list;
-    SDMenuStep(MenuHost* host);
-    ~SDMenuStep();
+    RetroMainMenuStep(MenuHost* host);
+    ~RetroMainMenuStep();
     void LoadComplete() override;
     void Tick() override;
     void Paint(BufferedDisplay* g) override;

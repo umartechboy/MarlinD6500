@@ -6,14 +6,31 @@
 std::vector<String> seen;
 String toDOSNameFixed(const String& longName, const std::vector<String>& seenNames);
 
+void selectionUpdated(void* caller, ListItem* selectedItem, int selectedIndex){
+    SDMenuStep* This = (SDMenuStep*)caller;
+    if (selectedIndex < 0) {
+        This->NextStep = 0;
+    }
+    else {
+        This->NextStep = &fileOverViewStep;
+        idleScreenStep.fileName = String("/") + ((FileNameListItem*)selectedItem)->ItemText;
+        idleScreenStep.DOSFileName = String("/") + ((FileNameListItem*)selectedItem)->DOSName;
+        This->NeedsRedraw = true;
+    }
+}
 SDMenuStep::SDMenuStep(MenuHost* host):MenuStep(host) {
     ButtonColor = DarkPaleYellow;
     BackColor = DarkPaleYellow;
     TextColor = ST7735_BLACK;
     Icon = &img_SD;
     TickPeriod = 50;
-    list = VerticalList(Host, 14, 128, "No SD Card");
+    list = new VerticalList(Host, 14, 128, "No SD Card");
+    list->SetOnSelectionUpdated(this, selectionUpdated);
 }
+SDMenuStep::~SDMenuStep(){
+    delete list;
+}
+
 void SDMenuStep::Tick() {
     NeedsRedraw = true;
 }
@@ -23,8 +40,7 @@ void SDMenuStep::Paint(BufferedDisplay* g) {
     g->fillScreen(BackColor);
     g->setTextColor(TextColor);
     if (hasSDCard){
-        list.Paint(g, TextColor);
-        updateSelection();
+        list->Paint(g, TextColor);
     } else {
         centerString(g, "No SD Card", Host->appWidth() / 2, Host->appHeight() / 2);
     }
@@ -37,49 +53,30 @@ void SDMenuStep::DecrementValue() {
 }
 void SDMenuStep::HandleKeyUp(Keys key) {
     if (key == Keys::KEYPAD_DOWN)
-        list.scrollDown();
+        list->scrollDown();
     else if (key == Keys::KEYPAD_UP)
-        list.scrollUp();
+        list->scrollUp();
     else if (key == Keys::KEYPAD_RIGHT)
         Host->GotoNextStep();
     else if (key == Keys::KEYPAD_LEFT)
         Host->GotoPreviousStep();
 }    
 
-void SDMenuStep::updateSelection(){    
-    if (list.getSelectedIndex() < 0) {
-        NextStep = 0;
-    }
-    if(list.getSelectedIndex() == lastSelected){
-        return;
-    }
-    lastSelected = list.getSelectedIndex();
-    if (list.getSelectedIndex() < 0) {
-        SERIAL_IMPL.printf("Selected index changed: %d\n", list.getSelectedIndex());
-    }
-    else {
-        SERIAL_IMPL.printf("Selected index changed: %d\n", list.getSelectedIndex());
-        NextStep = &fileOverViewStep;
-        idleScreenStep.fileName = String("/") + ((FileNameListItem*)list.getSelected())->ItemText;
-        idleScreenStep.DOSFileName = String("/") + ((FileNameListItem*)list.getSelected())->DOSName;
-        NeedsRedraw = true;
-    }
-}
 void SDMenuStep::LoadComplete(){    
   SERIAL_IMPL.println("Starting SD");
-    list.EmptyString = "Loading..."; 
+    list->EmptyString = "Loading..."; 
     hasSDCard = SD.begin();
     seen.clear();
 
     if (!hasSDCard){
         SERIAL_IMPL.println("SD card not found");
-        list.EmptyString = "No SD card"; 
+        list->EmptyString = "No SD card"; 
         return;
     }
     SERIAL_IMPL.println("SD card FOUND!");
 
     File root = SD.open("/");
-    list.Clear();
+    list->Clear();
     while (root)
     {
         File f = root.openNextFile(); 
@@ -105,25 +102,21 @@ void SDMenuStep::LoadComplete(){
             // if (isCompatible){
             String dosName = toDOSNameFixed(fName, seen);
             SERIAL_IMPL.printf("Compatible G code: {%s}, {%s}\n", fName.c_str(), dosName.c_str());
-            list.Add(new FileNameListItem(Host, fName, dosName, 6));                
+            list->Add(new FileNameListItem(Host, fName, dosName, 6));                
             // }
             // else{                
             //     SERIAL_IMPL.printf("Incompatible G code: %s\n", fName.c_str());
             // }
         }
     }      
-    if(list.Count() == 0) {
-        list.EmptyString = "No g-code files"; 
-        list.selected = -1;
+    if(list->Count() == 0) {
+        list->EmptyString = "No g-code files"; 
+        list->selected = -1;
     }
     else {
-        list.selected = 0;
+        list->selected = 0;
     }
-    // for (int i = 0; i < 15; i++){
-    //     list.filesCount++;
-    //     list.files[i] = String("File ") + String(rand(), 16) + " " + String(i);
-    // }
-    updateSelection();
+    list->InvokeSelectionChanged();
 }
 
 String toDOSNameFixed(const String& longName, const std::vector<String>& seenNames) {

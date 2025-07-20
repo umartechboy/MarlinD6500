@@ -33,6 +33,7 @@ extern Image img_RetroRight;
 extern Image img_RetroUp;
 extern Image img_RetroVertical;
 extern Image img_RetroBack;
+extern Image img_RetroOptions;
 
 
 #endif

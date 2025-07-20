@@ -6,8 +6,9 @@
 
 class MaterialsStep: public MenuStep {
 public:
-    VerticalList options;
+    VerticalList* options;
     MaterialsStep(MenuHost* host);
+    ~MaterialsStep();
     void Paint(BufferedDisplay* g) override;
     void SaveColors();   
     void ToggleSelected();

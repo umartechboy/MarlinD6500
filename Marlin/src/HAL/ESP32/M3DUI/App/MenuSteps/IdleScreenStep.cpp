@@ -71,7 +71,7 @@ void IdleScreenStep::Paint(BufferedDisplay* g) {
             centerString(g, fileName.substring(1, fileName.length() - 6).c_str(), Host->appWidth() / 2, Host->appHeight() / 2 + pbh + 5);
         }
         if (Host->Retro){
-            retro_singleMenuOption(g, Host, &img_RetroEnter, "Options", TextColor);
+            retro_singleMenuOption(g, Host, &img_RetroOptions, "Options", TextColor);
         }
         else{            
             uint8_t opBkp = g->GetOpacity();

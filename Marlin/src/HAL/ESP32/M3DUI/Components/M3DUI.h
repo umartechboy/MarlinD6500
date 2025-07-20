@@ -68,14 +68,18 @@ class VerticalList{
         int lineHeight = 0;
         int displayHeight = 0;
         MenuHost* Host = 0;
+        int lastSelected = -2;
+        void (*OnSelectionUpdated)(void* caller, ListItem* selectedItem, int selectedIndex) = 0;
+        void *Owner = 0;
     public:
         int selected = -1;
         String EmptyString;
-        VerticalList() {}
         VerticalList(MenuHost* host, int lineHeight, int _displayHeight, String emptyString = "");
         ~VerticalList();
         int getSelectedIndex();
         ListItem* getSelected();
+        void SetOnSelectionUpdated(void* owner, void (*_OnSelectionUpdated)(void* caller, ListItem* selectedItem, int selectedIndex));
+        void InvokeSelectionChanged();
         // Overload operator[] for non-const access
         ListItem* operator[](int index);
         void Clear();
@@ -85,6 +89,22 @@ class VerticalList{
         void scrollUp();
         void Paint(BufferedDisplay* g, Color TextColor);
 };
+
+class Notification
+{
+private:
+    int fadeInProgress = 0;
+    int fadeOutProgress = 0;
+public:
+    int lifeLeft = 0;
+    long lastDrawing = 0;
+    String Text;
+    Notification(String& text, int life);
+    void Paint(BufferedDisplay* g);
+    void HandleKeyUp(Keys key);
+    ~Notification();
+};
+
 
 enum StepAnimationStage{
     MainStep = 0,
@@ -110,6 +130,7 @@ class MenuStep {
         MenuHost* Host;
         MenuStep* NextStep = 0;
         MenuStep* PreviousStep = 0;
+        MenuStep* RetroOptionsStep = 0;
         Color ButtonColor;
         Color BackColor;
         Color TextColor;
@@ -140,12 +161,15 @@ public:
     TransitionDirection menuTransitionDirection = TransitionDirection::Forward;
     StepAnimationStage stepAnimationStage = StepAnimationStage::MainStep;
     MenuStep* moveToMenuAfterStepAnim = 0;
+    Notification* CurrentNotification = 0;
     long lastPaint = 0;
+    bool Retro = true;
     MenuHost();
     ~MenuHost();
     bool CanGotoNextStep();
     void GotoStepFromNull(MenuStep* step);
     void GotoNextStep();
+    void GotoRetroOptionsStep();
     void GotoPreviousStep();
     bool NeedsMenuTransition();
     void ResetAnimationProgress(long duration = 200);
@@ -160,8 +184,8 @@ public:
     // Top Right
     void DrawButton3(MenuStep* step, BufferedDisplay* g, float progress);
     void Paint(BufferedDisplay* bTft);
+    void PushNotification(const char* str, int life = -1);
     void Loop(BufferedDisplay* bTft);
-    bool Retro = false;
 private:
     float animationStepProgress = 0.0f;
     long animationStartTime = 0;

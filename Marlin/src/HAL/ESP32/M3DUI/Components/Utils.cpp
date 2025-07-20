@@ -7,14 +7,15 @@
 void centerStringWithImage(BufferedDisplay* g, Image* image, const char* str,  int16_t x, int16_t y, int16_t* wOut, int16_t* hOut) {
     int16_t x1, y1;
     uint16_t w, h;
+    int padding = 2;
     g->setTextWrap(false);
     g->getTextBounds(str, x, y, &x1, &y1, &w, &h);
-    w += 2 + image->width();
+    w += padding + image->width();
     int16_t errorInX = x1 - x;
     int16_t errorInY = y1 - y;
-    g->setCursor(x - w / 2 - errorInX, y - h / 2 - errorInY);
+    g->setCursor(x - w / 2 - errorInX + image->width() + padding, y - h / 2 - errorInY);
     g->print(str);
-    image->Draw(g, x - w / 2, y, false, true);
+    image->Draw(g, x - w / 2, y - image->height() / 2, false, true);
     if (wOut)
         *wOut = w;
     if (hOut)
@@ -63,6 +64,66 @@ void centerRightString(BufferedDisplay* g, const char* str,  int16_t x, int16_t 
     if (hOut)
         *hOut = h;
 }
+void drawMultilineCenteredText(BufferedDisplay* g, const String& text, int x, int y, int maxWidth, int lineHeight, int* _w, int* _h) {
+    g->setTextWrap(false); // We'll manually handle wrapping
+
+    // Step 1: Break text into words
+    std::vector<String> words;
+    int start = 0;
+    for (int i = 0; i <= text.length(); i++) {
+        if (i == text.length() || text[i] == ' ') {
+            words.push_back(text.substring(start, i));
+            start = i + 1;
+        }
+    }
+
+    // Step 2: Assemble lines that fit within maxWidth
+    std::vector<String> lines;
+    String currentLine = "";
+    for (size_t i = 0; i < words.size(); i++) {
+        String testLine = currentLine.length() ? currentLine + " " + words[i] : words[i];
+
+        int16_t bx, by;
+        uint16_t bw, bh;
+        g->getTextBounds(testLine, 0, 0, &bx, &by, &bw, &bh);
+
+        if (bw <= maxWidth) {
+            currentLine = testLine;
+        } else {
+            if (currentLine.length()) lines.push_back(currentLine);
+            currentLine = words[i];
+        }
+    }
+    if (currentLine.length()) lines.push_back(currentLine);
+
+    // Step 3: Calculate total block height
+    int totalHeight = lines.size() * lineHeight;
+
+    // Step 4: Draw each line centered at (x, y)
+    int currentY = y - totalHeight / 2 + lineHeight / 2;
+    if (_w)
+        *_w = 0;
+    for (size_t i = 0; i < lines.size(); i++) {
+        const String& line = lines[i];
+        int16_t x1, y1;
+        uint16_t w, h;
+        g->getTextBounds(line, x, currentY, &x1, &y1, &w, &h);
+        
+        if (_w){
+            if (w > (*_w))
+                *_w = w;
+        }
+        int16_t errorInX = x1 - x;
+        int16_t errorInY = y1 - currentY;
+        g->setCursor(x - w / 2 - errorInX, currentY - h / 2 - errorInY);
+        g->print(line);
+        currentY += lineHeight;
+    }
+    if (_h){
+        *_h = lines.size() * lineHeight;
+    }
+}
+
 
 void centerLeftString(BufferedDisplay* g, const char* str,  int16_t x, int16_t y, int16_t* wOut, int16_t* hOut) {
     int16_t x1, y1;
@@ -71,8 +132,6 @@ void centerLeftString(BufferedDisplay* g, const char* str,  int16_t x, int16_t y
     g->getTextBounds(str, x, y, &x1, &y1, &w, &h);
     int16_t errorInX = x1 - x;
     int16_t errorInY = y1 - y;
-    //g->drawRect(x, y, w, h, ST7735_CYAN);
-    //g->drawRect(x1, y1, w, h, ST7735_YELLOW);
     g->setCursor(x - 0 - errorInX, y - h / 2 - errorInY);
     g->print(str);
     //g->SetOpacity(30);
@@ -86,16 +145,17 @@ void centerLeftString(BufferedDisplay* g, const char* str,  int16_t x, int16_t y
         *hOut = h;
 }
 
+int retroNavSectionHeight = 10;
 void retro_singleMenuOption(BufferedDisplay* g, MenuHost* host, Image* icon, const char* text, Color color){           
-        uint8_t opBkp = g->GetOpacity();
-        uint8_t lineMargin = 10;
-        uint8_t tempSectionHeight = 20;
-        g->SetOpacity(10);
-        for (int i =0; i < 5; i++)
-            g->drawLine(lineMargin + i * 2, host->appHeight() - tempSectionHeight, host->appWidth() - lineMargin - i * 2, host->appHeight() - tempSectionHeight, color);
-        g->SetOpacity(opBkp);
-        //g->drawLine(host->appWidth() / 2, host->appHeight() - tempSectionHeight, host->appWidth() / 2, host->appHeight(), g->readPixel(host->appWidth() / 2, host->appHeight() - tempSectionHeight));            
-        centerStringWithImage(g, icon, text, host->appWidth() / 2, host->appHeight() + 1 - tempSectionHeight / 2);
+    uint8_t opBkp = g->GetOpacity();
+    g->setFont();
+    uint8_t lineMargin = 10;
+    g->SetOpacity(10);
+    for (int i =0; i < 5; i++)
+        g->drawLine(lineMargin + i * 2, g->height() - retroNavSectionHeight - 6, host->appWidth() - lineMargin - i * 2 - 6, g->height() - retroNavSectionHeight - 4, color);
+    g->SetOpacity(opBkp);
+    //g->drawLine(host->appWidth() / 2, host->appHeight() - tempSectionHeight, host->appWidth() / 2, host->appHeight(), g->readPixel(host->appWidth() / 2, host->appHeight() - tempSectionHeight));            
+    centerStringWithImage(g, icon, text, g->width() / 2, g->height() - 2 - retroNavSectionHeight / 2);
 }
 
 float MixFloats(float f1, float f2, float p, MixType mt)

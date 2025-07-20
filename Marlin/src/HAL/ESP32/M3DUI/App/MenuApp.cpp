@@ -17,6 +17,7 @@ void BeginApp(){
   menuHost.GotoStepFromNull(&idleScreenStep);
 
   idleScreenStep.NextStep = &sdMenuStep;
+  //idleScreenStep.RetroOptionsStep = 
   idleScreenStep.PreviousStep = &toolsMenuStep;
 
   // inverted next/back in menus behind idle because idle is at the center

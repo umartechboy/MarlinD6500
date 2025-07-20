@@ -8,7 +8,7 @@ MaterialsStep::MaterialsStep(MenuHost* host):MenuStep(host) {
     TextColor = ST7735_BLACK;            
     Icon = &img_ChangeFilament;
 
-    options = VerticalList(Host, 24, 128);
+    options = new VerticalList(Host, 24, 128);
 
     extruder0Color = new ColorSelectorListItem(Host, "Extruder 1", 0);
     extruder1Color = new ColorSelectorListItem(Host,"Extruder 2", 1);
@@ -24,14 +24,17 @@ MaterialsStep::MaterialsStep(MenuHost* host):MenuStep(host) {
     defaultExtruderColor->Label = String(defaultExtruder + 1);
 
     // Filament Load/Unload
-    options.Add(extruder0Color);
-    options.Add(change0);
-    options.Add(new ListSeparatorItem(Host));
-    options.Add(extruder1Color);
-    options.Add(change1);
-    options.Add(new ListSeparatorItem(Host));
-    options.Add(defaultExtruderColor);
+    options->Add(extruder0Color);
+    options->Add(change0);
+    options->Add(new ListSeparatorItem(Host));
+    options->Add(extruder1Color);
+    options->Add(change1);
+    options->Add(new ListSeparatorItem(Host));
+    options->Add(defaultExtruderColor);
     TickPeriod = 50;
+}
+MaterialsStep::~MaterialsStep(){
+    delete options;
 }
 void MaterialsStep::LoadBegin(){
     // Load default
@@ -54,12 +57,12 @@ void MaterialsStep::Paint(BufferedDisplay* g) {
     // Draw the idle screen
     g->fillScreen(BackColor);
     g->setTextColor(TextColor);
-    options.Paint(g, TextColor);
-    if (options.getSelected() == change0){
+    options->Paint(g, TextColor);
+    if (options->getSelected() == change0){
         PreviousStep = &filament0ChangeStep;
         filament0ChangeStep.NextStep = this;
     }
-    else if (options.getSelected() == change1){
+    else if (options->getSelected() == change1){
         PreviousStep = &filament1ChangeStep;
         filament1ChangeStep.NextStep = this;
     }
@@ -82,9 +85,9 @@ void MaterialsStep::ToggleSelected(){
     defaultExtruderColor->Label = String(defaultExtruder + 1);
 }
 int MaterialsStep::selectedExtruderItemIndex(){
-    if (options.getSelected() == extruderColors[0])
+    if (options->getSelected() == extruderColors[0])
         return 0;
-    if (options.getSelected() == extruderColors[1])
+    if (options->getSelected() == extruderColors[1])
         return 1;
     return -1;
 }
@@ -96,21 +99,21 @@ void MaterialsStep::DecrementValue() {
 }
 void MaterialsStep::HandleKeyUp(Keys key) {
     if (key == Keys::KEYPAD_LEFT){
-        if (options.getSelected() == extruder0Color || options.getSelected() == extruder1Color){ // extruders
-            ((ColorSelectorListItem*)options.getSelected())->incrementColor();
+        if (options->getSelected() == extruder0Color || options->getSelected() == extruder1Color){ // extruders
+            ((ColorSelectorListItem*)options->getSelected())->incrementColor();
             
             if (defaultExtruder == selectedExtruderItemIndex())
-                defaultExtruderColor->selectedColorIndex = ((ColorSelectorListItem*)options.getSelected())->selectedColorIndex;
+                defaultExtruderColor->selectedColorIndex = ((ColorSelectorListItem*)options->getSelected())->selectedColorIndex;
         }
         else ToggleSelected();
         NeedsRedraw = true;
         SaveColors();
     }
     else if (key == Keys::KEYPAD_RIGHT){
-        if (options.getSelected() == extruder0Color || options.getSelected() == extruder1Color){ // extruders
-            ((ColorSelectorListItem*)options.getSelected())->decrementColor();
+        if (options->getSelected() == extruder0Color || options->getSelected() == extruder1Color){ // extruders
+            ((ColorSelectorListItem*)options->getSelected())->decrementColor();
             if (defaultExtruder == selectedExtruderItemIndex())
-                defaultExtruderColor->selectedColorIndex = ((ColorSelectorListItem*)options.getSelected())->selectedColorIndex;
+                defaultExtruderColor->selectedColorIndex = ((ColorSelectorListItem*)options->getSelected())->selectedColorIndex;
         }
         else ToggleSelected();
         NeedsRedraw = true;
@@ -120,7 +123,7 @@ void MaterialsStep::HandleKeyUp(Keys key) {
         Host->GotoNextStep(); // back to options
     }
     else if (key == Keys::KEYPAD_DOWN)
-        options.scrollDown();
+        options->scrollDown();
     else if (key == Keys::KEYPAD_UP)
-        options.scrollUp();
+        options->scrollUp();
 }    

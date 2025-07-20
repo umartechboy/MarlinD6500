@@ -3,6 +3,7 @@
 #include "..\Hardware\Keypad.h"
 #include "Utils.h"
 #include "..\App\Images.h"
+#include <Fonts/FreeSansBold9pt7b.h>
 
 
 ListItem::ListItem(MenuHost* host){
@@ -148,6 +149,14 @@ void VerticalList::scrollUp(){ // List goes down, selection goes up
             targetScrollOffset += lineHeight;
     }
 }
+void VerticalList::SetOnSelectionUpdated(void *_owner, void (*_OnSelectionUpdated)(void* caller, ListItem* selectedItem, int selectedIndex)){
+    this->OnSelectionUpdated = _OnSelectionUpdated;
+    this->Owner = _owner;
+}
+void VerticalList::InvokeSelectionChanged(){
+    if (OnSelectionUpdated)
+        OnSelectionUpdated(Owner, getSelected(), getSelectedIndex());
+}
 void VerticalList::Paint(BufferedDisplay* g, Color TextColor){
     g->setTextColor(TextColor);
     if (targetScrollOffset != scrollOffset){
@@ -196,6 +205,67 @@ void VerticalList::Paint(BufferedDisplay* g, Color TextColor){
             items[i]->Paint(g, op, TextColor, lY, i == selected);
         }
     }
+    
+    if(getSelectedIndex() == lastSelected){
+        return;
+    }
+    lastSelected = getSelectedIndex();
+    SERIAL_IMPL.printf("Selected index changed: %d\n", getSelectedIndex());
+    InvokeSelectionChanged();
+}
+
+Notification::Notification(String& text, int life)
+{
+    if (life < 0)
+        life = text.length() * 200;
+    lifeLeft = life;
+    this->Text = text;
+}
+void Notification::HandleKeyUp(Keys key){
+    if (key == KEYPAD_MIDDLE){
+        lifeLeft = 1;
+    }
+}
+void Notification::Paint(BufferedDisplay* g){
+    int opBkp = g->GetOpacity();
+    int op = 100;
+    if (fadeInProgress <= 100){
+        // Happens only in fade in
+        op = fadeInProgress;
+        fadeInProgress += 25;
+    }
+    else if (lifeLeft <= 1) {
+        // Happens only in fade out
+        if (fadeOutProgress > 100){
+            lifeLeft = 0;
+            return; // not possible though. Still making it a safe call.
+        }
+        op = 100 - fadeOutProgress;
+        fadeOutProgress += 25;
+    }
+    else {
+        if (lastDrawing == 0)
+            lastDrawing = millis();
+        else {
+            lifeLeft -= millis() - lastDrawing;
+            if (lifeLeft <= 0)
+                lifeLeft = 1; // dodge the host for the exit animation
+            lastDrawing = millis();
+        }
+    }
+            
+    g->setFont(&FreeSansBold9pt7b);
+    g->SetOpacity(op / 3);
+    g->fillScreen(0);
+    g->SetOpacity(op);
+    drawMultilineCenteredText(g, Text, g->width() / 2, g->height() / 2, g->width() - 10, 17);
+
+    g->setFont();
+    g->SetOpacity(opBkp);
+}
+
+Notification::~Notification()
+{
 }
 
 MenuStep::MenuStep(MenuHost* host){
@@ -241,6 +311,22 @@ void MenuHost::GotoNextStep(){
         CurrentStep->UnloadBegin();
         ResetAnimationProgress(250);
     }
+}
+void MenuHost::GotoRetroOptionsStep(){
+    if (!CurrentStep)
+        return;
+    if (!CurrentStep->RetroOptionsStep){
+        PushNotification("No options at the current stage");
+        return;
+    }
+    SERIAL_IMPL.println("Going to retro options step");
+        menuTrasnsitionStage = MenuTransitionStage::TransitionaingScreens;
+        TargetStep = CurrentStep->NextStep;
+    menuTransitionDirection = TransitionDirection::Forward;
+    CurrentStep->RetroOptionsStep->PreviousStep = CurrentStep;
+    CurrentStep->RetroOptionsStep->LoadBegin();
+    CurrentStep->UnloadBegin();
+    ResetAnimationProgress(250);
 }
 void MenuHost::GotoPreviousStep(){
     if (CurrentStep->PreviousStep){ 
@@ -398,13 +484,16 @@ void MenuHost::Paint(BufferedDisplay* bTft){
                     CurrentStep->NeedsRedraw = false;                   
                     //Serial.println("In step");
                     CurrentStep->Paint(bTft);
-                    if (stepAnimationStage == StepAnimationStage::InOverlay)
-                        DrawButton3(CurrentStep, bTft, 1);
-                    if (CurrentStep->NextStep){
-                        DrawButton2(CurrentStep->NextStep, bTft, stepAnimationStage == StepAnimationStage::MainStep ? 0 : 1);
-                    }
-                    if (CurrentStep->PreviousStep){
-                        DrawButton1(CurrentStep->PreviousStep, bTft, stepAnimationStage == StepAnimationStage::MainStep ? 0 : 1);
+                    // Draw the overlay buttons and hints in normal mode
+                    if(!Retro){
+                        if (stepAnimationStage == StepAnimationStage::InOverlay)
+                            DrawButton3(CurrentStep, bTft, 1);
+                        if (CurrentStep->NextStep){
+                            DrawButton2(CurrentStep->NextStep, bTft, stepAnimationStage == StepAnimationStage::MainStep ? 0 : 1);
+                        }
+                        if (CurrentStep->PreviousStep){
+                            DrawButton1(CurrentStep->PreviousStep, bTft, stepAnimationStage == StepAnimationStage::MainStep ? 0 : 1);
+                        }
                     }
                 }
             }
@@ -412,12 +501,15 @@ void MenuHost::Paint(BufferedDisplay* bTft){
                 //Serial.printf("Going to: %s\n", stepAnimationStage == StepAnimationStage::GoingToOverLay ? "overlay" : "step");
                 CurrentStep->Paint(bTft);
                 
-                DrawButton3(CurrentStep, bTft, stepAnimationStage == StepAnimationStage::GoingToOverLay? animationStepProgress:(1 - animationStepProgress));
-                if (CurrentStep->NextStep){
-                    DrawButton2(CurrentStep->NextStep, bTft, stepAnimationStage == StepAnimationStage::GoingToOverLay? animationStepProgress:(1 - animationStepProgress));
-                }
-                if (CurrentStep->PreviousStep){
-                    DrawButton1(CurrentStep->PreviousStep, bTft, stepAnimationStage == StepAnimationStage::GoingToOverLay? animationStepProgress:(1 - animationStepProgress));
+                // Draw the overlay buttons and hints in normal mode
+                if(!Retro){
+                    DrawButton3(CurrentStep, bTft, stepAnimationStage == StepAnimationStage::GoingToOverLay? animationStepProgress:(1 - animationStepProgress));
+                    if (CurrentStep->NextStep){
+                        DrawButton2(CurrentStep->NextStep, bTft, stepAnimationStage == StepAnimationStage::GoingToOverLay? animationStepProgress:(1 - animationStepProgress));
+                    }
+                    if (CurrentStep->PreviousStep){
+                        DrawButton1(CurrentStep->PreviousStep, bTft, stepAnimationStage == StepAnimationStage::GoingToOverLay? animationStepProgress:(1 - animationStepProgress));
+                    }
                 }
                 IncrementAnimationProgress();
                 if (animationStepProgress >= 1){
@@ -473,8 +565,22 @@ void MenuHost::Paint(BufferedDisplay* bTft){
     if (TargetStep != 0) { // we have a transition animation
         
     }
+    if (CurrentNotification){
+        CurrentNotification->Paint(bTft);
+        if (CurrentNotification->lifeLeft <= 0){
+            delete CurrentNotification;
+            CurrentNotification = 0;
+        }
+    }
+
     bTft->update(true, true); 
     
+}
+void MenuHost::PushNotification(const char* str, int life){
+    if (CurrentNotification)
+        delete CurrentNotification;
+    String str2 = String(str);
+    CurrentNotification = new Notification(str2, life);
 }
 void MenuHost::Loop(BufferedDisplay* bTft){
     keypad->Loop(this);
