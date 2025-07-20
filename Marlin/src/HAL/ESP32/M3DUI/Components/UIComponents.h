@@ -60,6 +60,7 @@ public:
     void decrementColor();
     void Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, int y, bool selected) override;
 };
+typedef void (*SelectionUpdatedCallback)(void* caller, ListItem* selectedItem, int selectedIndex);
 class VerticalList{
     private:
     std::vector<ListItem*> items;
@@ -68,7 +69,7 @@ class VerticalList{
         int displayHeight = 0;
         MenuHost* Host = 0;
         int lastSelected = -2;
-        void (*OnSelectionUpdated)(void* caller, ListItem* selectedItem, int selectedIndex) = 0;
+        SelectionUpdatedCallback OnSelectionUpdated;
         void *Owner = 0;
     public:
         int selected = -1;
@@ -77,7 +78,7 @@ class VerticalList{
         ~VerticalList();
         int getSelectedIndex();
         ListItem* getSelected();
-        void SetOnSelectionUpdated(void* owner, void (*_OnSelectionUpdated)(void* caller, ListItem* selectedItem, int selectedIndex));
+        void SetOnSelectionUpdated(void* owner, SelectionUpdatedCallback _OnSelectionUpdated);
         void InvokeSelectionChanged();
         // Overload operator[] for non-const access
         ListItem* operator[](int index);
@@ -111,13 +112,15 @@ class MenuStep {
         MenuHost* Host;
         MenuStep* NextStep = 0;
         MenuStep* PreviousStep = 0;
-        MenuStep* RetroOptionsStep = 0;
+        MenuStep* RetroNextStep = 0;
+        MenuStep* RetroPreviousStep = 0;
         Color ButtonColor;
         Color BackColor;
         Color TextColor;
         Image* Icon = 0;
         Image* RetroIcon = 0;
         String Title;
+        String NextActionString;
         MenuStep(MenuHost* host);
         virtual void Paint(BufferedDisplay* g) {}
         virtual void PaintRetroTitle(BufferedDisplay* g);
@@ -132,6 +135,7 @@ class MenuStep {
         virtual void FocusChanged(StepAnimationStage currentStage) {}
         virtual MenuStep* GetPreviousStep();
         virtual MenuStep* GetNextStep();
+        virtual bool CanJumpToMainMenu();
         void loop();
     protected: 
         long lastTick = 0;

@@ -15,6 +15,7 @@ class RetroMainMenuStep: public MenuStep {
     void IncrementValue() override;
     void DecrementValue() override;
     void HandleKeyUp(Keys key) override;
+    bool CanJumpToMainMenu() override;
 };
 
 #endif

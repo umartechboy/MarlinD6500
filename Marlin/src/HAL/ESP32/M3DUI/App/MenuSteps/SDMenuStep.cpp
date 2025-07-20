@@ -6,7 +6,7 @@
 std::vector<String> seen;
 String toDOSNameFixed(const String& longName, const std::vector<String>& seenNames);
 
-void selectionUpdated(void* caller, ListItem* selectedItem, int selectedIndex){
+static void selectionUpdated(void* caller, ListItem* selectedItem, int selectedIndex){
     SDMenuStep* This = (SDMenuStep*)caller;
     if (selectedIndex < 0) {
         This->NextStep = 0;
@@ -25,6 +25,7 @@ SDMenuStep::SDMenuStep(MenuHost* host):MenuStep(host) {
     Icon = &img_SD;
     PreviousStep = &idleScreenStep;
     NextStep = &fileOverViewStep; 
+    Title = "SD Card Contents";
     TickPeriod = 50;
     list = new VerticalList(Host, 128, "No SD Card");
     list->SetOnSelectionUpdated(this, selectionUpdated);

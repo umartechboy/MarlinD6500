@@ -27,7 +27,7 @@ uint8_t Image::height(){
 void Image::DrawCentered(BufferedDisplay* g, int x, int y){
     Draw(g, x - width() / 2 - xo, y - height() / 2 - yo, false, true);
 }
-void Image::Draw(BufferedDisplay* g, int x, int y, bool invertOffset, bool useDisplayOffset){
+void Image::Draw(BufferedDisplay* g, int x, int y, bool invertOffset, bool useDisplayOffset, bool useDisplayOpacity){
     int w = width();
     int h = height();
     x += invertOffset?-xo:xo;
@@ -49,7 +49,12 @@ void Image::Draw(BufferedDisplay* g, int x, int y, bool invertOffset, bool useDi
             byte cIndex = (byte)((pData >> 4) & 0xF);
             byte op = (byte)(pData & 0xF);
             uint16_t c = pallete[cIndex];
-            g->SetOpacity((op * 255) / 15);
+            if (useDisplayOpacity){
+                // Opacity is 4 bit here.
+                g->SetOpacity((((op * 100) / 15) * opBkp) / 100);
+            }
+            else
+                g->SetOpacity((op * 100) / 15);
             g->drawPixel(i, j, c);
         }
     g->xOffset = xofBkp;

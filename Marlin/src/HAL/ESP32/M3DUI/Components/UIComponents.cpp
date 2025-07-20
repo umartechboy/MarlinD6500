@@ -5,6 +5,7 @@
 #include <Fonts/FreeSansBold9pt7b.h>
 #include "MenuHost.h"
 #include "..\App\Images.h"
+#include "..\App\MenuApp.h"
 
 ListItem::ListItem(MenuHost* host, int height){
     Host = host;
@@ -24,13 +25,19 @@ void StringListItem::Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, i
     // else
     //     g->setTextColor(TextColor);
     //Serial.printf("Printing SD File %d: %s @ %d, %d\n", i, files[i].c_str(), Host->appWidth() / 2, FileLineCenter(i));
-    int16_t w = 0;
-    centerStringWithImage(g, Icon, ItemText.substring(0, ItemText.length() - endTrimLength).c_str(), Host->appWidth() / 2, y, &w);
-    if (selected){
-        w = Host->appWidth() - w - 8;
-        g->drawLine(0, y, w / 2, y, TextColor);
-        g->drawLine(Host->appWidth(), y, Host->appWidth() - w / 2, y, TextColor);
+    int16_t w = 0;    
+    if (selected){ // b.t.w. we can discard opacity here coz the selected is 100% op
+        g->SetOpacity(15);
+        g->fillRect(0, y - itemHeight / 2, g->width(), itemHeight, 0);
+        g->SetOpacity(op);
     }
+    centerStringWithImage(g, Icon, ItemText.substring(0, ItemText.length() - endTrimLength).c_str(), Host->appWidth() / 2, y, &w, 0, true);
+    // if (selected){
+    //     w = Host->appWidth() - w - 8;
+    //     g->drawLine(0, y, w / 2, y, TextColor);
+    //     g->drawLine(Host->appWidth(), y, Host->appWidth() - w / 2, y, TextColor);
+    // }
+
     g->SetOpacity(opBkp);
 }
 
@@ -169,7 +176,7 @@ void VerticalList::scrollUp(){ // List goes down, selection goes up
         }
     }
 }
-void VerticalList::SetOnSelectionUpdated(void *_owner, void (*_OnSelectionUpdated)(void* caller, ListItem* selectedItem, int selectedIndex)){
+void VerticalList::SetOnSelectionUpdated(void *_owner, SelectionUpdatedCallback _OnSelectionUpdated){
     this->OnSelectionUpdated = _OnSelectionUpdated;
     this->Owner = _owner;
 }
@@ -211,30 +218,30 @@ void VerticalList::Paint(BufferedDisplay* g, Color TextColor){
             int lineHeight = 10;
             if (Count() > 0) 
                 lineHeight = items[0]->getHeight();
-            int16_t op = (abs(i * lineHeight + scrollOffset) * 100) / displayHeight;
+            int16_t op = (abs(i * lineHeight + scrollOffset) * 150) / displayHeight;
             if (op < 0) op = 0;
             if (op > 100) op = 100;
             op = 100 - op;
             // 100, 90, 80, 70, 60
             if (op < 95){ 
                 op -= 50; 
-                if (op < 0) op = 0;
-            }
+            if (op < 0) op = 0;
+        }
 
-            //Serial.printf("Printing SD File %d: %s @ %d\n", i, files[i].c_str(), op);
-            
-            // if (op > 100)
-            //     op = 100;
-            // op = 100 - op;
-            // if (op < 95){
-            //     op -= 50;
-            //     op *= 2;
-            // }
+        //Serial.printf("Printing SD File %d: %s @ %d\n", i, files[i].c_str(), op);
+        
+        // if (op > 100)
+        //     op = 100;
+        // op = 100 - op;
+        // if (op < 95){
+        //     op -= 50;
+        //     op *= 2;
+        // }
 
-            int lY = displayHeight / 2 + i * lineHeight + scrollOffset;
-            if (op > 95)
-                selected = i;
-            items[i]->Paint(g, op, TextColor, lY, i == selected);
+        int lY = displayHeight / 2 + i * lineHeight + scrollOffset;
+        if (op > 95)
+            selected = i;
+        items[i]->Paint(g, op, TextColor, lY, i == selected);
         }
     }
     
@@ -313,26 +320,28 @@ void MenuStep::loop(){
 }
 void MenuStep::PaintRetroTitle(BufferedDisplay* g) {
     // Draw at 0 because g has the offset.
-    retro_titleBar(g, Host, 0, RetroIcon, Title.c_str(), TextColor);
+    retro_drawTitleBar(g, Host, 0, RetroIcon, Title.c_str(), TextColor);
 }
 void MenuStep::PaintRetroOptionsBar(BufferedDisplay* g) {
     // Draw at 0 because g has the offset.
-    if (GetPreviousStep()){  
-        if (RetroOptionsStep)
-            retro_optionsBar(g, Host, 0, &img_RetroBack, &img_RetroOptionsKey, RetroOptionsStep->Title.c_str(), 0, TextColor);
-        else
-            retro_optionsBar(g, Host, 0, &img_RetroBack, 0, "", 0, TextColor);
-    }
-    else{        
-        if (RetroOptionsStep)
-            retro_optionsBar(g, Host, 0, 0, &img_RetroOptionsKey, RetroOptionsStep->Title.c_str(), 0, TextColor);
-        //else // no point drawing it. It doesn't show
-            //retro_optionsBar(g, Host, 0, 0, 0, "", 0, TextColor);
-    }
+    retro_drawNavigationBar(g, Host, 0,
+        GetPreviousStep()?(&img_RetroBack):0,
+        GetNextStep()?(&img_RetroEnter):0, GetNextStep()?NextActionString.c_str():"",
+        CanJumpToMainMenu()?&img_RetroOptionsKey:0, 
+        TextColor);
 }
 MenuStep* MenuStep::GetPreviousStep(){
-    return PreviousStep;
+    if (Host->Retro)
+        return RetroPreviousStep;
+    else
+        return PreviousStep;
 }
 MenuStep* MenuStep::GetNextStep(){
-    return NextStep;
+    if (Host->Retro)
+        return RetroNextStep;
+    else
+        return NextStep;
+}
+bool MenuStep::CanJumpToMainMenu(){
+    return true;
 }

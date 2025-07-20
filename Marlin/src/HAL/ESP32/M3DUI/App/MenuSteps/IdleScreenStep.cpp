@@ -12,10 +12,10 @@ IdleScreenStep::IdleScreenStep(MenuHost* host):MenuStep(host) {
     BackColor = DarkRed;
     TextColor = ST7735_WHITE;            
     Title = "M3D Enabler";
-    RetroIcon = &img_RetroM3D;
-    RetroOptionsStep = &retroMainMenuStep;    
-    NextStep = &sdMenuStep;
+    RetroIcon = &img_RetroM3D;  
+    NextStep = &sdMenuStep;    
     PreviousStep = &toolsMenuStep;
+    RetroNextStep = &retroMainMenuStep;
     Icon = &img_Home;
     TickPeriod = 50;
 }
@@ -109,11 +109,11 @@ void IdleScreenStep::Paint(BufferedDisplay* g) {
 
 void IdleScreenStep::HandleKeyUp(Keys key){
     if (printStatus == PrintStatus::Idle){
-        if (key == KEYPAD_LEFT){
+        if (key == KEYPAD_LEFT && !Host->Retro){
             SERIAL_IMPL.println("Go to previous from Idle");
             Host->GotoPreviousStep();
         }
-        else if (key == KEYPAD_RIGHT){
+        else if (key == KEYPAD_RIGHT && !Host->Retro){
             SERIAL_IMPL.println("Go to next from Idle");
             Host->GotoNextStep();
         }
@@ -218,4 +218,7 @@ void IdleScreenStep::FocusChanged(StepAnimationStage stage){
             SERIAL_IMPL.println("Turning to idle menu (2)");
         }
     }
+}
+bool IdleScreenStep::CanJumpToMainMenu(){
+    return printStatus == PrintStatus::Idle; // Can jump ony when idle
 }

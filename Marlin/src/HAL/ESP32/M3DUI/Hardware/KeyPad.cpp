@@ -1,5 +1,6 @@
 #include "Keypad.h"
 #include "..\Components\M3DUI.h"
+#include "..\App\MenuApp.h"
 
 int pinMap [] = {14, 13, 0, 12};
 int baseValues [4];
@@ -107,7 +108,7 @@ void KeyPad::Loop(MenuHost* host){
             if (millis() - lastIncrementSendAt < 30) 
                 host->CurrentStep->IncrementValue(); // accelerate
             lastIncrementSendAt = millis(); 
-            }
+          }
         }
         else if (key ==  AddKey(lastKeyDown, -1)) {
             if (host->CurrentStep) { 
@@ -120,10 +121,10 @@ void KeyPad::Loop(MenuHost* host){
         else {
             lastKeyDown = Keys::KEYPAD_NONE;
         }
-        }
-        else
+      }
+      else
         keyToSend = key;
-        lastKeyDown = key;
+      lastKeyDown = key;
     }
     else {
       //  cannot be a dial rotate
@@ -138,13 +139,23 @@ void KeyPad::Loop(MenuHost* host){
               SERIAL_IMPL.println("Middle or back key pressed");
               host->CurrentNotification->HandleKeyUp(keyToSend);
             }
-            else if (keyToSend == KEYPAD_OPTIONS){
+            else if (keyToSend == KEYPAD_MIDDLE){
               if (host->CurrentStep)
-                host->GotoRetroOptionsStep();
+                host->GotoNextStep();
+            }
+            else if (keyToSend == KEYPAD_OPTIONS){
+              if (host->CurrentStep){
+                if (host->CurrentStep->CanJumpToMainMenu()){
+                  host->GotoStepFromAny(&retroMainMenuStep);
+                }
+                else              
+                  if (host->CurrentStep != &retroMainMenuStep)
+                    host->PushNotification("Can't jump to the menu right now");
+              }
             }
             else if (keyToSend == KEYPAD_BACK){
               if (host->CurrentStep)
-                if (host->CurrentStep->PreviousStep)
+                if (host->CurrentStep->GetPreviousStep())
                   host->GotoPreviousStep();
             }
             else { // Send all the keys to the step

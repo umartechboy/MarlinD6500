@@ -17,7 +17,7 @@ class Image
         uint8_t height();
         int16_t xOffset();
         int16_t yOffset();
-        void Draw(BufferedDisplay* g, int x, int y, bool invertOffset = false, bool useDisplayOffset = false);
+        void Draw(BufferedDisplay* g, int x, int y, bool invertOffset = false, bool useDisplayOffset = false, bool useDisplayOpacity = false);
         void DrawCentered(BufferedDisplay* g, int x, int y);
 };
 

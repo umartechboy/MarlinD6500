@@ -20,9 +20,8 @@ public:
     MenuHost();
     ~MenuHost();
     bool CanGotoNextStep();
-    void GotoStepFromNull(MenuStep* step);
+    void GotoStepFromAny(MenuStep* step);
     void GotoNextStep();
-    void GotoRetroOptionsStep();
     void GotoPreviousStep();
     bool NeedsMenuTransition();
     void ResetAnimationProgress(long duration = 200);

@@ -24,5 +24,6 @@ public:
     void UnloadBegin() override;
     void FocusChanged(StepAnimationStage stage) override;
     MenuStep* GetPreviousStep() override;
+    bool CanJumpToMainMenu() override;
 };
 #endif

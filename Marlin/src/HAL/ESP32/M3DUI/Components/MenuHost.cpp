@@ -10,29 +10,47 @@ MenuHost::~MenuHost(){
 bool MenuHost::CanGotoNextStep() {
     return TargetStep == 0;
 }
-void MenuHost::GotoStepFromNull(MenuStep* step) {
+void MenuHost::GotoStepFromAny(MenuStep* step) {
     TargetStep = step;
     ResetAnimationProgress(500);
     menuTrasnsitionStage = MenuTransitionStage::TransitionaingScreens;
 }
 void MenuHost::GotoNextStep(){
-    if (CurrentStep->GetNextStep()) {
-        SERIAL_IMPL.println("Going to next step");
-        // begin Next menu transition
-        if (stepAnimationStage == StepAnimationStage::MainStep){
+    if (!CurrentStep)
+        return;
+    if (Retro){
+        if (!CurrentStep->GetNextStep()){
+            PushNotification("No options at the current stage");
+            return;
+        }
+        SERIAL_IMPL.println("Going to retro options step");
             menuTrasnsitionStage = MenuTransitionStage::TransitionaingScreens;
-            TargetStep = CurrentStep->GetNextStep();
-        }
-        else
-        {
-            stepAnimationStage = StepAnimationStage::GoingToStep;
-            moveToMenuAfterStepAnim = CurrentStep->GetNextStep();
-        }
+        TargetStep = CurrentStep->RetroNextStep;
         menuTransitionDirection = TransitionDirection::Forward;
-        if (CurrentStep->GetNextStep())
-            CurrentStep->GetNextStep()->LoadBegin();
+        CurrentStep->RetroNextStep->LoadBegin();
         CurrentStep->UnloadBegin();
         ResetAnimationProgress(250);
+    }
+    else 
+    {
+        if (CurrentStep->GetNextStep()) {
+            SERIAL_IMPL.println("Going to next step");
+            // begin Next menu transition
+            if (stepAnimationStage == StepAnimationStage::MainStep){
+                menuTrasnsitionStage = MenuTransitionStage::TransitionaingScreens;
+                TargetStep = CurrentStep->GetNextStep();
+            }
+            else
+            {
+                stepAnimationStage = StepAnimationStage::GoingToStep;
+                moveToMenuAfterStepAnim = CurrentStep->GetNextStep();
+            }
+            menuTransitionDirection = TransitionDirection::Forward;
+            if (CurrentStep->GetNextStep())
+                CurrentStep->GetNextStep()->LoadBegin();
+            CurrentStep->UnloadBegin();
+            ResetAnimationProgress(250);
+        }
     }
 }
 void MenuHost::GotoPreviousStep(){
@@ -53,21 +71,6 @@ void MenuHost::GotoPreviousStep(){
         CurrentStep->UnloadBegin();
         ResetAnimationProgress(250);
     }
-}
-void MenuHost::GotoRetroOptionsStep(){
-    if (!CurrentStep)
-        return;
-    if (!CurrentStep->RetroOptionsStep){
-        PushNotification("No options at the current stage");
-        return;
-    }
-    SERIAL_IMPL.println("Going to retro options step");
-        menuTrasnsitionStage = MenuTransitionStage::TransitionaingScreens;
-    TargetStep = CurrentStep->RetroOptionsStep;
-    menuTransitionDirection = TransitionDirection::Forward;
-    CurrentStep->RetroOptionsStep->LoadBegin();
-    CurrentStep->UnloadBegin();
-    ResetAnimationProgress(250);
 }
 bool MenuHost::NeedsMenuTransition() {
     return (CurrentStep != TargetStep) && TargetStep != 0;

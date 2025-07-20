@@ -15,7 +15,7 @@ RetroMainMenuStep retroMainMenuStep(&menuHost);
 
 void BeginApp(){    
   SERIAL_IMPL.println("Goto menu pushed");
-  menuHost.GotoStepFromNull(&idleScreenStep);
+  menuHost.GotoStepFromAny(&idleScreenStep);
 
   // inverted next/back in menus behind idle because idle is at the center
 }
