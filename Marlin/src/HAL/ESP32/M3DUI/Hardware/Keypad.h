@@ -23,12 +23,10 @@ class KeyPad{
 public:
     void Loop(MenuHost* host);
 private:
-    int lastKey = 0;
-    Keys keyToSend = Keys::KEYPAD_NONE;
     Keys lastKeyDown = Keys::KEYPAD_NONE;
     int dialValue = 0;
     long lastKeyCheck = 0;
-    long lastIncrementSendAt = 0;
+    long lastDialRotateSentAt = 0;
     Keys possibleSwipFrom = Keys::KEYPAD_NONE;
 };
 

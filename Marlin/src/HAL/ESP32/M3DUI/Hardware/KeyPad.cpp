@@ -37,8 +37,10 @@ Keys touchOnADCKeyPad_getKey(){
 #if DebugKeys
     SERIAL_IMPL.printf(", Above zero 1: %d", aboveZero);
 #endif
-    if (aboveZero >= 4){      
+    if (aboveZero >= 4){  
+#if DebugKeys    
       SERIAL_IMPL.println();
+#endif
       return Keys::KEYPAD_MIDDLE;
     }
     // Check if its a diagonal button
@@ -94,114 +96,81 @@ Keys touchOnADCKeyPad_getKey(){
 
 #define AddKey(k, i) (Keys)(((k) + (i) > 8) ? ((k) + (i) - 8):(((k) + (i) < 1) ? ((k) + (i) + 8):((k) + (i))))
 
+bool unknwonSwipe = false;
+bool swipeInProcess = false;
 void KeyPad::Loop(MenuHost* host){
   if (millis() - lastKeyCheck > 30){
     lastKeyCheck = millis();
     Keys key = touchOnADCKeyPad_getKey();
-    if (key){ // we just need to wait for it to go up
-        if (key != lastKeyDown && lastKeyDown != Keys::KEYPAD_NONE){ // dial rotate or swipe
-        SERIAL_IMPL.printf("Dial Rotate: %d > %d\n", lastKeyDown, key);
 
-        if (key == AddKey(lastKeyDown, 1)) {
-            if (host->CurrentStep){ 
-            host->CurrentStep->IncrementValue(); 
-            if (millis() - lastIncrementSendAt < 30) 
-                host->CurrentStep->IncrementValue(); // accelerate
-            lastIncrementSendAt = millis(); 
-          }
-        }
-        else if (key ==  AddKey(lastKeyDown, -1)) {
-            if (host->CurrentStep) { 
-            host->CurrentStep->DecrementValue(); 
-            if (millis() - lastIncrementSendAt < 30) 
-                host->CurrentStep->DecrementValue(); // accelerate
-            lastIncrementSendAt = millis(); 
-            }
-        }
-        else {
-            lastKeyDown = Keys::KEYPAD_NONE;
-        }
-      }
-      else
-        keyToSend = key;
+    if (key == KEYPAD_NONE && lastKeyDown == KEYPAD_NONE){
+      // Idle
       lastKeyDown = key;
+      return;
+    }
+    // Its a change. Detect which one    
+    if (key == KEYPAD_NONE){ // lastKey cannot be NONE too
+      // Its a key Up
+      if (swipeInProcess){ 
+        // End of swipe doesn't mean anything. At least not yet
+        swipeInProcess = false;
+        SERIAL_IMPL.println("End of Swipe");
+      }
+      else{
+        // Send Key up
+        SERIAL_IMPL.printf("Key Up: %d\n", lastKeyDown);
+        host->HandleKeyUp(lastKeyDown);
+      }
+    }
+    else if (lastKeyDown == KEYPAD_NONE) {// Its a Key down.
+        SERIAL_IMPL.printf("Key Down: %d\n", key);
+      // We can't send key down because it might turn into a swipe
+      swipeInProcess = false; // Not needed, but still reset things
+      unknwonSwipe = false;
     }
     else {
-      //  cannot be a dial rotate
-      lastKeyDown = Keys::KEYPAD_NONE;
-      possibleSwipFrom = Keys::KEYPAD_NONE;
-      if(keyToSend){
-        SERIAL_IMPL.printf("Key proessed: %d\n", keyToSend);
-        if (host->TargetStep == 0){ // No step transitions in process
-          if (host->Retro){
-            // Complete Retro navigation
-            if (host->CurrentNotification){
-              SERIAL_IMPL.println("Middle or back key pressed");
-              host->CurrentNotification->HandleKeyUp(keyToSend);
-            }
-            else if (keyToSend == KEYPAD_MIDDLE){
-              if (host->CurrentStep)
-                host->GotoNextStep();
-            }
-            else if (keyToSend == KEYPAD_OPTIONS){
-              if (host->CurrentStep){
-                if (host->CurrentStep->CanJumpToMainMenu()){
-                  host->GotoStepFromAny(&retroMainMenuStep);
-                }
-                else              
-                  if (host->CurrentStep != &retroMainMenuStep)
-                    host->PushNotification("Can't jump to the menu right now");
-              }
-            }
-            else if (keyToSend == KEYPAD_BACK){
-              if (host->CurrentStep)
-                if (host->CurrentStep->GetPreviousStep())
-                  host->GotoPreviousStep();
-            }
-            else { // Send all the keys to the step
-              if (host->CurrentStep)
-                host->CurrentStep->HandleKeyUp(keyToSend);
-            }
-          }
-          else{ 
-            // Normal mode
-            if (keyToSend == KEYPAD_MIDDLE){
-              SERIAL_IMPL.println("Middle key pressed");
-              // begin buttons overlay
-              if(host->stepAnimationStage == StepAnimationStage::MainStep && keyToSend == KEYPAD_MIDDLE){
-                  host->stepAnimationStage = StepAnimationStage::GoingToOverLay;
-                  if (host->CurrentStep)
-                    host->CurrentStep->FocusChanged(StepAnimationStage::GoingToOverLay);
-                  host->moveToMenuAfterStepAnim = 0;
-                  host->ResetAnimationProgress(250);
-              }
-              else if (host->stepAnimationStage == StepAnimationStage::InOverlay){
-                  host->stepAnimationStage = StepAnimationStage::GoingToStep;
-                  if (host->CurrentStep)
-                    host->CurrentStep->FocusChanged(StepAnimationStage::GoingToStep);
-                  host->moveToMenuAfterStepAnim = 0;
-                  host->ResetAnimationProgress(250);
-              }
-            }
-            else if (keyToSend == KEYPAD_UP_LEFT && host->CurrentStep->PreviousStep && host->stepAnimationStage == StepAnimationStage::InOverlay){
-              host->GotoPreviousStep();
-            }
-            else if (keyToSend == KEYPAD_DOWN_RIGHT && host->CurrentStep->NextStep && host->stepAnimationStage == StepAnimationStage::InOverlay){
-              host->GotoNextStep();
-            }
-            else if (keyToSend == KEYPAD_UP_RIGHT && host->CurrentStep->NextStep && host->stepAnimationStage == StepAnimationStage::InOverlay){                  
-              host->stepAnimationStage = StepAnimationStage::GoingToStep;
-              host->ResetAnimationProgress(250);
-            }
-            else { // Let the step handle this key if not in overlay
-              if (host->stepAnimationStage == StepAnimationStage::MainStep)
-                host->CurrentStep->HandleKeyUp(keyToSend);
-            }
-          }
+      if (lastKeyDown == key) {// None None Key Hold
+        if (swipeInProcess){
+          // Just skip
         }
-        // else just discard this button
-        keyToSend = Keys::KEYPAD_NONE;
+        else { // We can process a hold or press here
+          // skip for now
+        }
+      }
+      else {
+        // Key to Key swipe
+        swipeInProcess = true;
+        // Detect the gesture
+
+        // Test for Dial rotate
+        if (key == AddKey(lastKeyDown, 1) && !unknwonSwipe){
+          SERIAL_IMPL.printf("Dial Inc: %d > %d\n", lastKeyDown, key);
+          host->HandleDialIncrement();
+          if (millis() - lastDialRotateSentAt < 30) 
+              host->HandleDialIncrement(); // accelerate
+          lastDialRotateSentAt = millis(); 
+        }
+        else if (key == AddKey(lastKeyDown, -1) && !unknwonSwipe){
+          SERIAL_IMPL.printf("Dial Dec: %d > %d\n", lastKeyDown, key);
+          host->HandleDialDecrement();
+          if (millis() - lastDialRotateSentAt < 30) 
+              host->HandleDialDecrement(); // accelerate
+          lastDialRotateSentAt = millis(); 
+        }
+        else if (key == KEYPAD_MIDDLE && lastKeyDown == KEYPAD_DOWN || key == KEYPAD_UP && lastKeyDown == KEYPAD_MIDDLE){
+          SERIAL_IMPL.printf("Swipe Up: %d > %d\n", lastKeyDown, key);
+          host->HandleDialIncrement();
+        }
+        else if (key == KEYPAD_MIDDLE && lastKeyDown == KEYPAD_UP || key == KEYPAD_DOWN && lastKeyDown == KEYPAD_MIDDLE){
+          SERIAL_IMPL.printf("Swipe Down: %d > %d\n", lastKeyDown, key);
+          host->HandleDialDecrement();
+        }
+        else { // Swipe but not a dial rotate
+          SERIAL_IMPL.printf("Unknown Swipe: %d > %d\n", lastKeyDown, key);
+          unknwonSwipe = true;
+        }
       }
     }
+    lastKeyDown = key;
   }
 }

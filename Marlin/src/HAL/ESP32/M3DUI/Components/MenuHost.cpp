@@ -1,5 +1,6 @@
 #include "MenuHost.h"
 #include "..\App\Images.h"
+#include "..\App\MenuApp.h"
 
 MenuHost::MenuHost(){
     keypad = new KeyPad();
@@ -352,4 +353,79 @@ void MenuHost::Loop(BufferedDisplay* bTft){
     if (TargetStep)
     TargetStep->loop();
 
+}
+
+void MenuHost::HandleKeyUp(Keys key){    
+    if (Retro){
+        // Complete Retro navigation
+        if (CurrentNotification){
+            CurrentNotification->HandleKeyUp(key);
+        }
+        else if (key == KEYPAD_MIDDLE){
+            if (CurrentStep)
+            GotoNextStep();
+        }
+        else if (key == KEYPAD_OPTIONS){
+            if (CurrentStep){
+            if (CurrentStep->CanJumpToMainMenu()){
+                GotoStepFromAny(&retroMainMenuStep);
+            }
+            else              
+                if (CurrentStep != &retroMainMenuStep)
+                PushNotification("Can't jump to the menu right now");
+            }
+        }
+        else if (key == KEYPAD_BACK){
+            if (CurrentStep)
+            if (CurrentStep->GetPreviousStep())
+                GotoPreviousStep();
+        }
+        else { // Send all the keys to the step
+            if (CurrentStep)
+            CurrentStep->HandleKeyUp(key);
+        }
+    }
+    else{ 
+        // Normal mode
+        if (key == KEYPAD_MIDDLE){
+            SERIAL_IMPL.println("Middle key pressed");
+            // begin buttons overlay
+            if(stepAnimationStage == StepAnimationStage::MainStep && key == KEYPAD_MIDDLE){
+                stepAnimationStage = StepAnimationStage::GoingToOverLay;
+                if (CurrentStep)
+                CurrentStep->FocusChanged(StepAnimationStage::GoingToOverLay);
+                moveToMenuAfterStepAnim = 0;
+                ResetAnimationProgress(250);
+            }
+            else if (stepAnimationStage == StepAnimationStage::InOverlay){
+                stepAnimationStage = StepAnimationStage::GoingToStep;
+                if (CurrentStep)
+                CurrentStep->FocusChanged(StepAnimationStage::GoingToStep);
+                moveToMenuAfterStepAnim = 0;
+                ResetAnimationProgress(250);
+            }
+        }
+        else if (key == KEYPAD_UP_LEFT && CurrentStep->PreviousStep && stepAnimationStage == StepAnimationStage::InOverlay){
+            GotoPreviousStep();
+        }
+        else if (key == KEYPAD_DOWN_RIGHT && CurrentStep->NextStep && stepAnimationStage == StepAnimationStage::InOverlay){
+            GotoNextStep();
+        }
+        else if (key == KEYPAD_UP_RIGHT && CurrentStep->NextStep && stepAnimationStage == StepAnimationStage::InOverlay){                  
+            stepAnimationStage = StepAnimationStage::GoingToStep;
+            ResetAnimationProgress(250);
+        }
+        else { // Let the step handle this key if not in overlay
+            if (stepAnimationStage == StepAnimationStage::MainStep)
+            CurrentStep->HandleKeyUp(key);
+        }
+    }
+}
+void MenuHost::HandleDialIncrement(){
+    if (CurrentStep)
+        CurrentStep->IncrementValue();
+}
+void MenuHost::HandleDialDecrement(){
+    if (CurrentStep)
+        CurrentStep->DecrementValue();
 }

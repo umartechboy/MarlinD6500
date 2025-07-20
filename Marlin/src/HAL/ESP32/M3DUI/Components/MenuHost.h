@@ -29,6 +29,9 @@ public:
     void DrawButton(int index, MenuStep* step, BufferedDisplay* g, float progress);
     int appHeight();
     int appWidth();
+    void HandleKeyUp(Keys key);
+    void HandleDialIncrement();
+    void HandleDialDecrement();
     // Top left
     void DrawButton1(MenuStep* step, BufferedDisplay* g, float progress);
     // Bottom Right
