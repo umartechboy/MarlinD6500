@@ -11,7 +11,12 @@ RetroMainMenuStep::RetroMainMenuStep(MenuHost* host):MenuStep(host) {
     PreviousStep = &idleScreenStep;
     Icon = &img_SD;
     TickPeriod = 50;
-    list = new VerticalList(Host, 14, 128, "No SD Card");
+    list = new VerticalList(Host, 128, "");
+    list->Add(new StringListItem(Host, &img_RetroSD, "Print from SD", 0, 16));
+    list->Add(new StringListItem(Host, &img_RetroChangeFilament, "Filament Setup", 0, 16));
+    list->Add(new StringListItem(Host, &img_RetroBedLevel, "Bed Leveling", 0, 16));
+    list->Add(new StringListItem(Host, &img_RetroOptions, "Settings", 0, 16));
+    list->Add(new StringListItem(Host, &img_RetroRedM3D, "Info", 0, 16));
 }
 RetroMainMenuStep::~RetroMainMenuStep(){
     delete list;

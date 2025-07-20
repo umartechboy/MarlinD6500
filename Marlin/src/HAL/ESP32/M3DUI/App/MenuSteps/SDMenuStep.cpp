@@ -26,7 +26,7 @@ SDMenuStep::SDMenuStep(MenuHost* host):MenuStep(host) {
     PreviousStep = &idleScreenStep;
     NextStep = &fileOverViewStep; 
     TickPeriod = 50;
-    list = new VerticalList(Host, 14, 128, "No SD Card");
+    list = new VerticalList(Host, 128, "No SD Card");
     list->SetOnSelectionUpdated(this, selectionUpdated);
 }
 SDMenuStep::~SDMenuStep(){
@@ -104,7 +104,7 @@ void SDMenuStep::LoadComplete(){
             // if (isCompatible){
             String dosName = toDOSNameFixed(fName, seen);
             SERIAL_IMPL.printf("Compatible G code: {%s}, {%s}\n", fName.c_str(), dosName.c_str());
-            list->Add(new FileNameListItem(Host, fName, dosName, 6));                
+            list->Add(new FileNameListItem(Host, fName, dosName, 6, 14));
             // }
             // else{                
             //     SERIAL_IMPL.printf("Incompatible G code: %s\n", fName.c_str());

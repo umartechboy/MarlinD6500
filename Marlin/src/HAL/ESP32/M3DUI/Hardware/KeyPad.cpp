@@ -131,31 +131,25 @@ void KeyPad::Loop(MenuHost* host){
       possibleSwipFrom = Keys::KEYPAD_NONE;
       if(keyToSend){
         SERIAL_IMPL.printf("Key proessed: %d\n", keyToSend);
-        if (host->TargetStep == 0){
+        if (host->TargetStep == 0){ // No step transitions in process
           if (host->Retro){
-            // Retro navigation
+            // Complete Retro navigation
             if (host->CurrentNotification){
-              if (keyToSend == KEYPAD_MIDDLE){
-                SERIAL_IMPL.println("Middle key pressed");
-                  host->CurrentNotification->HandleKeyUp(KEYPAD_MIDDLE);
-              }
-              else
-                return;
+              SERIAL_IMPL.println("Middle or back key pressed");
+              host->CurrentNotification->HandleKeyUp(keyToSend);
             }
-            if (keyToSend == KEYPAD_MIDDLE){
-              SERIAL_IMPL.println("Middle key pressed");
-              // begin buttons overlay
-              if(keyToSend == KEYPAD_MIDDLE && host->CurrentStep)
-                host->CurrentStep->HandleKeyUp(KEYPAD_MIDDLE);
-            }
-            else if (keyToSend == KEYPAD_DOWN_RIGHT){ // Options
+            else if (keyToSend == KEYPAD_OPTIONS){
               if (host->CurrentStep)
                 host->GotoRetroOptionsStep();
             }
-            else if (keyToSend == KEYPAD_DOWN_LEFT){
+            else if (keyToSend == KEYPAD_BACK){
               if (host->CurrentStep)
                 if (host->CurrentStep->PreviousStep)
                   host->GotoPreviousStep();
+            }
+            else { // Send all the keys to the step
+              if (host->CurrentStep)
+                host->CurrentStep->HandleKeyUp(keyToSend);
             }
           }
           else{ 

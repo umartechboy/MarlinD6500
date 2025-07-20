@@ -11,11 +11,11 @@ void centerStringWithImage(BufferedDisplay* g, Image* image, const char* str,  i
     g->setTextWrap(false);
     g->getTextBounds(str, x, y, &x1, &y1, &w, &h);
     int imgWidth = 0;
-    if (image) imgWidth = image->width();
-    w += padding + imgWidth;
+    if (image) imgWidth = image->width() + padding;
+    w += imgWidth;
     int16_t errorInX = x1 - x;
     int16_t errorInY = y1 - y;
-    g->setCursor(x - w / 2 - errorInX + imgWidth + padding, y - h / 2 - errorInY);
+    g->setCursor(x - w / 2 - errorInX + imgWidth, y - h / 2 - errorInY);
     g->print(str);
     if (image)
         image->Draw(g, x - w / 2, y - image->height() / 2, false, true);

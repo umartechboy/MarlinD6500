@@ -9,18 +9,18 @@ MaterialsStep::MaterialsStep(MenuHost* host):MenuStep(host) {
     Icon = &img_ChangeFilament;    
     NextStep = &toolsMenuStep;
 
-    options = new VerticalList(Host, 24, 128);
-
-    extruder0Color = new ColorSelectorListItem(Host, "Extruder 1", 0);
-    extruder1Color = new ColorSelectorListItem(Host,"Extruder 2", 1);
-    change0 = new StringListItem(Host,"Change Filament", 0);
-    change1 = new StringListItem(Host, "Change Filament", 0);
+    options = new VerticalList(Host, 128);
+    
+    extruder0Color = new ColorSelectorListItem(Host, "Extruder 1", 0, 24);
+    extruder1Color = new ColorSelectorListItem(Host,"Extruder 2", 1, 24);
+    change0 = new StringListItem(Host, 0, "Change Filament", 0, 24);
+    change1 = new StringListItem(Host, 0, "Change Filament", 0, 24);
 
     extruder0Color->selectedColorIndex = 0;
     extruder1Color->selectedColorIndex = 1;
     extruderColors[0] = extruder0Color;
     extruderColors[1] = extruder1Color;
-    defaultExtruderColor = new ColorSelectorListItem(Host, "Default", extruderColors[defaultExtruder]->selectedColorIndex);
+    defaultExtruderColor = new ColorSelectorListItem(Host, "Default", extruderColors[defaultExtruder]->selectedColorIndex, 24);
     defaultExtruderColor->selectedColorIndex = extruderColors[defaultExtruder]->selectedColorIndex;
     defaultExtruderColor->Label = String(defaultExtruder + 1);
 

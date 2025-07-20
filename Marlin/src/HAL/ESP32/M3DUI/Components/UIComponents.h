@@ -14,42 +14,45 @@ static uint16_t AvailableColors[] = {ST7735_BLACK, ST7735_WHITE, ST7735_RED, ST7
 
 class ListItem{
 public:
-    ListItem(){}
-    ~ListItem(){}
-    ListItem(MenuHost* host);
+    ListItem(MenuHost* host, int _height);
     MenuHost* Host = 0;
     virtual void Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, int y, bool selected){} // Must be overriden
+    int getHeight(){
+        return itemHeight;
+    }
     bool IsDummyItem(){
         return isDummyItem;
     }
 protected:
     bool isDummyItem = false;
+    int itemHeight = 0;
 };
 class ListSeparatorItem: public ListItem{
     public:
-    ListSeparatorItem(MenuHost* host):ListItem(host){
+    ListSeparatorItem(MenuHost* host):ListItem(host, 8){
         isDummyItem = true;
     }
     virtual void Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, int y, bool selected);; // Must be overriden
 };
 class StringListItem: public ListItem{
 public:
-    StringListItem(MenuHost* host, String str, int _endTrimLength);
+    StringListItem(MenuHost* host, Image* icon, String str, int _endTrimLength, int height);
     String ItemText;
     void Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, int y, bool selected) override;
 private:
     int endTrimLength;
+    Image* Icon;
 };
+
 class FileNameListItem: public StringListItem{
 public:
     String DOSName;
-    FileNameListItem(MenuHost* host, String str, String dosName, int _endTrimLength);
+    FileNameListItem(MenuHost* host, String str, String dosName, int _endTrimLength, int height);
 };
 
 class ColorSelectorListItem: public ListItem{
 public:
-    ColorSelectorListItem(){};
-    ColorSelectorListItem(MenuHost* host, String str, int colorIndex);
+    ColorSelectorListItem(MenuHost* host, String str, int colorIndex, int height);
     String ItemText;
     String Label;
     int selectedColorIndex = 0;
@@ -62,7 +65,6 @@ class VerticalList{
     std::vector<ListItem*> items;
         int scrollOffset = 0;
         int targetScrollOffset = 0;
-        int lineHeight = 0;
         int displayHeight = 0;
         MenuHost* Host = 0;
         int lastSelected = -2;
@@ -71,7 +73,7 @@ class VerticalList{
     public:
         int selected = -1;
         String EmptyString;
-        VerticalList(MenuHost* host, int lineHeight, int _displayHeight, String emptyString = "");
+        VerticalList(MenuHost* host, int _displayHeight, String emptyString = "");
         ~VerticalList();
         int getSelectedIndex();
         ListItem* getSelected();

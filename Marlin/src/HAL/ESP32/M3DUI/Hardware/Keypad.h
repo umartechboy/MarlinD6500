@@ -15,6 +15,8 @@ enum Keys : byte {
     KEYPAD_DOWN_LEFT    = 6, 
     KEYPAD_DOWN_RIGHT   = 8, 
     KEYPAD_MIDDLE       = 9, 
+    KEYPAD_OPTIONS      = KEYPAD_DOWN_RIGHT,
+    KEYPAD_BACK         = KEYPAD_DOWN_LEFT,
 };
 
 class KeyPad{

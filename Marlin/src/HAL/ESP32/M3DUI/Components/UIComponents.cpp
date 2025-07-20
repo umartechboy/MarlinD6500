@@ -6,12 +6,13 @@
 #include "MenuHost.h"
 #include "..\App\Images.h"
 
-ListItem::ListItem(MenuHost* host){
+ListItem::ListItem(MenuHost* host, int height){
     Host = host;
-
+    itemHeight = height;
 }
-StringListItem::StringListItem(MenuHost* host, String str, int _endTrimLength):ListItem(host){
+StringListItem::StringListItem(MenuHost* host, Image* icon, String str, int _endTrimLength, int height):ListItem(host, height){
     ItemText = str;
+    this->Icon = icon;
     endTrimLength = _endTrimLength;
 }
 void StringListItem::Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, int y, bool selected) {
@@ -24,7 +25,7 @@ void StringListItem::Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, i
     //     g->setTextColor(TextColor);
     //Serial.printf("Printing SD File %d: %s @ %d, %d\n", i, files[i].c_str(), Host->appWidth() / 2, FileLineCenter(i));
     int16_t w = 0;
-    centerString(g, ItemText.substring(0, ItemText.length() - endTrimLength).c_str(), Host->appWidth() / 2, y, &w);
+    centerStringWithImage(g, Icon, ItemText.substring(0, ItemText.length() - endTrimLength).c_str(), Host->appWidth() / 2, y, &w);
     if (selected){
         w = Host->appWidth() - w - 8;
         g->drawLine(0, y, w / 2, y, TextColor);
@@ -33,7 +34,7 @@ void StringListItem::Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, i
     g->SetOpacity(opBkp);
 }
 
-FileNameListItem::FileNameListItem(MenuHost* host, String str, String dosName, int _endTrimLength):StringListItem(host, str, _endTrimLength) {
+FileNameListItem::FileNameListItem(MenuHost* host, String str, String dosName, int _endTrimLength, int height):StringListItem(host, 0, str, _endTrimLength, height) {
     DOSName = dosName;
 }
 void ListSeparatorItem::Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, int y, bool selected) {
@@ -47,7 +48,7 @@ void ListSeparatorItem::Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor
     g->SetOpacity(opBkp);
 }
 
-ColorSelectorListItem::ColorSelectorListItem(MenuHost* host, String str, int colorIndex):ListItem(host){
+ColorSelectorListItem::ColorSelectorListItem(MenuHost* host, String str, int colorIndex, int height):ListItem(host, height){
     ItemText = str;
     selectedColorIndex = colorIndex;
 }
@@ -100,11 +101,10 @@ void ColorSelectorListItem::Paint(BufferedDisplay* g, uint8_t op, uint16_t TextC
     }
     g->SetOpacity(opBkp);
 }
-VerticalList::VerticalList(MenuHost* host, int lineHeight, int _displayHeight, String emptyString){
+VerticalList::VerticalList(MenuHost* host, int _displayHeight, String emptyString){
     Host = host;
     for (int i =0; i < items.size(); i++)
         items[i] = 0;
-    this->lineHeight = lineHeight;
     EmptyString = emptyString;
     displayHeight = _displayHeight;
 }
@@ -117,7 +117,9 @@ int VerticalList::getSelectedIndex(){
     return selected;
 }
 ListItem* VerticalList::getSelected(){
-    return items[selected];
+    if(selected < items.size())
+        return items[selected];
+    return 0;
 }
 // Overload operator[] for non-const access
 ListItem* VerticalList::operator[](int index) {
@@ -136,17 +138,35 @@ int VerticalList::Count(){
     return items.size();
 }
 void VerticalList::scrollDown(){ // List goes up, selection goes down
-    targetScrollOffset -= lineHeight;
+    int toScroll = 0;
+    if (getSelectedIndex() >= 0 && getSelectedIndex() < Count())
+        toScroll += items[getSelectedIndex()]->getHeight() / 2;
+    if (getSelectedIndex() + 1  >= 0 && (getSelectedIndex() + 1) < Count())
+        toScroll += items[getSelectedIndex() + 1]->getHeight() / 2;
+    targetScrollOffset -= toScroll;
     if (selected + 1 < Count()){
-        if (items[selected + 1]->IsDummyItem()) // skip over
-            targetScrollOffset -= lineHeight;
+        if (items[selected + 1]->IsDummyItem()) {// skip over    
+            toScroll = items[getSelectedIndex() + 1]->getHeight() / 2; // completely skip the dummy
+            if (getSelectedIndex() + 2  >= 0 && (getSelectedIndex() + 2) < Count())
+                toScroll += items[getSelectedIndex() + 2]->getHeight() / 2;
+            targetScrollOffset -= toScroll;
+        }
     }
 }
 void VerticalList::scrollUp(){ // List goes down, selection goes up
-    targetScrollOffset += lineHeight;
+    int toScroll = 0;
+    if (getSelectedIndex() >= 0 && getSelectedIndex() < Count())
+        toScroll += items[getSelectedIndex()]->getHeight() / 2;
+    if (getSelectedIndex() - 1  >= 0 && (getSelectedIndex() - 1) < Count())
+        toScroll += items[getSelectedIndex() - 1]->getHeight() / 2;
+    targetScrollOffset += toScroll;
     if (selected - 1 >= 0){
-        if (items[selected - 1]->IsDummyItem()) // skip over, double scroll
-            targetScrollOffset += lineHeight;
+        if (items[selected - 1]->IsDummyItem()) {// skip over, double scroll
+            toScroll = items[getSelectedIndex() - 1]->getHeight() / 2; // completely skip the dummy
+            if (getSelectedIndex() - 2  >= 0 && (getSelectedIndex() - 2) < Count())
+                toScroll += items[getSelectedIndex() - 2]->getHeight() / 2;
+            targetScrollOffset += toScroll;
+        }
     }
 }
 void VerticalList::SetOnSelectionUpdated(void *_owner, void (*_OnSelectionUpdated)(void* caller, ListItem* selectedItem, int selectedIndex)){
@@ -171,14 +191,26 @@ void VerticalList::Paint(BufferedDisplay* g, Color TextColor){
             targetScrollOffset = 0;
             SERIAL_IMPL.println("Adjust underflow 1");
         }
-        else if (scrollOffset < -((int)items.size() - 1) * lineHeight) {
-            targetScrollOffset = -((int)items.size() - 1) * lineHeight;
-            SERIAL_IMPL.printf("Adjust underflow 2 %d < %d\n", scrollOffset, -((int)items.size() - 1) * lineHeight);
+        else {
+            int maxScroll = 0;
+            for (int i = 0; i < Count(); i++){
+                if (i == 0 || i == (Count() - 1))
+                    maxScroll += items[i]->getHeight() / 2;
+                else
+                    maxScroll += items[i]->getHeight();
+            }
+            if (scrollOffset < -maxScroll) {
+                targetScrollOffset = -maxScroll;
+                SERIAL_IMPL.printf("Adjust underflow 2 %d < %d\n", scrollOffset, -maxScroll);
+            }
         }
         for (int i = 0; i < items.size(); i++){
             g->setFont();
             //if (i * lineHeight + scrollOffset > - lineHeight / 2 && i * lineHeight + scrollOffset < lineHeight / 2){
             
+            int lineHeight = 10;
+            if (Count() > 0) 
+                lineHeight = items[0]->getHeight();
             int16_t op = (abs(i * lineHeight + scrollOffset) * 100) / displayHeight;
             if (op < 0) op = 0;
             if (op > 100) op = 100;
@@ -222,7 +254,7 @@ Notification::Notification(String& text, int life)
     this->Text = text;
 }
 void Notification::HandleKeyUp(Keys key){
-    if (key == KEYPAD_MIDDLE){
+    if (key == KEYPAD_MIDDLE || key == KEYPAD_BACK){
         lifeLeft = 1;
     }
 }
