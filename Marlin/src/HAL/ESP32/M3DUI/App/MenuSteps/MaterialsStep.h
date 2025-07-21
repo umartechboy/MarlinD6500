@@ -17,13 +17,13 @@ public:
     void DecrementValue();
     void Tick() override; 
     void LoadBegin() override;
-private:
-    int defaultExtruder = 0;
+    StringListItem* change0, *change1;
     ColorSelectorListItem* extruder0Color;
     ColorSelectorListItem* extruder1Color;
+private:
+    int defaultExtruder = 0;
     ColorSelectorListItem* defaultExtruderColor;
     ColorSelectorListItem* extruderColors[2];
-    StringListItem* change0, *change1;
     int selectedExtruderItemIndex();
     Preferences prefs;
 

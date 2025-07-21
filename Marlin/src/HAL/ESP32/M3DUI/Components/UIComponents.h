@@ -137,12 +137,17 @@ class MenuStep {
         virtual MenuStep* GetNextStep();
         virtual bool CanJumpToMainMenu();
         void loop();
+        bool IsDummyStep();
     protected: 
         long lastTick = 0;
         long TickPeriod = 0;
-    protected: 
+        bool isDummy = false;
         virtual void Tick() {}
 };
 
+class DummyMenuStep:public MenuStep{
+public:
+    DummyMenuStep(MenuHost* host):MenuStep(host){ isDummy = true; }
+};
 
 #endif // M3DUI

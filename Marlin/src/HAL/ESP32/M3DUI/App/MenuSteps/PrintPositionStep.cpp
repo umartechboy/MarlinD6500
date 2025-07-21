@@ -8,28 +8,32 @@ PrintPositionStep::PrintPositionStep(MenuHost* host):MenuStep(host) {
     BackColor = DarkPurple;
     TextColor = ST7735_WHITE;
     Icon = &img_MovePrint;
-    PreviousStep = &fileOverViewStep;
+    Title = "Print Position";
+    RetroIcon = &img_RetroPrintPosition;
+    PreviousStep = &filePreviewStep;
     NextStep = &idleScreenStep; // If it gets triggered, the menu locks the screen
+    RetroPreviousStep = &filePreviewStep;
+    RetroNextStep = &idleScreenStep;
+    NextActionString = "Print";
 }
+
 int PrintPositionStep::scaleX(int v) {
-    return round((127.0F * v) / (float)bedWidth);
+    return round((115.0F * v) / (float)bedWidth);
 }
 int PrintPositionStep::scaleY(int v) {
-    return round((127.0F * v) / (float)bedWidth);
+    return round((115.0F * v) / (float)bedWidth);
 }
 int PrintPositionStep::transformX(int v) {
-    return scaleX(v);
+    return scaleX(v) + 6;
 }
 int PrintPositionStep::transformY(int v) {
-    float fo = (127 * bedHeight) / bedWidth;
-    return (127 - fo) / 2 + fo - scaleX(v);
+    int gHeight = scaleY(bedHeight);
+    return (128 / 2) + gHeight / 2 - scaleY(v);
 }
 void PrintPositionStep::Paint(BufferedDisplay* g) {
     g->fillScreen(BackColor);
     g->setFont();
     g->setTextColor(TextColor);
-    centerString(g, "Use movement keys to", Host->appWidth() / 2, 7);
-    centerString(g, "adjust print position", Host->appWidth() / 2, 121);
     g->drawRect(transformX(0), transformY(bedHeight), scaleX(bedWidth), scaleY(bedHeight), ST7735_RED);
     g->drawRect(transformX(sideMargin), transformY(bedHeight - sideMargin), scaleX(bedWidth - 2 * sideMargin), scaleY(bedHeight - 2 * sideMargin), ST7735_YELLOW);
     Serial.printf("fill: %dx%d, %dx%d\n",

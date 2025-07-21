@@ -22,8 +22,7 @@ IdleScreenStep::IdleScreenStep(MenuHost* host):MenuStep(host) {
 MenuStep* IdleScreenStep::GetPreviousStep(){
     if (Host->Retro)
         return 0;
-    else return PreviousStep;
-
+    else return MenuStep::GetPreviousStep();
 }
 void IdleScreenStep::Tick() {
     NeedsRedraw = true;
@@ -57,29 +56,34 @@ void IdleScreenStep::Paint(BufferedDisplay* g) {
     else {
         if(printStatus == PrintStatus::Idle){
             g->setFont(&FreeSans12pt7b);
-            centerString(g, "Ready!", Host->appWidth() / 2, Host->appHeight() / 2);
+            centerString(g, "Ready!", Host->appWidth() / 2, Host->appTop() + Host->appHeight() / 2);
         }
         else{        
+            int titleHeight = 10;
+            if (Host->Retro)
+                titleHeight = retroTitleSectionHeight + 14;
+            
             if (card.isPrinting())
-                centerLeftString(g, "Printing", 2, 10);
+                centerLeftString(g, "Printing", 2, titleHeight);
             else if (card.isPaused())
-                centerLeftString(g, "Paused", 2, 10);
+                centerLeftString(g, "Paused", 2, titleHeight);
             else {// Must have ended
-                centerLeftString(g, "All Done!", 2, 10);
+                centerLeftString(g, "All Done!", 2, titleHeight);
             }
-            centerRightString(g, (String((print_job_timer.getStats().filamentUsed - materialAtStart) / 1000, 3) + String("m")).c_str(), Host->appWidth() - 2, 10);
+
+            centerRightString(g, (String((print_job_timer.getStats().filamentUsed - materialAtStart) / 1000, 3) + String("m")).c_str(), Host->appWidth() - 2, titleHeight);
             
             int pbh = 8;
             g->SetOpacity(50);
             float pcCommplete = card.percentDone();
             //pcCommplete = 24.4;
-            g->drawRoundRect(1, Host->appHeight() / 2 - 5, Host->appWidth() - 2, pbh, pbh / 2, TextColor);
+            g->drawRoundRect(1, Host->appTop() + Host->appHeight() / 2 - 5, Host->appWidth() - 2, pbh, pbh / 2, TextColor);
             g->SetOpacity(100);
-            g->fillRoundRect(1, Host->appHeight() / 2 - 5, ((Host->appWidth() - 2) * pcCommplete) / 100, pbh, pbh / 2, TextColor);    
+            g->fillRoundRect(1, Host->appTop() + Host->appHeight() / 2 - 5, ((Host->appWidth() - 2) * pcCommplete) / 100, pbh, pbh / 2, TextColor);    
             g->setFont();
-            centerString(g, (String(pcCommplete, 1) + String("%")).c_str(), Host->appWidth() / 2, Host->appHeight() / 2 - 14);
+            centerString(g, (String(pcCommplete, 1) + String("%")).c_str(), Host->appWidth() / 2, Host->appTop() + Host->appHeight() / 2 - 14);
             g->setFont();
-            centerString(g, fileName.substring(1, fileName.length() - 6).c_str(), Host->appWidth() / 2, Host->appHeight() / 2 + pbh + 5);
+            centerString(g, fileName.substring(1, fileName.length() - 6).c_str(), Host->appWidth() / 2, Host->appTop() + Host->appHeight() / 2 + pbh + 5);
         }
         if (Host->Retro){
         }

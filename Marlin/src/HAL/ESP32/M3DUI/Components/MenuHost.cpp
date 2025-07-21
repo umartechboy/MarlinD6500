@@ -177,6 +177,14 @@ int MenuHost::appHeight(){
 int MenuHost::appWidth(){
     return _appWidth;
 }
+int MenuHost::appTop(){
+    if (Retro)
+        return retroTitleSectionHeight;
+    return 0;
+}
+int MenuHost::appLeft(){
+    return 0;
+}
 // Top left
 void MenuHost::DrawButton1(MenuStep* step, BufferedDisplay* g, float progress){
     DrawButton(1, step, g, progress);
@@ -197,7 +205,10 @@ void MenuHost::Paint(BufferedDisplay* bTft){
     }
     if (Retro){
         _appWidth = bTft->width();
-        _appHeight = bTft->height() - 12;
+        _appHeight = bTft->height() - retroTitleSectionHeight;
+        if (CurrentStep)
+            if (CurrentStep->GetNextStep() || CurrentStep->GetPreviousStep() || CurrentStep->CanJumpToMainMenu())
+                _appHeight -= retroNavSectionHeight;
     }
     else{
         _appWidth = bTft->width();

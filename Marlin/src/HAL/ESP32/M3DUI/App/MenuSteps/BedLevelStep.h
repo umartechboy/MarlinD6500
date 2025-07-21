@@ -20,6 +20,7 @@ public:
     void HandleKeyUp(Keys key) override;         
     void Tick() override;
     void FocusChanged(StepAnimationStage currentStage) override;
+    MenuStep* GetPreviousStep() override;
 };
 
 #endif

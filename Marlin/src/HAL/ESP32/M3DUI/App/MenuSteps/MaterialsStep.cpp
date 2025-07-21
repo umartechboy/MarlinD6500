@@ -2,14 +2,43 @@
 #include "..\Images.h"
 #include "..\MenuApp.h"
 
+DummyMenuStep* dummyColorChangeStep;
+void materilaOptionChange(void* caller, ListItem* selectedItem, int selectedIndex){
+    MaterialsStep* owner = (MaterialsStep*)caller;
+    if (selectedItem == owner->change0 || selectedItem == owner->change1){
+        owner->NextActionString = "Change";
+        owner->RetroNextStep = dummyColorChangeStep;
+        filament0ChangeStep.RetroPreviousStep = owner;
+        // Normal mode
+        owner->PreviousStep = &filament0ChangeStep;
+        filament0ChangeStep.NextStep = owner;
+    }
+    else if (selectedItem == owner->extruder0Color || selectedItem == owner->extruder1Color)
+    {   
+        owner->NextActionString = "Select";
+        owner->RetroNextStep = &filament1ChangeStep;
+        filament1ChangeStep.RetroPreviousStep = owner;
+        // Normal mode
+        owner->PreviousStep = &filament1ChangeStep;
+        filament1ChangeStep.NextStep = owner;
+
+    }
+    else {
+        owner->NextActionString = "";
+        owner->RetroNextStep = 0;
+        // Normal mode
+        owner->PreviousStep = 0;
+    }
+}
 MaterialsStep::MaterialsStep(MenuHost* host):MenuStep(host) {
     ButtonColor = ST7735_WHITE;
     BackColor = ST7735_WHITE;
     TextColor = ST7735_BLACK;            
     Icon = &img_ChangeFilament;    
-    NextStep = &toolsMenuStep;
+    NextStep = &toolsMenuStep;    
 
-    options = new VerticalList(Host, 128);
+    dummyColorChangeStep = new DummyMenuStep(Host);
+    dummyColorChangeStep->RetroIcon = &img_RetroHorizontal;
     
     extruder0Color = new ColorSelectorListItem(Host, "Extruder 1", 0, 24);
     extruder1Color = new ColorSelectorListItem(Host,"Extruder 2", 1, 24);
@@ -25,6 +54,8 @@ MaterialsStep::MaterialsStep(MenuHost* host):MenuStep(host) {
     defaultExtruderColor->Label = String(defaultExtruder + 1);
 
     // Filament Load/Unload
+    options = new VerticalList(Host, 128);
+    options->SetOnSelectionUpdated(this, materilaOptionChange);
     options->Add(extruder0Color);
     options->Add(change0);
     options->Add(new ListSeparatorItem(Host));
@@ -35,6 +66,7 @@ MaterialsStep::MaterialsStep(MenuHost* host):MenuStep(host) {
     TickPeriod = 50;
 }
 MaterialsStep::~MaterialsStep(){
+    delete dummyColorChangeStep;
     delete options;
 }
 void MaterialsStep::LoadBegin(){
@@ -59,16 +91,6 @@ void MaterialsStep::Paint(BufferedDisplay* g) {
     g->fillScreen(BackColor);
     g->setTextColor(TextColor);
     options->Paint(g, TextColor);
-    if (options->getSelected() == change0){
-        PreviousStep = &filament0ChangeStep;
-        filament0ChangeStep.NextStep = this;
-    }
-    else if (options->getSelected() == change1){
-        PreviousStep = &filament1ChangeStep;
-        filament1ChangeStep.NextStep = this;
-    }
-    else
-        PreviousStep = 0;
 }
 void MaterialsStep::SaveColors(){
     

@@ -38,6 +38,9 @@ FilePreviewStep::FilePreviewStep(MenuHost* host):MenuStep(host) {
     Icon = &img_PrintPreview;    
     PreviousStep = &sdMenuStep;
     NextStep = &printPositionStep;
+    RetroPreviousStep = &sdMenuStep;
+    RetroNextStep = &printPositionStep;
+    NextActionString = "Continue";
 }
 void FilePreviewStep::Paint(BufferedDisplay* g) {
     //Serial.printf("File Preview Step Paint called @ %d, %d\n", g->xOffset, g->yOffset);
@@ -51,7 +54,7 @@ void FilePreviewStep::Paint(BufferedDisplay* g) {
         pngParams.x = Host->appWidth() / 2;
         pngParams.y = y;
         png.decode((void*)(&pngParams), 0);
-        y += 60; // can't rely on PNG data.
+        y += 55; // can't rely on PNG data.
     }
     else{
         centerString(g, "No file preivew", Host->appWidth() / 2, lineHeight); // some margin at the top too
@@ -69,9 +72,6 @@ void FilePreviewStep::Paint(BufferedDisplay* g) {
     g->setFont();
     g->setTextColor(TextColor);
     g->SetOpacity(100);
-    centerString(g, (idleScreenStep.fileName.substring(1, idleScreenStep.fileName.length() - 6)).c_str(), Host->appWidth() / 2, y);
-    y += lineHeight;
-
     if (estimatedPrintingTime.length() > 0){
         centerRightString(g, "Time", divider - margin, y);   
         centerLeftString(g, estimatedPrintingTime.c_str(), divider + margin + 1, y);
@@ -291,10 +291,12 @@ void FilePreviewStep::LoadBegin() {
     f.close();
 }
 void FilePreviewStep::HandleKeyUp(Keys key){    
-    if (key == Keys::KEYPAD_RIGHT)
-        Host->GotoNextStep();
-    else if (key == Keys::KEYPAD_LEFT)
-        Host->GotoPreviousStep();
+    if (!Host->Retro){
+        if (key == Keys::KEYPAD_RIGHT)
+            Host->GotoNextStep();
+        else if (key == Keys::KEYPAD_LEFT)
+            Host->GotoPreviousStep();
+    }
 }
 void FilePreviewStep::LoadComplete(){
     // in case the menu is coming back from the print position step, we need to notify the home screen

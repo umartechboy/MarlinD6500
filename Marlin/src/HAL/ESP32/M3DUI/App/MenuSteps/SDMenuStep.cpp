@@ -12,9 +12,11 @@ static void selectionUpdated(void* caller, ListItem* selectedItem, int selectedI
         This->NextStep = 0;
     }
     else {
-        This->NextStep = &fileOverViewStep;
+        This->NextStep = &filePreviewStep;
+        This->RetroNextStep = &filePreviewStep; // same in retro
         idleScreenStep.fileName = String("/") + ((FileNameListItem*)selectedItem)->ItemText;
         idleScreenStep.DOSFileName = String("/") + ((FileNameListItem*)selectedItem)->DOSName;
+        filePreviewStep.Title = idleScreenStep.fileName.substring(0, idleScreenStep.fileName.length() - 6);
         This->NeedsRedraw = true;
     }
 }
@@ -24,8 +26,10 @@ SDMenuStep::SDMenuStep(MenuHost* host):MenuStep(host) {
     TextColor = ST7735_BLACK;
     Icon = &img_SD;
     PreviousStep = &idleScreenStep;
-    NextStep = &fileOverViewStep; 
+    RetroPreviousStep = &retroMainMenuStep;
+    NextStep = &filePreviewStep; 
     Title = "SD Card Contents";
+    NextActionString = "Select";
     TickPeriod = 50;
     list = new VerticalList(Host, 128, "No SD Card");
     list->SetOnSelectionUpdated(this, selectionUpdated);
@@ -59,10 +63,12 @@ void SDMenuStep::HandleKeyUp(Keys key) {
         list->scrollDown();
     else if (key == Keys::KEYPAD_UP)
         list->scrollUp();
-    else if (key == Keys::KEYPAD_RIGHT)
-        Host->GotoNextStep();
-    else if (key == Keys::KEYPAD_LEFT)
-        Host->GotoPreviousStep();
+    if (!Host->Retro){
+        if (key == Keys::KEYPAD_RIGHT)
+            Host->GotoNextStep();
+        else if (key == Keys::KEYPAD_LEFT)
+            Host->GotoPreviousStep();
+    }
 }    
 
 void SDMenuStep::LoadComplete(){    

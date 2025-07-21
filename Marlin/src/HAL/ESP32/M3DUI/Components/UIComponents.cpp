@@ -331,10 +331,18 @@ void MenuStep::PaintRetroOptionsBar(BufferedDisplay* g) {
         TextColor);
 }
 MenuStep* MenuStep::GetPreviousStep(){
-    if (Host->Retro)
+    if (Host->Retro) {
+        if (RetroPreviousStep)
+            if (RetroPreviousStep->IsDummyStep())
+                return 0;
         return RetroPreviousStep;
-    else
+    }
+    else{        
+        if (RetroNextStep)
+            if (RetroNextStep->IsDummyStep())
+                return 0;
         return PreviousStep;
+    }
 }
 MenuStep* MenuStep::GetNextStep(){
     if (Host->Retro)
@@ -344,4 +352,7 @@ MenuStep* MenuStep::GetNextStep(){
 }
 bool MenuStep::CanJumpToMainMenu(){
     return true;
+}
+bool MenuStep::IsDummyStep(){
+    return isDummy;
 }

@@ -1,7 +1,7 @@
 #include "MenuApp.h"
 
 MenuHost menuHost;
-FilePreviewStep fileOverViewStep(&menuHost);
+FilePreviewStep filePreviewStep(&menuHost);
 PrintPositionStep printPositionStep(&menuHost);
 IdleScreenStep idleScreenStep(&menuHost);
 SDMenuStep sdMenuStep(&menuHost);

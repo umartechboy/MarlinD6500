@@ -142,7 +142,18 @@ void BedLevelStep::Paint(BufferedDisplay* g){
     g->setFont();
 }
 
+MenuStep* BedLevelStep::GetPreviousStep(){
+    if (!donePreHeating){
+        // No need to M104 because it will be called in step unload.
+        return MenuStep::GetPreviousStep();
+    }
+    else{
+        return 0;
+    }
+}
+
 void BedLevelStep::HandleKeyUp(Keys key) {
+    Host->PushNotification("Bed leveling in process. Please wait...");
 }
 void BedLevelStep::FocusChanged(StepAnimationStage stage){
     if (stage == StepAnimationStage::InOverlay){

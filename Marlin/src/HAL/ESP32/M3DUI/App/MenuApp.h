@@ -14,7 +14,7 @@
 #include "MenuSteps\RetroMainMenu.h"
 
 extern MenuHost menuHost;
-extern FilePreviewStep fileOverViewStep;
+extern FilePreviewStep filePreviewStep;
 extern PrintPositionStep printPositionStep;
 extern IdleScreenStep idleScreenStep;
 extern SDMenuStep sdMenuStep;
