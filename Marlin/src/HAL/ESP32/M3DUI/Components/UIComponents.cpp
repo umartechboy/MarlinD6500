@@ -48,10 +48,9 @@ void ListSeparatorItem::Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor
     
     uint8_t opBkp = g->GetOpacity();
     uint8_t lineMargin = 10;
-    uint8_t tempSectionHeight = 20;
     g->SetOpacity(10);
     for (int i =0; i < 5; i++)
-        g->drawLine(lineMargin + i * 2, y - 5, Host->appWidth() - lineMargin - i * 2, y - 5, TextColor);
+        g->drawLine(lineMargin + i * 2, y, Host->appWidth() - lineMargin - i * 2, y, TextColor);
     g->SetOpacity(opBkp);
 }
 
@@ -84,6 +83,12 @@ void ColorSelectorListItem::Paint(BufferedDisplay* g, uint8_t op, uint16_t TextC
     int rSz = 18;
     int arrowSpace = 12;
     int aSz = 8;
+      
+    if (selected){ // b.t.w. we can discard opacity here coz the selected is 100% op
+        g->SetOpacity(15);
+        g->fillRect(0, y - itemHeight / 2, g->width(), itemHeight, 0);
+        g->SetOpacity(op);
+    }
     centerLeftString(g, ItemText.c_str(), px, y, &w);
     g->SetOpacity(100); // force full bright rect.
     g->fillRoundRect(Host->appWidth() - pxe - arrowSpace - rSz, y - rSz/2, rSz, rSz, 3, AvailableColors[selectedColorIndex]);
@@ -244,8 +249,12 @@ void VerticalList::Paint(BufferedDisplay* g, Color TextColor){
 
             // if (op > 95)
             //     selected = i;
+            //SERIAL_IMPL.printf("Rect i = %d, lY = %d, height = %d\n", i, lY, items[i]->getHeight());
+            //g->drawRect(0, lY + displayHeight / 2 + scrollOffset - items[i]->getHeight() / 2, 128, items[i]->getHeight(), i%2? ST7735_BLUE:ST7735_ORANGE);
             items[i]->Paint(g, op, TextColor, lY + displayHeight / 2 + scrollOffset, i == selected);
-            lY += items[i]->getHeight();
+            if (i + 1 < Count()){
+                lY += items[i]->getHeight() / 2 + items[i + 1]->getHeight() / 2;
+            }
         }
     }
     // We dont have a tick in the list obj
