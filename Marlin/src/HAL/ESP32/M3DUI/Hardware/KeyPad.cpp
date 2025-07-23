@@ -99,7 +99,7 @@ Keys touchOnADCKeyPad_getKey(){
 bool unknwonSwipe = false;
 bool swipeInProcess = false;
 void KeyPad::Loop(MenuHost* host){
-  if (millis() - lastKeyCheck > 10){
+  if (millis() - lastKeyCheck > (lastKeyDown == Keys::KEYPAD_NONE) ? 5:30){
     lastKeyCheck = millis();
     Keys key = touchOnADCKeyPad_getKey();
 

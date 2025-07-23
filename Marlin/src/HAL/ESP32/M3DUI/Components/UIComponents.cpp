@@ -140,40 +140,44 @@ void VerticalList::Clear(){
 }
 void VerticalList::Add(ListItem* item){
     items.push_back(item);
+    if (selected < 0)
+        selected = 0;
 }
 int VerticalList::Count(){
     return items.size();
 }
-void VerticalList::scrollDown(){ // List goes up, selection goes down
+void VerticalList::scrollDown(){ // List goes down, selection goes up
     int toScroll = 0;
     if (getSelectedIndex() >= 0 && getSelectedIndex() < Count())
         toScroll += items[getSelectedIndex()]->getHeight() / 2;
     if (getSelectedIndex() + 1  >= 0 && (getSelectedIndex() + 1) < Count())
         toScroll += items[getSelectedIndex() + 1]->getHeight() / 2;
     targetScrollOffset -= toScroll;
-    if (selected + 1 < Count()){
-        if (items[selected + 1]->IsDummyItem()) {// skip over    
-            toScroll = items[getSelectedIndex() + 1]->getHeight() / 2; // completely skip the dummy
-            if (getSelectedIndex() + 2  >= 0 && (getSelectedIndex() + 2) < Count())
-                toScroll += items[getSelectedIndex() + 2]->getHeight() / 2;
-            targetScrollOffset -= toScroll;
-        }
+    selected++;
+    if (selected >= Count()){
+        selected--;
+    }
+    SERIAL_IMPL.printf("Scroll Down: toScroll: %d, targetScrollOffset: %d\n", toScroll, targetScrollOffset);
+    if (items[selected ]->IsDummyItem()) { // skip over    
+        SERIAL_IMPL.println("Scrolled down on dummy item, skipping");
+        scrollDown();
     }
 }
-void VerticalList::scrollUp(){ // List goes down, selection goes up
+void VerticalList::scrollUp(){ // List goes up, selection goes down
     int toScroll = 0;
-    if (getSelectedIndex() >= 0 && getSelectedIndex() < Count())
-        toScroll += items[getSelectedIndex()]->getHeight() / 2;
+    if (getSelectedIndex() >= 0 && getSelectedIndex() < Count()) // in case we are coming from indeterminded state
+        toScroll += items[getSelectedIndex()]->getHeight() / 2; // Scroll current item's half
     if (getSelectedIndex() - 1  >= 0 && (getSelectedIndex() - 1) < Count())
-        toScroll += items[getSelectedIndex() - 1]->getHeight() / 2;
-    targetScrollOffset += toScroll;
-    if (selected - 1 >= 0){
-        if (items[selected - 1]->IsDummyItem()) {// skip over, double scroll
-            toScroll = items[getSelectedIndex() - 1]->getHeight() / 2; // completely skip the dummy
-            if (getSelectedIndex() - 2  >= 0 && (getSelectedIndex() - 2) < Count())
-                toScroll += items[getSelectedIndex() - 2]->getHeight() / 2;
-            targetScrollOffset += toScroll;
-        }
+        toScroll += items[getSelectedIndex() - 1]->getHeight() / 2; // scroll over the half of the next item
+    targetScrollOffset += toScroll; // Implement the scroll
+    selected--;
+    if (selected < 0){
+        selected++;
+    }
+    SERIAL_IMPL.printf("Scroll Up: toScroll: %d, targetScrollOffset: %d\n", toScroll, targetScrollOffset);
+    if (items[selected]->IsDummyItem()) {// skip over, double scroll
+        SERIAL_IMPL.println("Scrolled Up on dummy item, skipping");
+        scrollUp();
     }
 }
 void VerticalList::SetOnSelectionUpdated(void *_owner, SelectionUpdatedCallback _OnSelectionUpdated){
@@ -211,40 +215,40 @@ void VerticalList::Paint(BufferedDisplay* g, Color TextColor){
                 SERIAL_IMPL.printf("Adjust underflow 2 %d < %d\n", scrollOffset, -maxScroll);
             }
         }
+        int lY = 0;
         for (int i = 0; i < items.size(); i++){
             g->setFont();
             //if (i * lineHeight + scrollOffset > - lineHeight / 2 && i * lineHeight + scrollOffset < lineHeight / 2){
             
-            int lineHeight = 10;
-            if (Count() > 0) 
-                lineHeight = items[0]->getHeight();
-            int16_t op = (abs(i * lineHeight + scrollOffset) * 150) / displayHeight;
+            int16_t op = (abs(lY + scrollOffset) * 150) / displayHeight;
             if (op < 0) op = 0;
             if (op > 100) op = 100;
             op = 100 - op;
             // 100, 90, 80, 70, 60
             if (op < 95){ 
                 op -= 50; 
-            if (op < 0) op = 0;
-        }
+                if (op < 0)
+                    op = 0;
+            }
 
-        //Serial.printf("Printing SD File %d: %s @ %d\n", i, files[i].c_str(), op);
-        
-        // if (op > 100)
-        //     op = 100;
-        // op = 100 - op;
-        // if (op < 95){
-        //     op -= 50;
-        //     op *= 2;
-        // }
+            //SERIAL_IMPL.printf("i: %d, lY: %d, scrollOffset: %d, op: %d, selected: %d\n", i, lY, scrollOffset, op, selected);
+            //Serial.printf("Printing SD File %d: %s @ %d\n", i, files[i].c_str(), op);
+            
+            // if (op > 100)
+            //     op = 100;
+            // op = 100 - op;
+            // if (op < 95){
+            //     op -= 50;
+            //     op *= 2;
+            // }
 
-        int lY = displayHeight / 2 + i * lineHeight + scrollOffset;
-        if (op > 95)
-            selected = i;
-        items[i]->Paint(g, op, TextColor, lY, i == selected);
+            // if (op > 95)
+            //     selected = i;
+            items[i]->Paint(g, op, TextColor, lY + displayHeight / 2 + scrollOffset, i == selected);
+            lY += items[i]->getHeight();
         }
     }
-    
+    // We dont have a tick in the list obj
     if(getSelectedIndex() == lastSelected){
         return;
     }

@@ -40,6 +40,8 @@ MaterialsStep::MaterialsStep(MenuHost* host):MenuStep(host) {
     dummyColorChangeStep = new DummyMenuStep(Host);
     dummyColorChangeStep->RetroIcon = &img_RetroHorizontal;
     
+    Title = "Materials";
+    RetroPreviousStep = &retroMainMenuStep;
     extruder0Color = new ColorSelectorListItem(Host, "Extruder 1", 0, 24);
     extruder1Color = new ColorSelectorListItem(Host,"Extruder 2", 1, 24);
     change0 = new StringListItem(Host, 0, "Change Filament", 0, 24);
