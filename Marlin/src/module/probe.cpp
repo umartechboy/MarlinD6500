@@ -604,11 +604,12 @@ bool Probe::probe_down_to_z(const_float_t z, const_feedRate_t fr_mm_s) {
   SERIAL_IMPL.println("set_probing_paused()");
   TERN_(HAS_QUIET_PROBING, set_probing_paused(true));
 
+  float startFrom = current_position.z;
   // Move down until the probe is triggered
   do_blocking_move_to_z(z, fr_mm_s); // we just need to override this for D8500
   
-  SERIAL_IMPL.println("do_blocking_move_to_z Ends");
-  float deltaZ = z - current_position.z;
+  float deltaZ = current_position.z - startFrom;
+  SERIAL_IMPL.printf("do_blocking_move_to_z Ends: dz = %f, z = %f\n", deltaZ, current_position.z);
   
   // SERIAL_IMPL.printf("Before Probe current_position.z = %f, z = %f\n", current_position.z, z);
   // float distanceGone = do_blocking_move_to_dz_D8500(deltaZ, fr_mm_s); // always -ive

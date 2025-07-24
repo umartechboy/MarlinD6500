@@ -11,6 +11,7 @@ BedLevelStep::BedLevelStep(MenuHost* host):MenuStep(host)
     Icon = &img_Tools;
     TickPeriod = 50;
     NextStep = &toolsMenuStep;
+    Title = "Auto bed leveling";
 }
 
 BedLevelStep::~BedLevelStep()
@@ -20,7 +21,57 @@ BedLevelStep::~BedLevelStep()
 void BedLevelStep::Tick()
 {
     NeedsRedraw = true;
-    if (millis() - levelingDoneSince > 3000 && levelingDoneSince != 0){
+    
+    if ((readTemp(0) >= preHeatTemp && readTemp(1) >= preHeatTemp)){
+        if (!donePreHeating){
+            // just done
+            // Send the cleaning codes
+            // find an empty slot
+            String probeCom = String("G30 X") + String(pxStart - 20) + String(" Y") + String(pyStart);
+            enqueueComs({"G91", "M106" "G1 Z3 X20", probeCom}); // We are gonna need the fan too
+        }
+        donePreHeating = true;
+    }
+    if (donePreHeating && levelingDoneSince == 0){ // We are either wiping or leveling
+        if(cleaningWipeDueIndex < wipeAreaHeight / wipeRungHeight){
+            if (cleaningWipeSentIndex != cleaningWipeDueIndex) {
+                // Send now                
+                String wipeCom1 = String("G1 X") + String(wipeAreaWidth) + String(" E-10 F300");
+                String wipeCom2 = String("G1 E6 Z2 F2000"); // force ooze out too
+                String wipeCom3 = String("G1 X") + String(-wipeAreaWidth) + String(" Y") + String(wipeRungHeight);// Force ooze out
+                String wipeCom4 = String("G30"); // Find new Z
+                enqueueComs({wipeCom1, wipeCom2, wipeCom3, wipeCom4});
+                cleaningWipeSentIndex = cleaningWipeDueIndex;
+            }
+            else {
+                // See if we can send more
+                if (!hasComsQueued())
+                    cleaningWipeDueIndex++;
+            }
+            // check if cleaning coms are done
+        }
+        else {
+            if (!G29Sent) {
+                // Send the G29
+                PreviousStep = 0;
+                G29Sent = true;
+                StartABL();
+                writeTemp(0, 0);
+                writeTemp(1, 0);
+            }
+            else {
+                // Just wait now!
+                if (checkABLComplete()){
+                    if (levelingDoneSince == 0){ // first call
+                        PreviousStep = &bedLevelStep;
+                        notifyLevelingDone();
+                    }
+                }
+            }
+        }
+        
+    }
+    else if (millis() - levelingDoneSince > 5000 && levelingDoneSince != 0 && !checkABLFailed()){ // auto procede in case of success
         TickPeriod = 0; // remove the tick
         Host->GotoNextStep();
     }
@@ -35,6 +86,8 @@ void BedLevelStep::LoadComplete(){
     enqueueComs({"G91", "G1 Z5", "G90"});
     G29Sent = false;
     donePreHeating = false;
+    cleaningWipeDueIndex = 0;
+    cleaningWipeSentIndex = -1;
     levelingDoneSince = 0;
     TickPeriod = 50;
 }
@@ -42,6 +95,11 @@ void BedLevelStep::LoadComplete(){
 void BedLevelStep::UnloadBegin(){
     SERIAL_IMPL.println("End ABL");
     AbortABL();
+    if (donePreHeating && !checkABLComplete()) {
+        // Nozzle wipe
+        enqueueComs("G1 Z-3"); // lift the head in case of nozzle wipe
+    }
+    enqueueComs({"G90"});
 
     writeTemp(0, 0);
     writeTemp(1, 0);
@@ -67,24 +125,19 @@ void BedLevelStep::Paint(BufferedDisplay* g){
     BackColor = red;
     g->fillScreen(BackColor);
     g->setTextColor(TextColor);
-    if ((readTemp(0) < preHeatTemp || readTemp(1) < preHeatTemp) && !donePreHeating){        
+    if (!G29Sent){        
         g->setFont(&FreeSans9pt7b);
-        centerString(g, "Heating up...", Host->appWidth() / 2, Host->appHeight() / 2 - 10);
+        int _h = 0, _w;
+        drawMultilineCenteredText(g, !donePreHeating?"Heating up...":"Cleaning Nozzle...", Host->appWidth() / 2, retroTitleSectionHeight + Host->appHeight() / 2 - 10, Host->appWidth(), 20, &_w, &_h);
         g->setFont();
         String tempStatus = String("(") + String(readTemp(0) * 0.5F + readTemp(1) * 0.5F, 0) + "/" + String(preHeatTemp, 0) + String(")");
-        centerString(g, tempStatus.c_str(), Host->appWidth() / 2, Host->appHeight() / 2 + 10);
+        centerString(g, tempStatus.c_str(), Host->appWidth() / 2, retroTitleSectionHeight + Host->appHeight() / 2 + _h / 2 + 10);
     }
     else {
-        donePreHeating = true; // latch preheat check
-        if (!G29Sent){
-            G29Sent = true; 
-            StartABL(); // resets the flags
-        }
         if (checkABLComplete() && !checkABLFailed()){
             g->setFont(&FreeSans9pt7b);
             centerString(g, "Leveling", Host->appWidth() / 2, Host->appHeight() / 2 - 10);
             centerString(g, "Successful", Host->appWidth() / 2, Host->appHeight() / 2 + 10);
-            notifyLevelingDone();
         }
         else { // Going on or done with failure
             // Draw the bed
@@ -128,14 +181,14 @@ void BedLevelStep::Paint(BufferedDisplay* g){
             }
             if (checkABLFailed()){
                 g->setFont(&FreeSans9pt7b);
-                centerString(g, "Leveling", Host->appWidth() / 2, Host->appHeight() / 2 - 10);
-                centerString(g, "Failed", Host->appWidth() / 2, Host->appHeight() / 2 + 10);
+                centerString(g, "Leveling", Host->appWidth() / 2, retroTitleSectionHeight + Host->appHeight() / 2 - 10);
+                centerString(g, "Failed", Host->appWidth() / 2, retroTitleSectionHeight + Host->appHeight() / 2 + 10);
                 notifyLevelingDone();
             }
             else{           
                 g->setFont();     
-                centerString(g, "Leveling build plate", Host->appWidth() / 2, Host->appHeight() / 2 - 8);
-                centerString(g, "Please wait...", Host->appWidth() / 2, Host->appHeight() / 2 + 8);
+                centerString(g, "Leveling build plate", retroTitleSectionHeight +Host->appWidth() / 2, Host->appHeight() / 2 - 8);
+                centerString(g, "Please wait...", retroTitleSectionHeight + Host->appWidth() / 2, Host->appHeight() / 2 + 8);
             }
         }
     }
