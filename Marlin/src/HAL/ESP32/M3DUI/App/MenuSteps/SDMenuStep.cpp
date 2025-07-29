@@ -14,9 +14,9 @@ static void selectionUpdated(void* caller, ListItem* selectedItem, int selectedI
     else {
         This->NextStep = &filePreviewStep;
         This->RetroNextStep = &filePreviewStep; // same in retro
-        idleScreenStep.fileName = String("/") + ((FileNameListItem*)selectedItem)->ItemText;
-        idleScreenStep.DOSFileName = String("/") + ((FileNameListItem*)selectedItem)->DOSName;
-        filePreviewStep.Title = idleScreenStep.fileName.substring(0, idleScreenStep.fileName.length() - 6);
+        mainScreenStep.fileName = String("/") + ((FileNameListItem*)selectedItem)->ItemText;
+        mainScreenStep.DOSFileName = String("/") + ((FileNameListItem*)selectedItem)->DOSName;
+        filePreviewStep.Title = mainScreenStep.fileName.substring(0, mainScreenStep.fileName.length() - 6);
         This->NeedsRedraw = true;
     }
 }
@@ -25,7 +25,7 @@ SDMenuStep::SDMenuStep(MenuHost* host):MenuStep(host) {
     BackColor = DarkPaleYellow;
     TextColor = ST7735_BLACK;
     Icon = &img_SD;
-    PreviousStep = &idleScreenStep;
+    PreviousStep = &mainScreenStep;
     RetroPreviousStep = &retroMainMenuStep;
     NextStep = &filePreviewStep; 
     Title = "SD Card Contents";

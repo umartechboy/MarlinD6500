@@ -11,9 +11,9 @@ PrintPositionStep::PrintPositionStep(MenuHost* host):MenuStep(host) {
     Title = "Print Position";
     RetroIcon = &img_RetroPrintPosition;
     PreviousStep = &filePreviewStep;
-    NextStep = &idleScreenStep; // If it gets triggered, the menu locks the screen
+    NextStep = &mainScreenStep; // If it gets triggered, the menu locks the screen
     RetroPreviousStep = &filePreviewStep;
-    RetroNextStep = &idleScreenStep;
+    RetroNextStep = &mainScreenStep;
     NextActionString = "Print";
 }
 
@@ -37,38 +37,38 @@ void PrintPositionStep::Paint(BufferedDisplay* g) {
     g->drawRect(transformX(0), transformY(bedHeight), scaleX(bedWidth), scaleY(bedHeight), ST7735_RED);
     g->drawRect(transformX(sideMargin), transformY(bedHeight - sideMargin), scaleX(bedWidth - 2 * sideMargin), scaleY(bedHeight - 2 * sideMargin), ST7735_YELLOW);
     Serial.printf("fill: %dx%d, %dx%d\n",
-        idleScreenStep.minX + idleScreenStep.xOffset, 
-        idleScreenStep.maxY + idleScreenStep.yOffset,
-        idleScreenStep.maxX - idleScreenStep.minX,
-        idleScreenStep.maxY - idleScreenStep.minY);
+        mainScreenStep.minX + mainScreenStep.xOffset, 
+        mainScreenStep.maxY + mainScreenStep.yOffset,
+        mainScreenStep.maxX - mainScreenStep.minX,
+        mainScreenStep.maxY - mainScreenStep.minY);
     g->fillRect(
-        transformX(idleScreenStep.minX + idleScreenStep.xOffset), transformY(idleScreenStep.maxY + idleScreenStep.yOffset), 
-        scaleX(idleScreenStep.maxX - idleScreenStep.minX), scaleY(idleScreenStep.maxY - idleScreenStep.minY),
+        transformX(mainScreenStep.minX + mainScreenStep.xOffset), transformY(mainScreenStep.maxY + mainScreenStep.yOffset), 
+        scaleX(mainScreenStep.maxX - mainScreenStep.minX), scaleY(mainScreenStep.maxY - mainScreenStep.minY),
         ST7735_WHITE);
 }
 void PrintPositionStep::HandleKeyUp(Keys key) {
     switch (key)
     {
-        case Keys::KEYPAD_RIGHT: idleScreenStep.xOffset += inc; break;
-        case Keys::KEYPAD_LEFT: idleScreenStep.xOffset -= inc; break;
-        case Keys::KEYPAD_DOWN: idleScreenStep.yOffset -= inc; break;
-        case Keys::KEYPAD_UP: idleScreenStep.yOffset += inc; break;
+        case Keys::KEYPAD_RIGHT: mainScreenStep.xOffset += inc; break;
+        case Keys::KEYPAD_LEFT: mainScreenStep.xOffset -= inc; break;
+        case Keys::KEYPAD_DOWN: mainScreenStep.yOffset -= inc; break;
+        case Keys::KEYPAD_UP: mainScreenStep.yOffset += inc; break;
         case Keys::KEYPAD_UP_RIGHT: HandleKeyUp(Keys::KEYPAD_UP); HandleKeyUp(Keys::KEYPAD_RIGHT); break;
         case Keys::KEYPAD_UP_LEFT:  HandleKeyUp(Keys::KEYPAD_UP); HandleKeyUp(Keys::KEYPAD_LEFT); break; 
         case Keys::KEYPAD_DOWN_RIGHT:   HandleKeyUp(Keys::KEYPAD_DOWN); HandleKeyUp(Keys::KEYPAD_RIGHT); break; 
         case Keys::KEYPAD_DOWN_LEFT:    HandleKeyUp(Keys::KEYPAD_DOWN); HandleKeyUp(Keys::KEYPAD_LEFT); break; 
     }
-    if (idleScreenStep.minX + idleScreenStep.xOffset < inc) idleScreenStep.xOffset = inc - idleScreenStep.minX;
-    if (idleScreenStep.maxX + idleScreenStep.xOffset > (bedWidth - inc)) idleScreenStep.xOffset = (bedWidth - inc) - idleScreenStep.maxX;
-    if (idleScreenStep.minY + idleScreenStep.yOffset < inc) idleScreenStep.yOffset = inc - idleScreenStep.minY;
-    if (idleScreenStep.maxY + idleScreenStep.yOffset > (bedHeight - inc)) idleScreenStep.yOffset = (bedHeight - inc) - idleScreenStep.maxY;
+    if (mainScreenStep.minX + mainScreenStep.xOffset < inc) mainScreenStep.xOffset = inc - mainScreenStep.minX;
+    if (mainScreenStep.maxX + mainScreenStep.xOffset > (bedWidth - inc)) mainScreenStep.xOffset = (bedWidth - inc) - mainScreenStep.maxX;
+    if (mainScreenStep.minY + mainScreenStep.yOffset < inc) mainScreenStep.yOffset = inc - mainScreenStep.minY;
+    if (mainScreenStep.maxY + mainScreenStep.yOffset > (bedHeight - inc)) mainScreenStep.yOffset = (bedHeight - inc) - mainScreenStep.maxY;
     NeedsRedraw = true;
 }
 void PrintPositionStep::UnloadBegin(){
     // Apply the offset
     // This happen even if the step is to the previous step
     // We need to take care of this limitation in File preview
-    String offsetCom = String("M206 X") + String(-idleScreenStep.xOffset) + String(" Y") + String(-idleScreenStep.yOffset);
-    idleScreenStep.printStatus = PrintStatus::FileToPrint;
+    String offsetCom = String("M206 X") + String(-mainScreenStep.xOffset) + String(" Y") + String(-mainScreenStep.yOffset);
+    mainScreenStep.printStatus = PrintStatus::FileToPrint;
     enqueueComs({offsetCom});
 }

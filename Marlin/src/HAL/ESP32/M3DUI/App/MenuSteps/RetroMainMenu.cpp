@@ -29,7 +29,7 @@ RetroMainMenuStep::RetroMainMenuStep(MenuHost* host):MenuStep(host) {
     Title = "Menu";
     NextActionString = "Select";
     RetroIcon = &img_RetroOptions;
-    RetroPreviousStep = &idleScreenStep;
+    RetroPreviousStep = &mainScreenStep;
     Icon = &img_SD;
     TickPeriod = 50;
     list = new VerticalList(Host, 128, "");

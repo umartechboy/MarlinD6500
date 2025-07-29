@@ -6,7 +6,7 @@ OptionsStep::OptionsStep(MenuHost* host):MenuStep(host) {
     ButtonColor = Charcoal;
     BackColor = Charcoal;
     TextColor = ST7735_WHITE;      
-    NextStep = &idleScreenStep;           
+    NextStep = &mainScreenStep;           
     Icon = &img_Utilities;
 }
 void OptionsStep::Paint(BufferedDisplay* g) {

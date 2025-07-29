@@ -3,7 +3,7 @@
 MenuHost menuHost;
 FilePreviewStep filePreviewStep(&menuHost);
 PrintPositionStep printPositionStep(&menuHost);
-MainScreenStep idleScreenStep(&menuHost);
+MainScreenStep mainScreenStep(&menuHost);
 SDMenuStep sdMenuStep(&menuHost);
 OptionsStep toolsMenuStep(&menuHost);
 MaterialsStep materialsMenuStep(&menuHost);
@@ -15,7 +15,7 @@ RetroMainMenuStep retroMainMenuStep(&menuHost);
 
 void BeginApp(){    
   SERIAL_IMPL.println("Goto menu pushed");
-  menuHost.GotoStepFromAny(&idleScreenStep);
+  menuHost.GotoStepFromAny(&mainScreenStep);
 
   // inverted next/back in menus behind idle because idle is at the center
 }

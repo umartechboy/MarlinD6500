@@ -16,7 +16,7 @@
 extern MenuHost menuHost;
 extern FilePreviewStep filePreviewStep;
 extern PrintPositionStep printPositionStep;
-extern MainScreenStep idleScreenStep;
+extern MainScreenStep mainScreenStep;
 extern SDMenuStep sdMenuStep;
 extern OptionsStep toolsMenuStep;
 extern MaterialsStep materialsMenuStep;

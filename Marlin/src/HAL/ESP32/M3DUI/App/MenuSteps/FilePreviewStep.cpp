@@ -128,13 +128,13 @@ void FilePreviewStep::Paint(BufferedDisplay* g) {
 }
 void FilePreviewStep::LoadBegin() {
     // Read the file and load data
-    SERIAL_IMPL.printf("Begin SD Read: %s\n",  idleScreenStep.fileName.c_str());
+    SERIAL_IMPL.printf("Begin SD Read: %s\n",  mainScreenStep.fileName.c_str());
     pngParams.thumbnailData.Reset();
-    File f = SD.open(idleScreenStep.fileName);
+    File f = SD.open(mainScreenStep.fileName);
     bool inThumbnail = false;
     bool isMarlin = false;
     if (f.available()){
-        SERIAL_IMPL.printf("File opened for thumbnail: %s\n", idleScreenStep.fileName.c_str());
+        SERIAL_IMPL.printf("File opened for thumbnail: %s\n", mainScreenStep.fileName.c_str());
     }
     bool weAreNearTheEnd = false;
     while (f.available())
@@ -203,19 +203,19 @@ void FilePreviewStep::LoadBegin() {
                 }
                 else if (line.startsWith("minx")){
                     getTrimmedAfter(line, ":");
-                    idleScreenStep.minX = line.toInt();
+                    mainScreenStep.minX = line.toInt();
                 }
                 else if (line.startsWith("maxx")){
                     getTrimmedAfter(line, ":");
-                    idleScreenStep.maxX = line.toInt();
+                    mainScreenStep.maxX = line.toInt();
                 }
                 else if (line.startsWith("miny")){
                     getTrimmedAfter(line, ":");
-                    idleScreenStep.minY = line.toInt();
+                    mainScreenStep.minY = line.toInt();
                 }
                 else if (line.startsWith("maxy")){
                     getTrimmedAfter(line, ":");
-                    idleScreenStep.maxY = line.toInt();
+                    mainScreenStep.maxY = line.toInt();
                 }
                 else if (line.startsWith("max_z_height") || line.startsWith("maxz:")){
                     getTrimmedAfter(line, ":");
@@ -300,7 +300,7 @@ void FilePreviewStep::HandleKeyUp(Keys key){
 }
 void FilePreviewStep::LoadComplete(){
     // in case the menu is coming back from the print position step, we need to notify the home screen
-    idleScreenStep.printStatus = PrintStatus::Idle;
+    mainScreenStep.printStatus = PrintStatus::Idle;
     Preferences prefs;
     prefs.begin("material");
     e0Color = AvailableColors[prefs.getInt("e1_c", 0)];
