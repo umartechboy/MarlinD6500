@@ -4,7 +4,7 @@
 #include "..\Components\M3DUI.h" // For the host and components
 #include "MenuSteps\PrintPositionStep.h"
 #include "MenuSteps\FilePreviewStep.h"
-#include "MenuSteps\IdleScreenStep.h"
+#include "MenuSteps\MainScreenStep.h"
 #include "MenuSteps\SDMenuStep.h"
 #include "MenuSteps\OptionsStep.h"
 #include "MenuSteps\MaterialsStep.h"
@@ -16,7 +16,7 @@
 extern MenuHost menuHost;
 extern FilePreviewStep filePreviewStep;
 extern PrintPositionStep printPositionStep;
-extern IdleScreenStep idleScreenStep;
+extern MainScreenStep idleScreenStep;
 extern SDMenuStep sdMenuStep;
 extern OptionsStep toolsMenuStep;
 extern MaterialsStep materialsMenuStep;

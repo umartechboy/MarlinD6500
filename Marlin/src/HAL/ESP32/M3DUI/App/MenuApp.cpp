@@ -3,7 +3,7 @@
 MenuHost menuHost;
 FilePreviewStep filePreviewStep(&menuHost);
 PrintPositionStep printPositionStep(&menuHost);
-IdleScreenStep idleScreenStep(&menuHost);
+MainScreenStep idleScreenStep(&menuHost);
 SDMenuStep sdMenuStep(&menuHost);
 OptionsStep toolsMenuStep(&menuHost);
 MaterialsStep materialsMenuStep(&menuHost);

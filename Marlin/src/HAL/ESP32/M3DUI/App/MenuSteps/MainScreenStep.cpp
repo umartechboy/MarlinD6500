@@ -1,4 +1,4 @@
-#include "IdleScreenStep.h"
+#include "MainScreenStep.h"
 #include "..\Images.h"
 #include "../../../../../module/printcounter.h"
 #include "../../../../../sd/cardreader.h"
@@ -7,7 +7,7 @@
 #include "../../Hardware/MarlinSpecific.h"
 #include "..\MenuApp.h"
 
-IdleScreenStep::IdleScreenStep(MenuHost* host):MenuStep(host) {
+MainScreenStep::MainScreenStep(MenuHost* host):MenuStep(host) {
     ButtonColor = DarkRed;
     BackColor = DarkRed;
     TextColor = ST7735_WHITE;            
@@ -19,15 +19,15 @@ IdleScreenStep::IdleScreenStep(MenuHost* host):MenuStep(host) {
     Icon = &img_Home;
     TickPeriod = 50;
 }
-MenuStep* IdleScreenStep::GetPreviousStep(){
+MenuStep* MainScreenStep::GetPreviousStep(){
     if (Host->Retro)
         return 0;
     else return MenuStep::GetPreviousStep();
 }
-void IdleScreenStep::Tick() {
+void MainScreenStep::Tick() {
     NeedsRedraw = true;
 }
-void IdleScreenStep::Paint(BufferedDisplay* g) {
+void MainScreenStep::Paint(BufferedDisplay* g) {
     
     //Serial.printf("Idle Screen Step Paint called @ %d, %d\n", g->xOffset, g->yOffset);
     // Draw the idle screen
@@ -111,7 +111,7 @@ void IdleScreenStep::Paint(BufferedDisplay* g) {
     }
 }
 
-void IdleScreenStep::HandleKeyUp(Keys key){
+void MainScreenStep::HandleKeyUp(Keys key){
     if (printStatus == PrintStatus::Idle){
         if (key == KEYPAD_LEFT && !Host->Retro){
             SERIAL_IMPL.println("Go to previous from Idle");
@@ -149,7 +149,7 @@ void IdleScreenStep::HandleKeyUp(Keys key){
     }
 }
 
-void IdleScreenStep::LoadComplete(){
+void MainScreenStep::LoadComplete(){
     // Get colors
     prefs.begin("material");
     e0Color = AvailableColors[prefs.getInt("e1_c", 0)];
@@ -188,7 +188,7 @@ void IdleScreenStep::LoadComplete(){
         }
     } 
 }
-void IdleScreenStep::UnloadBegin(){
+void MainScreenStep::UnloadBegin(){
     if (printStatus == PrintStatus::FileToPrint) {
         if (card.isPaused()) {// going to in-print utilities            
             printStatus = PrintStatus::ChangingFilament;
@@ -196,7 +196,7 @@ void IdleScreenStep::UnloadBegin(){
         }
     }
 }
-void IdleScreenStep::FocusChanged(StepAnimationStage stage){
+void MainScreenStep::FocusChanged(StepAnimationStage stage){
     if (printStatus == PrintStatus::FileToPrint) {
         if (card.isPrinting() || card.isPaused())
          {
@@ -223,6 +223,6 @@ void IdleScreenStep::FocusChanged(StepAnimationStage stage){
         }
     }
 }
-bool IdleScreenStep::CanJumpToMainMenu(){
+bool MainScreenStep::CanJumpToMainMenu(){
     return printStatus == PrintStatus::Idle; // Can jump ony when idle
 }
