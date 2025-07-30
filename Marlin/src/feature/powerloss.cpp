@@ -153,6 +153,7 @@ void PrintJobRecovery::prepare() {
 /**
  * Save the current machine state to the power-loss recovery file
  */
+float lastRecoverySavedAt = 0.1;
 void PrintJobRecovery::save(const bool force/*=false*/, const float zraise/*=POWER_LOSS_ZRAISE*/, const bool raised/*=false*/) {
 
   // We don't check IS_SD_PRINTING here so a save may occur during a pause
@@ -173,10 +174,12 @@ void PrintJobRecovery::save(const bool force/*=false*/, const float zraise/*=POW
         || ELAPSED(ms, next_save_ms)
       #endif
       // Save if Z is above the last-saved position by some minimum height
-      || current_position.z > info.current_position.z + POWER_LOSS_MIN_Z_CHANGE
+      //|| current_position.z > info.current_position.z + POWER_LOSS_MIN_Z_CHANGE
+      || (current_position.z > lastRecoverySavedAt + POWER_LOSS_MIN_Z_CHANGE && current_position.z < lastRecoverySavedAt + 0.4F) // too much z may mean z hope
     #endif
   ) {
-
+    lastRecoverySavedAt = current_position.z;
+    SERIAL_IMPL.println("Time to save the recovery");
     #if SAVE_INFO_INTERVAL_MS > 0
       next_save_ms = ms + SAVE_INFO_INTERVAL_MS;
     #endif
@@ -238,8 +241,12 @@ void PrintJobRecovery::save(const bool force/*=false*/, const float zraise/*=POW
     // Misc. Marlin flags
     info.flag.dryrun = !!(marlin_debug_flags & MARLIN_DEBUG_DRYRUN);
     info.flag.allow_cold_extrusion = TERN0(PREVENT_COLD_EXTRUSION, thermalManager.allow_cold_extrude);
-
+    SERIAL_IMPL.println("Saving Recovery File");
     write();
+  }
+  else{    
+  // Did Z change since the last call?
+    //SERIAL_IMPL.printf("PLR: F%d, %f !> %f + %f\n", force, current_position.z, lastRecoverySavedAt, POWER_LOSS_MIN_Z_CHANGE); 
   }
 }
 

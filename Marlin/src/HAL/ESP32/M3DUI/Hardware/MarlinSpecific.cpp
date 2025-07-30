@@ -1,6 +1,7 @@
 #include "MarlinSpecific.h"
 #include "..\..\..\..\module\temperature.h"
 #include "..\..\..\..\gcode\queue.h"
+#include "..\..\..\..\gcode\gcode.h"
 #include "..\..\..\..\sd\cardreader.h"
 
 static int target [2] = {30, 30};
@@ -117,28 +118,37 @@ void printJobTick(){
 
 }
 
+extern float lastRecoverySavedAt;
 void prepareForPrint(String dosFileName, bool hasExtruder1, bool hasExtruder2, void (*printStartedCallback)(void*), void* sender){
     nozzleCleaningSent = false;
     filamentPositioningSent = false;
     printComsSent = false;
+    lastRecoverySavedAt = 0.1;
     
     // FOr now, return right away.
+    enqueueComs({"M413 S1"});
     String m23 = String("M23 ") + dosFileName;
-    enqueueComs({"M21", m23, "M24"});
+    enqueueComs({"M21", m23, "M24"}); // Init SD, Select File, Put to print
     (*printStartedCallback)(sender);
 }
 void pausePrint(){
     SERIAL_IMPL.println("pausePrint()");
     card.pauseSDPrint();    
-    enqueueComs({"G91", "G1 Z5 E-5 F1000", "G90" "G1 X0 Y150 F1000"});
+
+    // gcode.process_subcommands_now(F("G91"));
+    // gcode.process_subcommands_now(F("G1 Z5 E-5 F1000"));
+    // gcode.process_subcommands_now(F("G90"));
+    // gcode.process_subcommands_now(F("G1 X0 Y150 F1000"));
 }
 void resumePrint(){
     SERIAL_IMPL.println("resumePrint()");
-    enqueueComs({"G91", "G1 Z-5 E5 F1000", "G90"});    
+    // gcode.process_subcommands_now(F("G91"));
+    // gcode.process_subcommands_now(F("G1 Z-5 E4 F1000"));
+    // gcode.process_subcommands_now(F("G90"));
     card.startOrResumeFilePrinting();
 }
 void abortPrint(){    
-    SERIAL_IMPL.println("abortPrint()");    
+    SERIAL_IMPL.println("abortPrint()");
+    pausePrint();
     card.abortFilePrintNow();
-    enqueueComs({"G91", "G1 Z5 E-5 F1000", "G90" "G1 X0 Y150 F1000"});
 }
