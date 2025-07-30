@@ -24,17 +24,23 @@ void MenuHost::GotoNextStep(){
             PushNotification("No options at the current stage");
             return;
         }
-        SERIAL_IMPL.println("Going to retro options step");
+        if (CurrentStep->GetNextStep()->IsDummyStep()){
+            SERIAL_IMPL.println("Going to Next DummyStep");
+            ((DummyMenuStep*)CurrentStep->GetNextStep())->NotifySelected();
+            return;
+        }
+        else {
+            SERIAL_IMPL.println("Going to retro options step");
             menuTrasnsitionStage = MenuTransitionStage::TransitionaingScreens;
-        TargetStep = CurrentStep->RetroNextStep;
-        menuTransitionDirection = TransitionDirection::Forward;
-        CurrentStep->RetroNextStep->LoadBegin();
-        CurrentStep->UnloadBegin();
-        ResetAnimationProgress(250);
+            TargetStep = CurrentStep->RetroNextStep;
+            menuTransitionDirection = TransitionDirection::Forward;
+            CurrentStep->RetroNextStep->LoadBegin();
+            CurrentStep->UnloadBegin();
+            ResetAnimationProgress(250);
+        }
     }
     else 
-    {
-        if (CurrentStep->GetNextStep()) {
+    {        if (CurrentStep->GetNextStep()) {
             SERIAL_IMPL.println("Going to next step");
             // begin Next menu transition
             if (stepAnimationStage == StepAnimationStage::MainStep){
@@ -55,22 +61,31 @@ void MenuHost::GotoNextStep(){
     }
 }
 void MenuHost::GotoPreviousStep(){
-    if (CurrentStep->GetPreviousStep()){ 
-        SERIAL_IMPL.println("Going to previous step");
-        // begin Next menu transition
-        if (stepAnimationStage == StepAnimationStage::MainStep) {
-            menuTrasnsitionStage = MenuTransitionStage::TransitionaingScreens;
-            TargetStep = CurrentStep->GetPreviousStep();
+    if (CurrentStep->GetPreviousStep(true)){ 
+        if (CurrentStep->GetPreviousStep()){
+            SERIAL_IMPL.println("Going to previous step");
+            // begin Next menu transition
+            if (stepAnimationStage == StepAnimationStage::MainStep) {
+                menuTrasnsitionStage = MenuTransitionStage::TransitionaingScreens;
+                TargetStep = CurrentStep->GetPreviousStep();
+            }
+            else {
+                stepAnimationStage = StepAnimationStage::GoingToStep;
+                moveToMenuAfterStepAnim = CurrentStep->GetPreviousStep();
+            }
+            menuTransitionDirection = TransitionDirection::Backward;
+            if (CurrentStep->GetPreviousStep())
+                CurrentStep->GetPreviousStep()->LoadBegin();
+            CurrentStep->UnloadBegin();
+            ResetAnimationProgress(250);
         }
-        else {
-            stepAnimationStage = StepAnimationStage::GoingToStep;
-            moveToMenuAfterStepAnim = CurrentStep->GetPreviousStep();
+        else { // Dummy step
+            // double check before casting
+            if (CurrentStep->GetPreviousStep()->IsDummyStep()){                
+                SERIAL_IMPL.println("Going to previos DummyStep");
+                ((DummyMenuStep*)(CurrentStep->GetPreviousStep()))->NotifySelected();
+            }
         }
-        menuTransitionDirection = TransitionDirection::Backward;
-        if (CurrentStep->GetPreviousStep())
-            CurrentStep->GetPreviousStep()->LoadBegin();
-        CurrentStep->UnloadBegin();
-        ResetAnimationProgress(250);
     }
 }
 bool MenuHost::NeedsMenuTransition() {
@@ -388,8 +403,9 @@ void MenuHost::HandleKeyUp(Keys key){
         }
         else if (key == KEYPAD_BACK){
             if (CurrentStep)
-            if (CurrentStep->GetPreviousStep())
+            if (CurrentStep->GetPreviousStep(true)){
                 GotoPreviousStep();
+            }
         }
         else { // Send all the keys to the step
             if (CurrentStep)

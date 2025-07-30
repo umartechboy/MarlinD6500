@@ -12,6 +12,7 @@ FilamentChangeStep filament1ChangeStep(&menuHost, 1);
 PrinterInfoStep printerInfoStep(&menuHost);
 BedLevelStep bedLevelStep(&menuHost);
 RetroMainMenuStep retroMainMenuStep(&menuHost);
+InPrintMenuStep inPrintMenuStep(&menuHost);
 
 void BeginApp(){    
   SERIAL_IMPL.println("Goto menu pushed");

@@ -16,6 +16,11 @@ class RetroMainMenuStep: public MenuStep {
     void DecrementValue() override;
     void HandleKeyUp(Keys key) override;
     bool CanJumpToMainMenu() override;
+    StringListItem* printFromSDOption;
+    StringListItem* filamentSetupOption;
+    StringListItem* bedLevelingOption;
+    StringListItem* settingsOption;
+    StringListItem* infoOption;
 };
 
 #endif

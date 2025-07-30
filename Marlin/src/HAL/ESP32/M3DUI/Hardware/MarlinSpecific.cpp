@@ -1,6 +1,7 @@
 #include "MarlinSpecific.h"
 #include "..\..\..\..\module\temperature.h"
 #include "..\..\..\..\gcode\queue.h"
+#include "..\..\..\..\sd\cardreader.h"
 
 static int target [2] = {30, 30};
 
@@ -106,4 +107,38 @@ int getABLIndex(){
 void ABLMeshUpdate(int _pointsDone){
     SERIAL_IMPL.printf("ABLMeshUpdate(%d)\n", _pointsDone);
     pointsDone = _pointsDone;
+}
+
+bool nozzleCleaningSent = false;
+bool filamentPositioningSent = false;
+bool printComsSent = false;
+
+void printJobTick(){
+
+}
+
+void prepareForPrint(String dosFileName, bool hasExtruder1, bool hasExtruder2, void (*printStartedCallback)(void*), void* sender){
+    nozzleCleaningSent = false;
+    filamentPositioningSent = false;
+    printComsSent = false;
+    
+    // FOr now, return right away.
+    String m23 = String("M23 ") + dosFileName;
+    enqueueComs({"M21", m23, "M24"});
+    (*printStartedCallback)(sender);
+}
+void pausePrint(){
+    SERIAL_IMPL.println("pausePrint()");
+    card.pauseSDPrint();    
+    enqueueComs({"G91", "G1 Z5 E-5 F1000", "G90" "G1 X0 Y150 F1000"});
+}
+void resumePrint(){
+    SERIAL_IMPL.println("resumePrint()");
+    enqueueComs({"G91", "G1 Z-5 E5 F1000", "G90"});    
+    card.startOrResumeFilePrinting();
+}
+void abortPrint(){    
+    SERIAL_IMPL.println("abortPrint()");    
+    card.abortFilePrintNow();
+    enqueueComs({"G91", "G1 Z5 E-5 F1000", "G90" "G1 X0 Y150 F1000"});
 }

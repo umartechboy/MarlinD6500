@@ -133,7 +133,7 @@ class MenuStep {
         virtual void UnloadBegin() {}
         virtual void UnloadComplete() {}
         virtual void FocusChanged(StepAnimationStage currentStage) {}
-        virtual MenuStep* GetPreviousStep();
+        virtual MenuStep* GetPreviousStep(bool returnEvenIfDummy = false);
         virtual MenuStep* GetNextStep();
         virtual bool CanJumpToMainMenu();
         void loop();
@@ -148,6 +148,11 @@ class MenuStep {
 class DummyMenuStep:public MenuStep{
 public:
     DummyMenuStep(MenuHost* host):MenuStep(host){ isDummy = true; }
+    void SetLoadCallBack(void (*_callback)(void*), void* _sender) { callback = _callback; sender = _sender; }
+    void NotifySelected(){ if (callback) (*callback)(sender); }
+private:
+    void (*callback)(void* sender) = 0;
+    void* sender = 0;
 };
 
 #endif // M3DUI

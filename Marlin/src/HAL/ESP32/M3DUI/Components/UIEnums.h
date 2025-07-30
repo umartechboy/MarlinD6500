@@ -21,6 +21,7 @@ enum MenuTransitionStage{
 enum PrintStatus{
     Idle,
     FileToPrint,
+    Printing,
     PrintToResume,
     ChangingFilament
 };

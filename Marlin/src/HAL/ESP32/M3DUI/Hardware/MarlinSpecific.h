@@ -26,5 +26,10 @@ extern void enqueueComs(String commands);
 extern void enqueueComs(std::initializer_list<String> commands);
 extern bool hasComsQueued();
 
+extern void prepareForPrint(String dosFileName, bool hasExtruder1, bool hasExtruder2, void (*printStartedCallback)(void*), void* sender);
+extern void printJobTick();
+extern void pausePrint();
+extern void resumePrint();
+extern void abortPrint();
 
 #endif

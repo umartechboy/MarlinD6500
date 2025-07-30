@@ -2,24 +2,18 @@
 #include "..\MenuApp.h"
 #include "..\Images.h"
 
-StringListItem* printFromSDOption;
-StringListItem* filamentSetupOption;
-StringListItem* bedLevelingOption;
-StringListItem* settingsOption;
-StringListItem* infoOption;
-
 static void selectionUpdated(void* caller, ListItem* selectedItem, int selectedIndex){
-    RetroMainMenuStep* menu = (RetroMainMenuStep*)caller;
+    RetroMainMenuStep* This = (RetroMainMenuStep*)caller;
 
-    menu->RetroNextStep = 0;
-    if (selectedItem == printFromSDOption) menu->RetroNextStep = &sdMenuStep;
-    if (selectedItem == filamentSetupOption) menu->RetroNextStep = &materialsMenuStep;
-    if (selectedItem == bedLevelingOption) menu->RetroNextStep = &bedLevelStep;
-    if (selectedItem == settingsOption) menu->RetroNextStep = 0;
-    if (selectedItem == infoOption) menu->RetroNextStep = &printerInfoStep;
+    This->RetroNextStep = 0;
+    if (selectedItem == This->printFromSDOption) This->RetroNextStep = &sdMenuStep;
+    if (selectedItem == This->filamentSetupOption) This->RetroNextStep = &materialsMenuStep;
+    if (selectedItem == This->bedLevelingOption) This->RetroNextStep = &bedLevelStep;
+    if (selectedItem == This->settingsOption) This->RetroNextStep = 0;
+    if (selectedItem == This->infoOption) This->RetroNextStep = &printerInfoStep;
 
-    if (menu->RetroNextStep)
-        menu->RetroNextStep->RetroPreviousStep = menu;
+    if (This->RetroNextStep)
+        This->RetroNextStep->RetroPreviousStep = This;
 }
 
 RetroMainMenuStep::RetroMainMenuStep(MenuHost* host):MenuStep(host) {
@@ -76,6 +70,7 @@ void RetroMainMenuStep::HandleKeyUp(Keys key) {
 }    
 
 void RetroMainMenuStep::LoadComplete(){    
+    materialsMenuStep.RetroPreviousStep = this;
 }
 
 bool RetroMainMenuStep::CanJumpToMainMenu(){

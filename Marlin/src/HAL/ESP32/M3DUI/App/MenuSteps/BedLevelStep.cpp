@@ -195,10 +195,10 @@ void BedLevelStep::Paint(BufferedDisplay* g){
     g->setFont();
 }
 
-MenuStep* BedLevelStep::GetPreviousStep(){
+MenuStep* BedLevelStep::GetPreviousStep(bool returnEvenIfDummy){
     if (!donePreHeating){
         // No need to M104 because it will be called in step unload.
-        return MenuStep::GetPreviousStep();
+        return MenuStep::GetPreviousStep(returnEvenIfDummy);
     }
     else{
         return 0;

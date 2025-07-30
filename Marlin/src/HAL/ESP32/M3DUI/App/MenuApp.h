@@ -12,6 +12,7 @@
 #include "MenuSteps\PrinterInfoStep.h"
 #include "MenuSteps\BedLevelStep.h"
 #include "MenuSteps\RetroMainMenu.h"
+#include "MenuSteps\InPrintMenuStep.h"
 
 extern MenuHost menuHost;
 extern FilePreviewStep filePreviewStep;
@@ -25,6 +26,7 @@ extern FilamentChangeStep filament1ChangeStep;
 extern PrinterInfoStep printerInfoStep;
 extern BedLevelStep bedLevelStep;
 extern RetroMainMenuStep retroMainMenuStep;
+extern InPrintMenuStep inPrintMenuStep;
 
 void BeginApp();
 #ifdef __MARLIN_FIRMWARE__

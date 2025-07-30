@@ -265,7 +265,9 @@ bool wait_for_heatup = true;
 
   void wait_for_user_response(millis_t ms/*=0*/, const bool no_sleep/*=false*/) {
     UNUSED(no_sleep);
+    #if !ENABLED(M3D_D8500_UI)
     KEEPALIVE_STATE(PAUSED_FOR_USER);
+    #endif
     wait_for_user = true;
     if (ms) ms += millis(); // expire time
     while (wait_for_user && !(ms && ELAPSED(millis(), ms)))

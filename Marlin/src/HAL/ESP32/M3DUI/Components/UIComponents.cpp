@@ -142,6 +142,10 @@ ListItem* VerticalList::operator[](int index) {
 }
 void VerticalList::Clear(){
     items.clear();
+    scrollOffset = 0;
+    targetScrollOffset = 0;
+    lastSelected = -2;
+    selected = -1;
 }
 void VerticalList::Add(ListItem* item){
     items.push_back(item);
@@ -343,16 +347,16 @@ void MenuStep::PaintRetroOptionsBar(BufferedDisplay* g) {
         CanJumpToMainMenu()?&img_RetroOptionsKey:0, 
         TextColor);
 }
-MenuStep* MenuStep::GetPreviousStep(){
+MenuStep* MenuStep::GetPreviousStep(bool returnEvenIfDummy){
     if (Host->Retro) {
         if (RetroPreviousStep)
-            if (RetroPreviousStep->IsDummyStep())
+            if (RetroPreviousStep->IsDummyStep() && !returnEvenIfDummy)
                 return 0;
         return RetroPreviousStep;
     }
     else{        
         if (RetroNextStep)
-            if (RetroNextStep->IsDummyStep())
+            if (RetroNextStep->IsDummyStep() && !returnEvenIfDummy)
                 return 0;
         return PreviousStep;
     }

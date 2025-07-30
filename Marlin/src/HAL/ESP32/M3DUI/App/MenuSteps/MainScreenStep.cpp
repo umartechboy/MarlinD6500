@@ -7,6 +7,30 @@
 #include "../../Hardware/MarlinSpecific.h"
 #include "..\MenuApp.h"
 
+
+void printComSent(void* sender){
+    MainScreenStep* This = (MainScreenStep*)sender;
+    This->RetroNextStep = &inPrintMenuStep;
+    This->NextActionString = "Pause";
+    This->printStarted = true;
+    This->printStatus = PrintStatus::Printing;
+}
+void cancelResumeCalled(void* sender){
+    MainScreenStep* This = (MainScreenStep*)sender;
+    card.removeJobRecoveryFile();
+    This->printStatus = PrintStatus::Idle;
+    This->RetroNextStep = &retroMainMenuStep;
+    This->RetroPreviousStep = 0;
+}
+void beginResumeCalled(void* sender){
+    MainScreenStep* This = (MainScreenStep*)sender;
+    SERIAL_IMPL.println("Resume print");
+    This->printStatus = PrintStatus::FileToPrint;
+    // Trigger the resume too
+    card.startOrResumeFilePrinting();
+    This->RetroNextStep = &inPrintMenuStep;
+    This->RetroPreviousStep = 0;
+}
 MainScreenStep::MainScreenStep(MenuHost* host):MenuStep(host) {
     ButtonColor = DarkRed;
     BackColor = DarkRed;
@@ -16,16 +40,34 @@ MainScreenStep::MainScreenStep(MenuHost* host):MenuStep(host) {
     NextStep = &sdMenuStep;    
     PreviousStep = &toolsMenuStep;
     RetroNextStep = &retroMainMenuStep;
+
+    inPrintMenuStep.RetroPreviousStep = this;
+    inPrintMenuStep.RetroIcon = &img_RetroHome;
+    inPrintMenuStep.Title = "Paused";
+
+    cancelResumeDummyStep = new DummyMenuStep(Host);
+    beginResumeDummyStep = new DummyMenuStep(Host);
+
+    cancelResumeDummyStep->SetLoadCallBack(cancelResumeCalled, this);
+    beginResumeDummyStep->SetLoadCallBack(beginResumeCalled, this);
     Icon = &img_Home;
     TickPeriod = 50;
 }
-MenuStep* MainScreenStep::GetPreviousStep(){
+MainScreenStep::~MainScreenStep(){
+    delete cancelResumeDummyStep;
+    delete beginResumeDummyStep;
+}
+MenuStep* MainScreenStep::GetPreviousStep(bool returnEvenIfDummy){
     if (Host->Retro)
         return 0;
-    else return MenuStep::GetPreviousStep();
+    else return MenuStep::GetPreviousStep(returnEvenIfDummy);
 }
 void MainScreenStep::Tick() {
     NeedsRedraw = true;
+    if (printStatus == PrintStatus::FileToPrint){
+        if (!printStarted)
+            printJobTick();
+    }
 }
 void MainScreenStep::Paint(BufferedDisplay* g) {
     
@@ -35,12 +77,11 @@ void MainScreenStep::Paint(BufferedDisplay* g) {
     g->setTextColor(TextColor);
     if (printStatus == PrintStatus::PrintToResume){
         g->setFont(&FreeSans9pt7b);
-        centerString(g, "Do you want", Host->appWidth() / 2, Host->appHeight() / 2 - 50);
-        centerString(g, "to resume", Host->appWidth() / 2, Host->appHeight() / 2 - 30);
-        centerString(g, "the print?", Host->appWidth() / 2, Host->appHeight() / 2 - 10);
+        int _w, _h;
+        drawMultilineCenteredText(g, "Do you want to resume the print?", Host->appWidth() / 2, retroTitleSectionHeight + Host->appHeight() / 2, Host->appWidth(), 16, &_w, &_h);
         g->setFont(&FreeSans12pt7b);
-        centerString(g, "Yes", Host->appWidth() / 4, Host->appHeight() / 2 + 22);
-        centerString(g, "No", (Host->appWidth() * 3) / 4, Host->appHeight() / 2 + 22);
+        centerString(g, "Yes", (Host->appWidth() * 1) / 4, retroTitleSectionHeight + Host->appHeight() / 2 + _h / 2 + 10);
+        centerString(g, "No",  (Host->appWidth() * 3) / 4, retroTitleSectionHeight + Host->appHeight() / 2 + _h / 2 + 10);
         int tSz = 12;
         g->fillTriangle(
             Host->appWidth() / 4 - tSz / 2, Host->appHeight() / 2 + 49, 
@@ -112,39 +153,41 @@ void MainScreenStep::Paint(BufferedDisplay* g) {
 }
 
 void MainScreenStep::HandleKeyUp(Keys key){
-    if (printStatus == PrintStatus::Idle){
-        if (key == KEYPAD_LEFT && !Host->Retro){
-            SERIAL_IMPL.println("Go to previous from Idle");
-            Host->GotoPreviousStep();
+    if (!Host->Retro) {
+        if (printStatus == PrintStatus::Idle){
+            if (key == KEYPAD_LEFT && !Host->Retro){
+                SERIAL_IMPL.println("Go to previous from Idle");
+                Host->GotoPreviousStep();
+            }
+            else if (key == KEYPAD_RIGHT && !Host->Retro){
+                SERIAL_IMPL.println("Go to next from Idle");
+                Host->GotoNextStep();
+            }
         }
-        else if (key == KEYPAD_RIGHT && !Host->Retro){
-            SERIAL_IMPL.println("Go to next from Idle");
-            Host->GotoNextStep();
-        }
-    }
-    else if (printStatus == PrintStatus::PrintToResume) { 
-        if (key == KEYPAD_LEFT) {
-            SERIAL_IMPL.println("Resume print");
-            printStatus = PrintStatus::FileToPrint;
-            // Trigger the resume too
-            card.startOrResumeFilePrinting();
-        }
-        else if (key == KEYPAD_RIGHT){                
-            SERIAL_IMPL.println("Don't resume print");
-            card.removeJobRecoveryFile();
-            PreviousStep = &toolsMenuStep;
-            NextStep = &sdMenuStep;
-            printStatus = PrintStatus::Idle;
-            fileName = "";
-        }
-    } else {        
-        if (!card.isPrinting() & !card.isPaused()){            
-            SERIAL_IMPL.println("Turning to idle menu (1)");
-            // No print. The job must have finished. A click should bring the printer to the idle state.
-            NextStep = &sdMenuStep;
-            PreviousStep = &toolsMenuStep;
-            printStatus = PrintStatus::Idle;
-            fileName = "";
+        else if (printStatus == PrintStatus::PrintToResume) { 
+            if (key == KEYPAD_LEFT) {
+                SERIAL_IMPL.println("Resume print");
+                printStatus = PrintStatus::FileToPrint;
+                // Trigger the resume too
+                card.startOrResumeFilePrinting();
+            }
+            else if (key == KEYPAD_RIGHT){                
+                SERIAL_IMPL.println("Don't resume print");
+                card.removeJobRecoveryFile();
+                PreviousStep = &toolsMenuStep;
+                NextStep = &sdMenuStep;
+                printStatus = PrintStatus::Idle;
+                fileName = "";
+            }
+        } else {        
+            if (!card.isPrinting() & !card.isPaused()){            
+                SERIAL_IMPL.println("Turning to idle menu (1)");
+                // No print. The job must have finished. A click should bring the printer to the idle state.
+                NextStep = &sdMenuStep;
+                PreviousStep = &toolsMenuStep;
+                printStatus = PrintStatus::Idle;
+                fileName = "";
+            }
         }
     }
 }
@@ -156,43 +199,65 @@ void MainScreenStep::LoadComplete(){
     e1Color = AvailableColors[prefs.getInt("e2_c", 1)];
     prefs.end();
 
-    // Get the status and set the mode
-    if (printStatus == PrintStatus::FileToPrint) { // This must be set by the file selection menus.
-        SERIAL_IMPL.printf("Home screen with print file: %s, %s\n", fileName.c_str(), DOSFileName.c_str());
-        String m23 = String("M23 ") + DOSFileName;
-        enqueueComs({"M21", m23, "M24"});
-        
-        materialAtStart = print_job_timer.getStats().filamentUsed;
-        // Remove the steps to restrict access to the print alone
-        NextStep = 0;
-        PreviousStep = 0;
-    } else if (printStatus == PrintStatus::ChangingFilament) { // Back from changing the filament
-        materialsMenuStep.NextStep = &toolsMenuStep; // reset the route
-        SERIAL_IMPL.println("Back to print (1)");
-        card.startOrResumeFilePrinting();
+    if (Host->Retro){
+        if (printStatus == PrintStatus::FileToPrint) { // This must be set by the file selection menus.
+            SERIAL_IMPL.printf("Home screen with print file: %s, %s\n", fileName.c_str(), DOSFileName.c_str());
+            materialAtStart = print_job_timer.getStats().filamentUsed;
+            RetroPreviousStep = 0;
+            RetroNextStep = 0;
+            NextActionString = "";
+            printStarted = false;
+            prepareForPrint(DOSFileName, true, true, printComSent, this);            
+        }
+        else if (printStatus == PrintStatus::Printing) {
+            if (card.isPaused()) { // came back from the menu with back button
+                card.startOrResumeFilePrinting();
+            }
+        }
     }
     else {
-        SERIAL_IMPL.println("Idle home screen.");
-        if(card.jobRecoverFileExists())
-        {
-            SERIAL_IMPL.println("Recovery file exists");
-            printStatus = PrintStatus::PrintToResume;
+        // Get the status and set the mode
+        if (printStatus == PrintStatus::FileToPrint) { // This must be set by the file selection menus.
+            SERIAL_IMPL.printf("Home screen with print file: %s, %s\n", fileName.c_str(), DOSFileName.c_str());
+            materialAtStart = print_job_timer.getStats().filamentUsed;
             // Remove the steps to restrict access to the print alone
             NextStep = 0;
             PreviousStep = 0;
+            prepareForPrint(DOSFileName, true, true, printComSent, this);
+        } else if (printStatus == PrintStatus::ChangingFilament) { // Back from changing the filament
+            materialsMenuStep.NextStep = &toolsMenuStep; // reset the route
+            SERIAL_IMPL.println("Back to print (1)");
+            card.startOrResumeFilePrinting();
         }
         else {
-            NextStep = &sdMenuStep;
-            PreviousStep = &toolsMenuStep;
-            printStatus = PrintStatus::Idle;
-        }
-    } 
+            SERIAL_IMPL.println("Idle home screen.");
+            if(card.jobRecoverFileExists())
+            {
+                SERIAL_IMPL.println("Recovery file exists");
+                printStatus = PrintStatus::PrintToResume;
+                // Remove the steps to restrict access to the print alone
+                NextStep = 0;
+                PreviousStep = 0;
+                RetroPreviousStep = cancelResumeDummyStep;
+                RetroNextStep = beginResumeDummyStep;
+            }
+            else {
+                NextStep = &sdMenuStep;
+                PreviousStep = &toolsMenuStep;
+                printStatus = PrintStatus::Idle;
+            }
+        } 
+    }
 }
 void MainScreenStep::UnloadBegin(){
+}
+void MainScreenStep::UnloadComplete(){
     if (printStatus == PrintStatus::FileToPrint) {
         if (card.isPaused()) {// going to in-print utilities            
             printStatus = PrintStatus::ChangingFilament;
-            Host->GotoPreviousStep();
+
+            if (!Host->Retro)
+                Host->GotoPreviousStep();
         }
     }
 }
