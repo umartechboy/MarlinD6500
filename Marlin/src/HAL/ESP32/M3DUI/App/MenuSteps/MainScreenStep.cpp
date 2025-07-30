@@ -152,7 +152,7 @@ void MainScreenStep::Paint(BufferedDisplay* g) {
     }
 }
 
-void MainScreenStep::HandleKeyUp(Keys key){
+void MainScreenStep::HandleKeyPress(Keys key){
     if (!Host->Retro) {
         if (printStatus == PrintStatus::Idle){
             if (key == KEYPAD_LEFT && !Host->Retro){

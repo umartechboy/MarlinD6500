@@ -12,7 +12,7 @@ public:
     void Paint(BufferedDisplay* g) override;
     void SaveColors();   
     void ToggleSelected();
-    void HandleKeyUp(Keys key) override;         
+    void HandleKeyPress(Keys key) override;         
     void IncrementValue();
     void DecrementValue();
     void Tick() override; 

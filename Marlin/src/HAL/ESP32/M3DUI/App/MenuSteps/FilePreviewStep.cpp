@@ -290,7 +290,7 @@ void FilePreviewStep::LoadBegin() {
     }    
     f.close();
 }
-void FilePreviewStep::HandleKeyUp(Keys key){    
+void FilePreviewStep::HandleKeyPress(Keys key){    
     if (!Host->Retro){
         if (key == Keys::KEYPAD_RIGHT)
             Host->GotoNextStep();

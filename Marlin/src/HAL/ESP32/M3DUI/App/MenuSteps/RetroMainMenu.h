@@ -14,7 +14,7 @@ class RetroMainMenuStep: public MenuStep {
     void Paint(BufferedDisplay* g) override;
     void IncrementValue() override;
     void DecrementValue() override;
-    void HandleKeyUp(Keys key) override;
+    void HandleKeyPress(Keys key) override;
     bool CanJumpToMainMenu() override;
     StringListItem* printFromSDOption;
     StringListItem* filamentSetupOption;

@@ -22,7 +22,7 @@ public:
     ~MainScreenStep();
     void Tick() override;
     void Paint(BufferedDisplay* g) override;
-    void HandleKeyUp(Keys key) override;
+    void HandleKeyPress(Keys key) override;
     void LoadComplete() override;
     void UnloadBegin() override;
     void UnloadComplete() override;

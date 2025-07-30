@@ -53,12 +53,12 @@ void SDMenuStep::Paint(BufferedDisplay* g) {
     }
 }
 void SDMenuStep::IncrementValue() {
-    HandleKeyUp(Keys::KEYPAD_UP);
+    HandleKeyPress(Keys::KEYPAD_UP);
 }
 void SDMenuStep::DecrementValue() {
-    HandleKeyUp(Keys::KEYPAD_DOWN);
+    HandleKeyPress(Keys::KEYPAD_DOWN);
 }
-void SDMenuStep::HandleKeyUp(Keys key) {
+void SDMenuStep::HandleKeyPress(Keys key) {
     if (key == Keys::KEYPAD_DOWN)
         list->scrollDown();
     else if (key == Keys::KEYPAD_UP)

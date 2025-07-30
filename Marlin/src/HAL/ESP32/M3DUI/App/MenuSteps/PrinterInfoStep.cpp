@@ -54,7 +54,7 @@ void PrinterInfoStep::Tick(){
     NeedsRedraw = true;
 }
 
-void PrinterInfoStep::HandleKeyUp(Keys key) {
+void PrinterInfoStep::HandleKeyPress(Keys key) {
     if (key == Keys::KEYPAD_RIGHT){
         Host->GotoNextStep(); // back to options menu
     }

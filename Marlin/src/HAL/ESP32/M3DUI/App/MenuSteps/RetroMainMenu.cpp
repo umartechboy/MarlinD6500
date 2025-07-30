@@ -53,12 +53,12 @@ void RetroMainMenuStep::Paint(BufferedDisplay* g) {
     list->Paint(g, TextColor);
 }
 void RetroMainMenuStep::IncrementValue() {
-    HandleKeyUp(Keys::KEYPAD_UP);
+    HandleKeyPress(Keys::KEYPAD_UP);
 }
 void RetroMainMenuStep::DecrementValue() {
-    HandleKeyUp(Keys::KEYPAD_DOWN);
+    HandleKeyPress(Keys::KEYPAD_DOWN);
 }
-void RetroMainMenuStep::HandleKeyUp(Keys key) {
+void RetroMainMenuStep::HandleKeyPress(Keys key) {
     if (key == Keys::KEYPAD_DOWN)
         list->scrollDown();
     else if (key == Keys::KEYPAD_UP)

@@ -117,12 +117,12 @@ int MaterialsStep::selectedExtruderItemIndex(){
     return -1;
 }
 void MaterialsStep::IncrementValue() {
-    HandleKeyUp(Keys::KEYPAD_UP);
+    HandleKeyPress(Keys::KEYPAD_UP);
 }
 void MaterialsStep::DecrementValue() {
-    HandleKeyUp(Keys::KEYPAD_DOWN);
+    HandleKeyPress(Keys::KEYPAD_DOWN);
 }
-void MaterialsStep::HandleKeyUp(Keys key) {
+void MaterialsStep::HandleKeyPress(Keys key) {
     if (key == Keys::KEYPAD_LEFT){
         if (options->getSelected() == extruder0Color || options->getSelected() == extruder1Color){ // extruders
             ((ColorSelectorListItem*)options->getSelected())->incrementColor();

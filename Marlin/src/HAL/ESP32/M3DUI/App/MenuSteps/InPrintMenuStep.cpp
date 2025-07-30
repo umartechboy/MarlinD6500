@@ -81,12 +81,12 @@ void InPrintMenuStep::Paint(BufferedDisplay* g) {
     list->Paint(g, TextColor);
 }
 void InPrintMenuStep::IncrementValue() {
-    HandleKeyUp(Keys::KEYPAD_UP);
+    HandleKeyPress(Keys::KEYPAD_UP);
 }
 void InPrintMenuStep::DecrementValue() {
-    HandleKeyUp(Keys::KEYPAD_DOWN);
+    HandleKeyPress(Keys::KEYPAD_DOWN);
 }
-void InPrintMenuStep::HandleKeyUp(Keys key) {
+void InPrintMenuStep::HandleKeyPress(Keys key) {
     if (key == Keys::KEYPAD_DOWN)
         list->scrollDown();
     else if (key == Keys::KEYPAD_UP)

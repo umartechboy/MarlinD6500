@@ -205,7 +205,7 @@ MenuStep* BedLevelStep::GetPreviousStep(bool returnEvenIfDummy){
     }
 }
 
-void BedLevelStep::HandleKeyUp(Keys key) {
+void BedLevelStep::HandleKeyPress(Keys key) {
     Host->PushNotification("Bed leveling in process. Please wait...");
 }
 void BedLevelStep::FocusChanged(StepAnimationStage stage){

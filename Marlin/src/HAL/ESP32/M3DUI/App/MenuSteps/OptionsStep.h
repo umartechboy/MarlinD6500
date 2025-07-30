@@ -7,6 +7,6 @@ class OptionsStep: public MenuStep {
     public:
         OptionsStep(MenuHost* host);
         void Paint(BufferedDisplay* g) override;
-        void HandleKeyUp(Keys key) override;
+        void HandleKeyPress(Keys key) override;
 };
 #endif

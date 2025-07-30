@@ -29,7 +29,7 @@ class FilePreviewStep: public MenuStep {
     FilePreviewStep(MenuHost* host);
     void Paint(BufferedDisplay* g) override;
     void LoadBegin() override;
-    void HandleKeyUp(Keys key) override;
+    void HandleKeyPress(Keys key) override;
     void LoadComplete() override;
 };
 

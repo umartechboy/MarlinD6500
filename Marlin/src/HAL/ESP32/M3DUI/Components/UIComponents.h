@@ -101,7 +101,7 @@ public:
     String Text;
     Notification(String& text, int life);
     void Paint(BufferedDisplay* g);
-    void HandleKeyUp(Keys key);
+    void HandleKeyPress(Keys key);
     ~Notification();
 };
 
@@ -125,7 +125,7 @@ class MenuStep {
         virtual void Paint(BufferedDisplay* g) {}
         virtual void PaintRetroTitle(BufferedDisplay* g);
         virtual void PaintRetroOptionsBar(BufferedDisplay* g);
-        virtual void HandleKeyUp(Keys key) {}
+        virtual void HandleKeyPress(Keys key) {}
         virtual void IncrementValue() {}
         virtual void DecrementValue() {}
         virtual void LoadBegin() {}

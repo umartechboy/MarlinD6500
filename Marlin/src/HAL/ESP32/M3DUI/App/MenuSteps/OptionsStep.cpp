@@ -40,7 +40,7 @@ void OptionsStep::Paint(BufferedDisplay* g) {
     g->SetOpacity(opBkp);
 }
     
-void OptionsStep::HandleKeyUp(Keys key) {
+void OptionsStep::HandleKeyPress(Keys key) {
     if (key == Keys::KEYPAD_UP_LEFT){ // materials
         PreviousStep = &materialsMenuStep;
         Host->GotoPreviousStep();

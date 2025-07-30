@@ -381,11 +381,11 @@ void MenuHost::Loop(BufferedDisplay* bTft){
 
 }
 
-void MenuHost::HandleKeyUp(Keys key){    
+void MenuHost::HandleKeyPress(Keys key){    
     if (Retro){
         // Complete Retro navigation
         if (CurrentNotification){
-            CurrentNotification->HandleKeyUp(key);
+            CurrentNotification->HandleKeyPress(key);
         }
         else if (key == KEYPAD_MIDDLE){
             if (CurrentStep)
@@ -409,7 +409,7 @@ void MenuHost::HandleKeyUp(Keys key){
         }
         else { // Send all the keys to the step
             if (CurrentStep)
-            CurrentStep->HandleKeyUp(key);
+            CurrentStep->HandleKeyPress(key);
         }
     }
     else{ 
@@ -444,7 +444,7 @@ void MenuHost::HandleKeyUp(Keys key){
         }
         else { // Let the step handle this key if not in overlay
             if (stepAnimationStage == StepAnimationStage::MainStep)
-            CurrentStep->HandleKeyUp(key);
+            CurrentStep->HandleKeyPress(key);
         }
     }
 }

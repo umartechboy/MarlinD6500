@@ -99,7 +99,12 @@ Keys touchOnADCKeyPad_getKey(){
 bool unknwonSwipe = false;
 bool swipeInProcess = false;
 void KeyPad::Loop(MenuHost* host){
-  if (millis() - lastKeyCheck > (lastKeyDown == Keys::KEYPAD_NONE) ? 5:30){
+  if (millis() - lastKeyCheck > 20){
+    lastKeyCheck = millis();
+    touchOnADCKeyPad_getKey();
+  }
+  return;
+  if (millis() - lastKeyCheck > (lastKeyDown == Keys::KEYPAD_NONE) ? 30:50){
     lastKeyCheck = millis();
     Keys key = touchOnADCKeyPad_getKey();
 
@@ -119,7 +124,7 @@ void KeyPad::Loop(MenuHost* host){
       else{
         // Send Key up
         SERIAL_IMPL.printf("Key Up: %d\n", lastKeyDown);
-        host->HandleKeyUp(lastKeyDown);
+        //host->HandleKeyUp(lastKeyDown);
       }
     }
     else if (lastKeyDown == KEYPAD_NONE) {// Its a Key down.

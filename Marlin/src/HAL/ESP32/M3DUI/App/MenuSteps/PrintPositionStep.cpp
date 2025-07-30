@@ -46,17 +46,17 @@ void PrintPositionStep::Paint(BufferedDisplay* g) {
         scaleX(mainScreenStep.maxX - mainScreenStep.minX), scaleY(mainScreenStep.maxY - mainScreenStep.minY),
         ST7735_WHITE);
 }
-void PrintPositionStep::HandleKeyUp(Keys key) {
+void PrintPositionStep::HandleKeyPress(Keys key) {
     switch (key)
     {
         case Keys::KEYPAD_RIGHT: mainScreenStep.xOffset += inc; break;
         case Keys::KEYPAD_LEFT: mainScreenStep.xOffset -= inc; break;
         case Keys::KEYPAD_DOWN: mainScreenStep.yOffset -= inc; break;
         case Keys::KEYPAD_UP: mainScreenStep.yOffset += inc; break;
-        case Keys::KEYPAD_UP_RIGHT: HandleKeyUp(Keys::KEYPAD_UP); HandleKeyUp(Keys::KEYPAD_RIGHT); break;
-        case Keys::KEYPAD_UP_LEFT:  HandleKeyUp(Keys::KEYPAD_UP); HandleKeyUp(Keys::KEYPAD_LEFT); break; 
-        case Keys::KEYPAD_DOWN_RIGHT:   HandleKeyUp(Keys::KEYPAD_DOWN); HandleKeyUp(Keys::KEYPAD_RIGHT); break; 
-        case Keys::KEYPAD_DOWN_LEFT:    HandleKeyUp(Keys::KEYPAD_DOWN); HandleKeyUp(Keys::KEYPAD_LEFT); break; 
+        case Keys::KEYPAD_UP_RIGHT: HandleKeyPress(Keys::KEYPAD_UP); HandleKeyPress(Keys::KEYPAD_RIGHT); break;
+        case Keys::KEYPAD_UP_LEFT:  HandleKeyPress(Keys::KEYPAD_UP); HandleKeyPress(Keys::KEYPAD_LEFT); break; 
+        case Keys::KEYPAD_DOWN_RIGHT:   HandleKeyPress(Keys::KEYPAD_DOWN); HandleKeyPress(Keys::KEYPAD_RIGHT); break; 
+        case Keys::KEYPAD_DOWN_LEFT:    HandleKeyPress(Keys::KEYPAD_DOWN); HandleKeyPress(Keys::KEYPAD_LEFT); break; 
     }
     if (mainScreenStep.minX + mainScreenStep.xOffset < inc) mainScreenStep.xOffset = inc - mainScreenStep.minX;
     if (mainScreenStep.maxX + mainScreenStep.xOffset > (bedWidth - inc)) mainScreenStep.xOffset = (bedWidth - inc) - mainScreenStep.maxX;

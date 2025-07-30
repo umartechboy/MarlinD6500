@@ -9,7 +9,6 @@
 #include "Hardware/digitalIO.h"
 #endif
 
-#define DebugKeys 0
 
 
 #define TFT_CS         17

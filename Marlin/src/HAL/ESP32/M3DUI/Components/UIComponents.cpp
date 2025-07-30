@@ -277,7 +277,7 @@ Notification::Notification(String& text, int life)
     lifeLeft = life;
     this->Text = text;
 }
-void Notification::HandleKeyUp(Keys key){
+void Notification::HandleKeyPress(Keys key){
     if (key == KEYPAD_MIDDLE || key == KEYPAD_BACK){
         lifeLeft = 1;
     }

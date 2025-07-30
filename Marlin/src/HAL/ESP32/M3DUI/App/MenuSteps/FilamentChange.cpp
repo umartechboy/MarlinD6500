@@ -200,7 +200,7 @@ void FilamentChangeStep::Paint(BufferedDisplay* g){
     g->SetOpacity(opBkp);
 }
 
-void FilamentChangeStep::HandleKeyUp(Keys key) {
+void FilamentChangeStep::HandleKeyPress(Keys key) {
     if (stage == FilamentChangeStage::Preheat){
         if (key == Keys::KEYPAD_RIGHT){
             Host->GotoNextStep(); // back to filament settings
