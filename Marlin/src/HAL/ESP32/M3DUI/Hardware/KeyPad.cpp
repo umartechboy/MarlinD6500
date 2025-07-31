@@ -140,6 +140,9 @@ void KeyPad::Loop(MenuHost* host){
       if (settelingTime){
         long settleStartAt = millis();
         while(millis() - settleStartAt < settelingTime){
+          if (touchOnADCKeyPad_getKey() == Keys::KEYPAD_NONE || touchOnADCKeyPad_getKey() == Keys::KEYPAD_MIDDLE){ // conclusive. Button has gone up or gone down
+            break;
+          }
           noiseSenseLoop();
           safe_delay(1);
         }
