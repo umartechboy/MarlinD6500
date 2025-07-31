@@ -69,7 +69,7 @@ class VerticalList{
         int targetScrollOffset = 0;
         MenuHost* Host = 0;
         int lastSelected = -2;
-        SelectionUpdatedCallback OnSelectionUpdated;
+        SelectionUpdatedCallback OnSelectionUpdated = 0;
         void *Owner = 0;
     public:
         int selected = -1;
@@ -88,6 +88,7 @@ class VerticalList{
         void scrollDown();
         void scrollUp();
         void Paint(BufferedDisplay* g, int x, int y, int w, int h, Color TextColor);
+        void MarkSelectionChangeSent();
 };
 
 class Notification
@@ -155,31 +156,35 @@ private:
     void* sender = 0;
 };
 
-class TextEntry {
-
+class TextEntryField {
+public:
+    String Text;
+    void Paint(BufferedDisplay* g, int x, int y, int width, int height);
+    int cursor = -1;
 };
 
 class TextEntrySource {
 public:
     VerticalList* chars;
     TextEntrySource(MenuHost* host);
-    void setTarget(TextEntry* target);
+    void setTarget(TextEntryField* target);
     ~TextEntrySource();
     void Loop();
     void HandleKeyPress(Keys key);
-    void Paint(BufferedDisplay* g);
+    void Paint(BufferedDisplay* g, int x, int y, int width, int height);
     MenuHost* Host;
     bool isCaps = false;
 private:
-    TextEntry* Target;
+    TextEntryField* Target;
 };
 
 class EntryCharListItem: public ListItem{
 public:
     TextEntrySource* Owner;
     EntryCharListItem(TextEntrySource* owner, char chr, int height);
-    char ItemChar;
     void Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, int x, int y, int width, int height, bool selected) override;
+    char GetChar();
 private:
+    char ItemChar;
 };
 #endif // M3DUI

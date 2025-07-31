@@ -52,6 +52,10 @@ MainScreenStep::MainScreenStep(MenuHost* host):MenuStep(host) {
     beginResumeDummyStep->SetLoadCallBack(beginResumeCalled, this);
     Icon = &img_Home;
     TickPeriod = 50;
+
+
+    textEntryTest = new TextEntryField();
+    Host->RequestTextEntry(textEntryTest);
 }
 MainScreenStep::~MainScreenStep(){
     delete cancelResumeDummyStep;
@@ -150,6 +154,7 @@ void MainScreenStep::Paint(BufferedDisplay* g) {
             g->fillRect(Host->appWidth() / 2 + 1, Host->appHeight() - 2, Host->appWidth() / 2, 2, e1Color);
         }
     }
+    textEntryTest->Paint(g, 10,10,80,40);
 }
 
 void MainScreenStep::HandleKeyPress(Keys key){

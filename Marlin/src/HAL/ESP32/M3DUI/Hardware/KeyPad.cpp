@@ -89,6 +89,7 @@ Keys touchOnADCKeyPad_getKey(){
 #endif
       return Keys::KEYPAD_MIDDLE;
     }
+  return Keys::KEYPAD_NONE;
 }
 
 #define AddKey(k, i) (Keys)(((k) + (i) > 8) ? ((k) + (i) - 8):(((k) + (i) < 1) ? ((k) + (i) + 8):((k) + (i))))
@@ -163,6 +164,8 @@ void KeyPad::Loop(MenuHost* host){
       SERIAL_IMPL.printf("Key Down: %d\n", key);
       if (key == Keys::KEYPAD_MIDDLE){        
         pressInProcess = true;
+        SERIAL_IMPL.printf("Middle Key Down 1: %d\n", key);
+        pressPeriod = 2000;
         host->HandleKeyPress(key);
         keyDownSince = millis() + pressPeriod;
         lastKeyDown = key;
@@ -178,16 +181,17 @@ void KeyPad::Loop(MenuHost* host){
           if (millis() - keyDownSince > pressPeriod){
             if (key == Keys::KEYPAD_UP || key == Keys::KEYPAD_DOWN || key == Keys::KEYPAD_LEFT || key == Keys::KEYPAD_RIGHT){
               pressesInARow++;
-              if (pressesInARow * pressPeriod > 1000){ // 1s elapsed since the last acceleration
+              if (pressesInARow * pressPeriod > 300){ // x seconds elapsed since the last acceleration
                 pressPeriod -= 100;
                 pressesInARow = 0;
               }
               if (pressPeriod < 50)
-              pressPeriod = 50;
+                pressPeriod = 50;
+              SERIAL_IMPL.printf("Key Press: %d\n", key);
+              host->HandleKeyPress(key);
+              pressInProcess = true;
+              keyDownSince = millis();
             }
-            host->HandleKeyPress(key);
-            pressInProcess = true;
-            keyDownSince = millis();
           }
         }
       }
@@ -202,8 +206,11 @@ void KeyPad::Loop(MenuHost* host){
           // Its not a swipe, its a key down.
           swipeProgress = 0;
           pressInProcess = true;
+          SERIAL_IMPL.printf("Middle Key Down 2: %d\n", key);
+          pressPeriod = 2000;
           host->HandleKeyPress(key);
           keyDownSince = millis() + pressPeriod;
+          lastKeyDown = key;
         }
         // Test for Dial rotate
         else if (key == AddKey(lastKeyDown, 1) && !unknwonSwipe){

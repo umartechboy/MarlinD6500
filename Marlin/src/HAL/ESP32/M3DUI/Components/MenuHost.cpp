@@ -4,9 +4,11 @@
 
 MenuHost::MenuHost(){
     keypad = new KeyPad();
+    textEntrySource = new TextEntrySource(this);
 }
 MenuHost::~MenuHost(){
     delete keypad;
+    delete textEntrySource;
 }
 bool MenuHost::CanGotoNextStep() {
     return TargetStep == 0;
@@ -220,6 +222,9 @@ void MenuHost::Paint(BufferedDisplay* bTft){
     if (millis() - lastPaint < 20) { // limit to 50 fps
         return;
     }
+    if (CurrentStep && textEntryTarget){
+        CurrentStep->NeedsRedraw = true; // for the cursor
+    }
     if (Retro){
         _appWidth = bTft->width();
         _appHeight = bTft->height() - retroTitleSectionHeight;
@@ -364,6 +369,10 @@ void MenuHost::Paint(BufferedDisplay* bTft){
         }
     }
 
+    if (textEntryTarget){
+        textEntrySource->Paint(bTft, bTft->width() - 20, 0, 20, bTft->height());
+    }
+
     bTft->update(true, true); 
     
 }
@@ -389,6 +398,14 @@ void MenuHost::HandleKeyPress(Keys key){
         // Complete Retro navigation
         if (CurrentNotification){
             CurrentNotification->HandleKeyPress(key);
+            return;
+        }
+        if (textEntryTarget){
+            if (key == Keys::KEYPAD_BACK)
+                ReleaseTextEntry();
+            else
+                textEntrySource->HandleKeyPress(key);
+            return;
         }
         else if (key == KEYPAD_MIDDLE){
             if (CurrentStep)
@@ -460,4 +477,21 @@ void MenuHost::HandleDialDecrement(){
     SERIAL_IMPL.println("HandleDialDecrement");
     if (CurrentStep)
         CurrentStep->DecrementValue();
+}
+
+void MenuHost::RequestTextEntry(TextEntryField* textField){
+    ReleaseTextEntry();
+    if (textField == 0)
+        return;
+    textEntrySource->setTarget(textField);
+    textEntryTarget = textField;
+    if (textEntryTarget){
+        textEntryTarget->cursor = textEntryTarget->Text.length();
+    }
+}
+void MenuHost::ReleaseTextEntry(){
+    if (textEntryTarget){ // Already have a target
+        textEntryTarget->cursor = -1;
+    }
+    textEntryTarget = 0;
 }

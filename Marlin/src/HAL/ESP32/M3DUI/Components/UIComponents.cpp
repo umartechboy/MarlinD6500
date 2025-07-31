@@ -28,7 +28,7 @@ void StringListItem::Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, i
     int16_t w = 0;    
     if (selected){ // b.t.w. we can discard opacity here coz the selected is 100% op
         g->SetOpacity(15);
-        g->fillRect(0, y - itemHeight / 2, g->width(), itemHeight, 0);
+        g->fillRect(x, y - itemHeight / 2, width, itemHeight, 0);
         g->SetOpacity(op);
     }
     centerStringWithImage(g, Icon, ItemText.substring(0, ItemText.length() - endTrimLength).c_str(), Host->appWidth() / 2, y, &w, 0, true);
@@ -128,7 +128,7 @@ int VerticalList::getSelectedIndex(){
     return selected;
 }
 ListItem* VerticalList::getSelected(){
-    if(selected < items.size())
+    if(selected >= 0 && selected < items.size() && items.size() > 0)
         return items[selected];
     return 0;
 }
@@ -193,6 +193,8 @@ void VerticalList::SetOnSelectionUpdated(void *_owner, SelectionUpdatedCallback 
     this->Owner = _owner;
 }
 void VerticalList::InvokeSelectionChanged(){
+    if (Count() == 0)
+        return;
     if (OnSelectionUpdated)
         OnSelectionUpdated(Owner, getSelected(), getSelectedIndex());
 }
@@ -205,7 +207,6 @@ void VerticalList::Paint(BufferedDisplay* g, int x, int y, int w, int h, Color T
     if (items.size() == 0)
         centerString(g, emptyString.c_str(), Host->appWidth() / 2, displayHeight / 2);
     else{
-
         // Adjust underflow from the top
         if (scrollOffset > 0) {
             targetScrollOffset = 0;
@@ -229,7 +230,7 @@ void VerticalList::Paint(BufferedDisplay* g, int x, int y, int w, int h, Color T
             g->setFont();
             //if (i * lineHeight + scrollOffset > - lineHeight / 2 && i * lineHeight + scrollOffset < lineHeight / 2){
             
-            int16_t op = (abs(lY + scrollOffset) * 150) / displayHeight;
+            int16_t op = (abs(lY + scrollOffset) * 100) / displayHeight;
             if (op < 0) op = 0;
             if (op > 100) op = 100;
             op = 100 - op;
@@ -255,19 +256,26 @@ void VerticalList::Paint(BufferedDisplay* g, int x, int y, int w, int h, Color T
             //     selected = i;
             //SERIAL_IMPL.printf("Rect i = %d, lY = %d, height = %d\n", i, lY, items[i]->getHeight());
             //g->drawRect(0, lY + displayHeight / 2 + scrollOffset - items[i]->getHeight() / 2, 128, items[i]->getHeight(), i%2? ST7735_BLUE:ST7735_ORANGE);
+            
             items[i]->Paint(g, op, TextColor, x, lY + displayHeight / 2 + scrollOffset, w, h, i == selected);
             if (i + 1 < Count()){
                 lY += items[i]->getHeight() / 2 + items[i + 1]->getHeight() / 2;
             }
         }
     }
-    // We dont have a tick in the list obj
-    if(getSelectedIndex() == lastSelected){
-        return;
+    if (Count() > 0){
+        // We dont have a tick in the list obj
+        if(getSelectedIndex() == lastSelected){
+            return;
+        }
+        lastSelected = getSelectedIndex();
+        SERIAL_IMPL.printf("Selected index changed: %d\n", getSelectedIndex());
+        InvokeSelectionChanged();
     }
+}
+
+void VerticalList::MarkSelectionChangeSent(){
     lastSelected = getSelectedIndex();
-    SERIAL_IMPL.printf("Selected index changed: %d\n", getSelectedIndex());
-    InvokeSelectionChanged();
 }
 
 Notification::Notification(String& text, int life)
@@ -374,6 +382,27 @@ bool MenuStep::IsDummyStep(){
     return isDummy;
 }
 
+void TextEntryField::Paint(BufferedDisplay* g, int x, int y, int width, int height){
+    int opBkp = g->GetOpacity();
+    g->fillRoundRect(x, y, width, height, 3, ST7735_WHITE);
+    g->drawRoundRect(x, y, width, height, 3, ST7735_BLACK);
+      
+    String before = Text.substring(0, cursor);
+    String after = Text.substring(cursor, Text.length());
+    int16_t wFirst;
+    g->setTextColor(ST7735_BLACK);
+    g->setFont(&FreeSansBold9pt7b);
+    g->SetOpacity(100);
+    leftString(g, before.c_str(), x + 3, y + 17, &wFirst);        
+    leftString(g, after.c_str(), x + 3 + wFirst + 1, y + 17);
+    if (cursor >= 0){      
+        int counter = (millis() % 601) / 6;
+        g->SetOpacity(100 - counter);
+        g->drawLine(x + 3 + wFirst, y + 3, x + 3 + wFirst, y + height - 6, ST7735_BLACK);
+    }
+        g->SetOpacity(opBkp);
+        g->setFont(0);
+}
 
 void EntryCharListItem::Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, int x, int y, int width, int height, bool selected) {
     
@@ -383,48 +412,129 @@ void EntryCharListItem::Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor
     int16_t w = 0;    
     if (selected){ // b.t.w. we can discard opacity here coz the selected is 100% op
         g->SetOpacity(15);
-        g->fillRect(0, y - itemHeight / 2, g->width(), itemHeight, 0);
+        g->fillRect(x, y - itemHeight / 2, width, itemHeight, 0);
         g->SetOpacity(op);
     }
-    char str [2] = {ItemChar, 0};
-    if (ItemChar >= 'a' && ItemChar <= 'z' && Owner->isCaps){
-        str[0] = 'A' + (ItemChar - 'a');
+    if (GetChar() == ' '){
+        g->drawLine(x + 1, y + 2, x + width - 2, y + 2, ST7735_BLACK);
+        g->drawLine(x + 1, y - 2, x + 1, y + 2, ST7735_BLACK);
+        g->drawLine(x + width - 2, y - 2, x + width - 2, y + 2, ST7735_BLACK);
     }
-    centerString(g, str, x, y);
+    else if (GetChar() == '\b'){
+        g->drawLine(x + 1, y, x + width - 2, y, ST7735_BLACK);
+        g->fillTriangle(x + 1, y, x + 5, y + 4, x + 5, y - 4, ST7735_BLACK);
+    }
+    else {
+        g->setFont(&FreeSansBold9pt7b);
+        char str [] = {GetChar(), 0};
+        centerString(g, str, x + width / 2, y);
+    }
+    g->setFont(0);
     g->SetOpacity(opBkp);
+}
+char EntryCharListItem::GetChar(){
+    char chr = ItemChar;
+    if (ItemChar >= 'a' && ItemChar <= 'z' && Owner->isCaps){
+        chr = 'A' + (ItemChar - 'a');
+    }
+    return chr;
 }
 EntryCharListItem::EntryCharListItem(TextEntrySource* owner, char chr, int height):ListItem(owner->Host, height){
     ItemChar = chr;
+    Owner = owner;
+}
+void OnEntryCharUpdated(void* sender, ListItem* selectedItem, int selectedIndex){
+    TextEntrySource* This = (TextEntrySource*)sender;
 }
 TextEntrySource::TextEntrySource(MenuHost* host){
     Host = host;
     chars = new VerticalList(host);
-    for (int i = 0; i < 26; i++){
-        chars->Add(new EntryCharListItem(this, i + 'a', 12));
-    }
-    for (int i = 0; i < 10; i++){
-        chars->Add(new EntryCharListItem(this, i + '0', 12));
-    }
-    chars->Add(new EntryCharListItem(this, ' ', 12));
-    chars->Add(new EntryCharListItem(this, '~', 12));
-    chars->Add(new EntryCharListItem(this, '!', 12));
-    chars->Add(new EntryCharListItem(this, '@', 12));
-    chars->Add(new EntryCharListItem(this, '#', 12));
-    chars->Add(new EntryCharListItem(this, '$', 12));
-    chars->Add(new EntryCharListItem(this, '%', 12));
-    chars->Add(new EntryCharListItem(this, '^', 12));
-    chars->Add(new EntryCharListItem(this, '&', 12));
-    chars->Add(new EntryCharListItem(this, '*', 12));
-    chars->Add(new EntryCharListItem(this, '(', 12));
-    chars->Add(new EntryCharListItem(this, ')', 12));
-    chars->Add(new EntryCharListItem(this, '_', 12));
-    chars->Add(new EntryCharListItem(this, '+', 12));
-    chars->Add(new EntryCharListItem(this, '-', 12));
-    chars->Add(new EntryCharListItem(this, '=', 12));
+    chars->SetOnSelectionUpdated(this, OnEntryCharUpdated);
 }
 TextEntrySource::~TextEntrySource(){
   delete chars;
 }
-void TextEntrySource::setTarget(TextEntry* target){
+void TextEntrySource::setTarget(TextEntryField* target){
   Target = target;
+   if (chars->Count() == 0){ // couldn't do this in the constructor coz we needed this
+        int charHeight = 16;
+        chars->Add(new EntryCharListItem(this, ' ', charHeight));
+        chars->Add(new EntryCharListItem(this, '\b', charHeight));
+        for (int i = 0; i < 26; i++){
+            chars->Add(new EntryCharListItem(this, i + 'a', charHeight));
+        }
+        for (int i = 0; i < 10; i++){
+            chars->Add(new EntryCharListItem(this, i + '0', charHeight));
+        }
+        chars->Add(new EntryCharListItem(this, '~', charHeight));
+        chars->Add(new EntryCharListItem(this, '!', charHeight));
+        chars->Add(new EntryCharListItem(this, '@', charHeight));
+        chars->Add(new EntryCharListItem(this, '#', charHeight));
+        chars->Add(new EntryCharListItem(this, '$', charHeight));
+        chars->Add(new EntryCharListItem(this, '%', charHeight));
+        chars->Add(new EntryCharListItem(this, '^', charHeight));
+        chars->Add(new EntryCharListItem(this, '&', charHeight));
+        chars->Add(new EntryCharListItem(this, '*', charHeight));
+        chars->Add(new EntryCharListItem(this, '(', charHeight));
+        chars->Add(new EntryCharListItem(this, ')', charHeight));
+        chars->Add(new EntryCharListItem(this, '_', charHeight));
+        chars->Add(new EntryCharListItem(this, '+', charHeight));
+        chars->Add(new EntryCharListItem(this, '-', charHeight));
+        chars->Add(new EntryCharListItem(this, '=', charHeight));
+        chars->MarkSelectionChangeSent(); // avoid the first key enter
+    }
+}
+
+void TextEntrySource::Paint(BufferedDisplay* g, int x, int y, int width, int height){
+    if (Target == 0)
+        return;
+    int opBkp = g->GetOpacity();
+    for (int i = 0; i < 3; i ++){
+        g->SetOpacity(70 - i * 30);
+        g->drawRect(x - i, y, 1, height, ST7735_BLACK);
+    }
+    g->SetOpacity(100);    
+    g->fillRect(x, y, width, height, ST7735_WHITE);
+    chars->Paint(g, x, y, width, height, ST7735_BLACK);
+
+    g->SetOpacity(opBkp);
+}
+
+void TextEntrySource::HandleKeyPress(Keys key){
+    if (key == Keys::KEYPAD_UP){
+        chars->scrollUp();
+    }
+    else if (key == Keys::KEYPAD_DOWN){
+        chars->scrollDown();
+    }
+    else if (key == Keys::KEYPAD_LEFT){
+        Target->cursor--;
+        if (Target->cursor < 0)
+            Target->cursor = 0;
+    }
+    else if (key == Keys::KEYPAD_RIGHT){
+        Target->cursor++;
+        if (Target->cursor > Target->Text.length())
+            Target->cursor = Target->Text.length();
+    }
+    else if (key == Keys::KEYPAD_MIDDLE){
+        char chr = ((EntryCharListItem*)(chars->getSelected()))->GetChar();
+        SERIAL_IMPL.printf("Key Entered: '%d' at %d in %s\n", chr, Target->cursor, Target->Text.c_str());
+        String before = Target->Text.substring(0, Target->cursor);
+        String after = Target->Text.substring(Target->cursor, Target->Text.length());
+        String thisChar = "";
+        if (chr == '\b'){
+            if(before.length() > 0)
+            before = before.substring(0, before.length() - 1);            
+            Target->cursor--;
+        }
+        else{
+            thisChar = String(chr);
+            Target->cursor++;
+        }
+        Target->Text = before + thisChar + after;
+    }
+    else if (key == Keys::KEYPAD_OPTIONS){
+        isCaps = !isCaps;
+    }
 }

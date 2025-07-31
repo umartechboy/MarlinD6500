@@ -6,6 +6,9 @@
 
 class MenuStep;
 class Notification;
+class TextEntryField;
+class TextEntrySource;
+
 class MenuHost{
 public:
     MenuStep* CurrentStep = 0;
@@ -43,6 +46,8 @@ public:
     void Paint(BufferedDisplay* bTft);
     void PushNotification(const char* str, int life = -1);
     void Loop(BufferedDisplay* bTft);
+    void RequestTextEntry(TextEntryField* textField);
+    void ReleaseTextEntry();
 private:
     float animationStepProgress = 0.0f;
     long animationStartTime = 0;
@@ -50,6 +55,8 @@ private:
     KeyPad* keypad;
     int _appHeight = 0;
     int _appWidth = 0;
+    TextEntryField* textEntryTarget = 0;
+    TextEntrySource* textEntrySource;
 };
 
 

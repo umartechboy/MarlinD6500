@@ -149,6 +149,25 @@ void centerLeftString(BufferedDisplay* g, const char* str,  int16_t x, int16_t y
     if (hOut)
         *hOut = h;
 }
+void leftString(BufferedDisplay* g, const char* str,  int16_t x, int16_t y, int16_t* wOut, int16_t* hOut) {
+    int16_t x1, y1;
+    uint16_t w, h;
+    g->setTextWrap(false);
+    g->getTextBounds(str, x, y, &x1, &y1, &w, &h);
+    int16_t errorInX = x1 - x;
+    int16_t errorInY = y1 - y;
+    g->setCursor(x - 0 - errorInX, y);
+    g->print(str);
+    //g->SetOpacity(30);
+    //g->setCursor(x, y);
+    //g->print(str);
+    //g->SetOpacity(100);
+    //g->print(str);
+    if (wOut)
+        *wOut = w;
+    if (hOut)
+        *hOut = h;
+}
 
 int retroNavSectionHeight = 18;
 int retroTitleSectionHeight = 16;
