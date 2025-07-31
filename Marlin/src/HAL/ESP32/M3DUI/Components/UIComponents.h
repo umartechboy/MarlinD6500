@@ -11,12 +11,11 @@
 
 static uint16_t AvailableColors[] = {ST7735_BLACK, ST7735_WHITE, ST7735_RED, ST7735_GREEN, ST7735_BLUE, ST7735_CYAN, ST7735_MAGENTA, ST7735_YELLOW, ST7735_ORANGE};
 
-
 class ListItem{
 public:
     ListItem(MenuHost* host, int _height);
     MenuHost* Host = 0;
-    virtual void Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, int y, bool selected){} // Must be overriden
+    virtual void Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, int x, int y, int width, int height, bool selected){} // Must be overriden
     int getHeight(){
         return itemHeight;
     }
@@ -38,7 +37,7 @@ class StringListItem: public ListItem{
 public:
     StringListItem(MenuHost* host, Image* icon, String str, int _endTrimLength, int height);
     String ItemText;
-    void Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, int y, bool selected) override;
+    void Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, int x, int y, int width, int height, bool selected) override;
 private:
     int endTrimLength;
     Image* Icon;
@@ -58,15 +57,16 @@ public:
     int selectedColorIndex = 0;
     void incrementColor();
     void decrementColor();
-    void Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, int y, bool selected) override;
+    void Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, int x, int y, int width, int height, bool selected) override;
 };
+
 typedef void (*SelectionUpdatedCallback)(void* caller, ListItem* selectedItem, int selectedIndex);
+
 class VerticalList{
     private:
     std::vector<ListItem*> items;
         int scrollOffset = 0;
         int targetScrollOffset = 0;
-        int displayHeight = 0;
         MenuHost* Host = 0;
         int lastSelected = -2;
         SelectionUpdatedCallback OnSelectionUpdated;
@@ -74,7 +74,7 @@ class VerticalList{
     public:
         int selected = -1;
         String EmptyString;
-        VerticalList(MenuHost* host, int _displayHeight, String emptyString = "");
+        VerticalList(MenuHost* host, String emptyString = "");
         ~VerticalList();
         int getSelectedIndex();
         ListItem* getSelected();
@@ -87,7 +87,7 @@ class VerticalList{
         int Count();
         void scrollDown();
         void scrollUp();
-        void Paint(BufferedDisplay* g, Color TextColor);
+        void Paint(BufferedDisplay* g, int x, int y, int w, int h, Color TextColor);
 };
 
 class Notification
@@ -155,4 +155,31 @@ private:
     void* sender = 0;
 };
 
+class TextEntry {
+
+};
+
+class TextEntrySource {
+public:
+    VerticalList* chars;
+    TextEntrySource(MenuHost* host);
+    void setTarget(TextEntry* target);
+    ~TextEntrySource();
+    void Loop();
+    void HandleKeyPress(Keys key);
+    void Paint(BufferedDisplay* g);
+    MenuHost* Host;
+    bool isCaps = false;
+private:
+    TextEntry* Target;
+};
+
+class EntryCharListItem: public ListItem{
+public:
+    TextEntrySource* Owner;
+    EntryCharListItem(TextEntrySource* owner, char chr, int height);
+    char ItemChar;
+    void Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, int x, int y, int width, int height, bool selected) override;
+private:
+};
 #endif // M3DUI

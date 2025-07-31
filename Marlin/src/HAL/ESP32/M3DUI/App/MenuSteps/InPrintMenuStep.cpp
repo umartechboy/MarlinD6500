@@ -49,7 +49,7 @@ InPrintMenuStep::InPrintMenuStep(MenuHost* host):MenuStep(host) {
     RetroIcon = &img_RetroOptions;
     RetroPreviousStep = &mainScreenStep;
     TickPeriod = 50;
-    list = new VerticalList(Host, 128, "");
+    list = new VerticalList(Host, "");
     list->SetOnSelectionUpdated(this, selectionUpdated);
     backToPrintOption = new StringListItem(Host, &img_RetroPlay, "Back to print", 0, 18);
     filamentSetupOption = new StringListItem(Host, &img_RetroChangeFilament, "Filament Setup", 0, 18);
@@ -78,7 +78,7 @@ void InPrintMenuStep::Paint(BufferedDisplay* g) {
     // Draw the idle screen
     g->fillScreen(BackColor);
     g->setTextColor(TextColor);
-    list->Paint(g, TextColor);
+    list->Paint(g, 0, 0, g->width(), g->height(), TextColor);
 }
 void InPrintMenuStep::IncrementValue() {
     HandleKeyPress(Keys::KEYPAD_UP);

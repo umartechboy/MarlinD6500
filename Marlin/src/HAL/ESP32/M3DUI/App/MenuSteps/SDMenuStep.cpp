@@ -31,7 +31,7 @@ SDMenuStep::SDMenuStep(MenuHost* host):MenuStep(host) {
     Title = "SD Card Contents";
     NextActionString = "Select";
     TickPeriod = 50;
-    list = new VerticalList(Host, 128, "No SD Card");
+    list = new VerticalList(Host, "No SD Card");
     list->SetOnSelectionUpdated(this, selectionUpdated);
 }
 SDMenuStep::~SDMenuStep(){
@@ -47,7 +47,7 @@ void SDMenuStep::Paint(BufferedDisplay* g) {
     g->fillScreen(BackColor);
     g->setTextColor(TextColor);
     if (hasSDCard){
-        list->Paint(g, TextColor);
+        list->Paint(g, 0, 0, g->width(), g->height(), TextColor);
     } else {
         centerString(g, "No SD Card", Host->appWidth() / 2, Host->appHeight() / 2);
     }

@@ -56,7 +56,7 @@ MaterialsStep::MaterialsStep(MenuHost* host):MenuStep(host) {
     defaultExtruderColor->Label = String(defaultExtruder + 1);
 
     // Filament Load/Unload
-    options = new VerticalList(Host, 128);
+    options = new VerticalList(Host);
     options->SetOnSelectionUpdated(this, materilaOptionChange);
     options->Add(extruder0Color);
     options->Add(change0);
@@ -92,7 +92,7 @@ void MaterialsStep::Paint(BufferedDisplay* g) {
     // Draw the idle screen
     g->fillScreen(BackColor);
     g->setTextColor(TextColor);
-    options->Paint(g, TextColor);
+    options->Paint(g, 0, 0, g->width(), g->height(), TextColor);
 }
 void MaterialsStep::SaveColors(){
     

@@ -97,6 +97,7 @@ bool unknwonSwipe = false;
 int swipeProgress = 0;
 bool pressInProcess = false;
 long keyDownSince = 0;
+int pressesInARow = 0;
 int pressPeriod = 500;
 void KeyPad::Loop(MenuHost* host){
   noiseSenseLoop();
@@ -126,11 +127,13 @@ void KeyPad::Loop(MenuHost* host){
       }
     }
     else if (lastKeyDown == KEYPAD_NONE) {// Its a Key down.      
+      // Reset the cycle here
       keyDownSince = millis();
       swipeProgress = 0; // Not needed, but still reset things
       unknwonSwipe = false;
       pressInProcess = false;
       pressPeriod = 500;
+      pressesInARow = 0;
 
       // We need to give the finger some to settle
       int settelingTime = 200;
@@ -173,8 +176,15 @@ void KeyPad::Loop(MenuHost* host){
         }
         else { // We process press here
           if (millis() - keyDownSince > pressPeriod){
-            if (key == Keys::KEYPAD_UP || key == Keys::KEYPAD_DOWN || key == Keys::KEYPAD_LEFT || key == Keys::KEYPAD_RIGHT)
-              pressPeriod = 200;
+            if (key == Keys::KEYPAD_UP || key == Keys::KEYPAD_DOWN || key == Keys::KEYPAD_LEFT || key == Keys::KEYPAD_RIGHT){
+              pressesInARow++;
+              if (pressesInARow * pressPeriod > 1000){ // 1s elapsed since the last acceleration
+                pressPeriod -= 100;
+                pressesInARow = 0;
+              }
+              if (pressPeriod < 50)
+              pressPeriod = 50;
+            }
             host->HandleKeyPress(key);
             pressInProcess = true;
             keyDownSince = millis();

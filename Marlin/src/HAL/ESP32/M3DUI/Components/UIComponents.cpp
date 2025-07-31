@@ -16,7 +16,7 @@ StringListItem::StringListItem(MenuHost* host, Image* icon, String str, int _end
     this->Icon = icon;
     endTrimLength = _endTrimLength;
 }
-void StringListItem::Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, int y, bool selected) {
+void StringListItem::Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, int x, int y, int width, int height, bool selected) {
     
     uint8_t opBkp = g->GetOpacity();
     g->SetOpacity(op);
@@ -68,7 +68,7 @@ void ColorSelectorListItem::decrementColor(){
     if (selectedColorIndex < 0)
         selectedColorIndex = sizeof(AvailableColors) / sizeof(AvailableColors[0]) - 1;
 }
-void ColorSelectorListItem::Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, int y, bool selected) {
+void ColorSelectorListItem::Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, int x, int y, int width, int height, bool selected) {
     
     uint8_t opBkp = g->GetOpacity();
     g->SetOpacity(op);
@@ -113,12 +113,11 @@ void ColorSelectorListItem::Paint(BufferedDisplay* g, uint8_t op, uint16_t TextC
     }
     g->SetOpacity(opBkp);
 }
-VerticalList::VerticalList(MenuHost* host, int _displayHeight, String emptyString){
+VerticalList::VerticalList(MenuHost* host, String emptyString){
     Host = host;
     for (int i =0; i < items.size(); i++)
         items[i] = 0;
     EmptyString = emptyString;
-    displayHeight = _displayHeight;
 }
 VerticalList::~VerticalList(){
     for (int i = 0; i < items.size(); i++){
@@ -197,7 +196,8 @@ void VerticalList::InvokeSelectionChanged(){
     if (OnSelectionUpdated)
         OnSelectionUpdated(Owner, getSelected(), getSelectedIndex());
 }
-void VerticalList::Paint(BufferedDisplay* g, Color TextColor){
+void VerticalList::Paint(BufferedDisplay* g, int x, int y, int w, int h, Color TextColor){
+    int displayHeight = h;
     g->setTextColor(TextColor);
     if (targetScrollOffset != scrollOffset){
         scrollOffset = (scrollOffset + targetScrollOffset) / 2;
@@ -255,7 +255,7 @@ void VerticalList::Paint(BufferedDisplay* g, Color TextColor){
             //     selected = i;
             //SERIAL_IMPL.printf("Rect i = %d, lY = %d, height = %d\n", i, lY, items[i]->getHeight());
             //g->drawRect(0, lY + displayHeight / 2 + scrollOffset - items[i]->getHeight() / 2, 128, items[i]->getHeight(), i%2? ST7735_BLUE:ST7735_ORANGE);
-            items[i]->Paint(g, op, TextColor, lY + displayHeight / 2 + scrollOffset, i == selected);
+            items[i]->Paint(g, op, TextColor, x, lY + displayHeight / 2 + scrollOffset, w, h, i == selected);
             if (i + 1 < Count()){
                 lY += items[i]->getHeight() / 2 + items[i + 1]->getHeight() / 2;
             }
@@ -372,4 +372,59 @@ bool MenuStep::CanJumpToMainMenu(){
 }
 bool MenuStep::IsDummyStep(){
     return isDummy;
+}
+
+
+void EntryCharListItem::Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, int x, int y, int width, int height, bool selected) {
+    
+    uint8_t opBkp = g->GetOpacity();
+    g->SetOpacity(op);
+    g->setTextColor(TextColor);
+    int16_t w = 0;    
+    if (selected){ // b.t.w. we can discard opacity here coz the selected is 100% op
+        g->SetOpacity(15);
+        g->fillRect(0, y - itemHeight / 2, g->width(), itemHeight, 0);
+        g->SetOpacity(op);
+    }
+    char str [2] = {ItemChar, 0};
+    if (ItemChar >= 'a' && ItemChar <= 'z' && Owner->isCaps){
+        str[0] = 'A' + (ItemChar - 'a');
+    }
+    centerString(g, str, x, y);
+    g->SetOpacity(opBkp);
+}
+EntryCharListItem::EntryCharListItem(TextEntrySource* owner, char chr, int height):ListItem(owner->Host, height){
+    ItemChar = chr;
+}
+TextEntrySource::TextEntrySource(MenuHost* host){
+    Host = host;
+    chars = new VerticalList(host);
+    for (int i = 0; i < 26; i++){
+        chars->Add(new EntryCharListItem(this, i + 'a', 12));
+    }
+    for (int i = 0; i < 10; i++){
+        chars->Add(new EntryCharListItem(this, i + '0', 12));
+    }
+    chars->Add(new EntryCharListItem(this, ' ', 12));
+    chars->Add(new EntryCharListItem(this, '~', 12));
+    chars->Add(new EntryCharListItem(this, '!', 12));
+    chars->Add(new EntryCharListItem(this, '@', 12));
+    chars->Add(new EntryCharListItem(this, '#', 12));
+    chars->Add(new EntryCharListItem(this, '$', 12));
+    chars->Add(new EntryCharListItem(this, '%', 12));
+    chars->Add(new EntryCharListItem(this, '^', 12));
+    chars->Add(new EntryCharListItem(this, '&', 12));
+    chars->Add(new EntryCharListItem(this, '*', 12));
+    chars->Add(new EntryCharListItem(this, '(', 12));
+    chars->Add(new EntryCharListItem(this, ')', 12));
+    chars->Add(new EntryCharListItem(this, '_', 12));
+    chars->Add(new EntryCharListItem(this, '+', 12));
+    chars->Add(new EntryCharListItem(this, '-', 12));
+    chars->Add(new EntryCharListItem(this, '=', 12));
+}
+TextEntrySource::~TextEntrySource(){
+  delete chars;
+}
+void TextEntrySource::setTarget(TextEntry* target){
+  Target = target;
 }

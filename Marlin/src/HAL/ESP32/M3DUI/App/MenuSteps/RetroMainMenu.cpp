@@ -26,7 +26,7 @@ RetroMainMenuStep::RetroMainMenuStep(MenuHost* host):MenuStep(host) {
     RetroPreviousStep = &mainScreenStep;
     Icon = &img_SD;
     TickPeriod = 50;
-    list = new VerticalList(Host, 128, "");
+    list = new VerticalList(Host, "");
     list->SetOnSelectionUpdated(this, selectionUpdated);
     printFromSDOption = new StringListItem(Host, &img_RetroSD, "Print from SD", 0, 18);
     filamentSetupOption = new StringListItem(Host, &img_RetroChangeFilament, "Filament Setup", 0, 18);
@@ -50,7 +50,7 @@ void RetroMainMenuStep::Paint(BufferedDisplay* g) {
     // Draw the idle screen
     g->fillScreen(BackColor);
     g->setTextColor(TextColor);
-    list->Paint(g, TextColor);
+    list->Paint(g, 0, 0, g->width(), g->height(), TextColor);
 }
 void RetroMainMenuStep::IncrementValue() {
     HandleKeyPress(Keys::KEYPAD_UP);
