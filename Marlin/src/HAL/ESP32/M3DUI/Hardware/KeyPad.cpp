@@ -2,65 +2,77 @@
 #include "..\Components\M3DUI.h"
 #include "..\App\MenuApp.h"
 
-int pinMap [] = {14, 13, 0, 12};
-int baseValues [4];
-#define readPad(i) (min(100, (min(100, (max(0, (baseValues[(((uint32_t)i) % 4)] - touchRead(pinMap[(((uint32_t)i) % 4)]))) * 100 / baseValues[(((uint32_t)i) % 4)]) * 2))) / 100.0F)
+#define DebugKeys 0
+static int touchPinMap [] = {14, 13, 0, 12};
+static float totalTouchNoise[] = {0, 0, 0, 0};
+static bool touchReadCache[] = {0, 0, 0, 0};
+static int lastTouchRead[] = {0, 0, 0, 0};
+static long lastNoiseSenseLoop = 0;
 
-bool first = true;
-Keys touchOnADCKeyPad_getKey(){
-    if (first){
-        for (int i = 0; i < 4; i++){
-          for (int ri = 0; ri < 10; ri ++){
-            baseValues [i] += touchRead(pinMap[i]);
-            delay(1);
-          }
-          baseValues[i] /= 10;
-        }
-      first = false;
-    }
-    // Make a cache
-    float all [4];
+void noiseSenseLoop(){
+    if (millis() - lastNoiseSenseLoop < 10)
+        return;
+    lastNoiseSenseLoop = millis();
+    int noiseThreshold = 10;
+    int stabilityTolerance = 7;
     for (int i = 0; i < 4; i++) {
-      all[i] = readPad(i);
+      //all[i] = readPad(i);
+      int thisRead = touchRead(touchPinMap[i]);
+      int delta =  thisRead - lastTouchRead[i];
+      totalTouchNoise[i] += abs(delta) - 2;
+      if (totalTouchNoise[i] < 0) totalTouchNoise[i] = 0;
+      else if (totalTouchNoise[i] > noiseThreshold) totalTouchNoise[i] = noiseThreshold;
+      touchReadCache[i] = totalTouchNoise[i] >= noiseThreshold - stabilityTolerance; 
+
+      lastTouchRead[i] = thisRead;
     }
+}
+
+Keys touchOnADCKeyPad_getKey(){
+
 #if DebugKeys
-    SERIAL_IMPL.printf("Cache values: %f %f %f %f", all[0], all[1], all[2], all[3]);
+    SERIAL_IMPL.printf("Cache values: %d %d %d %d", touchReadCache[0], touchReadCache[1], touchReadCache[2], touchReadCache[3]);
 #endif
     // Check if its the middle button
     int aboveZero = 0;
     for (int i = 0; i < 4; i++) {
-      if (all[i] > 0.05){
+      if (touchReadCache[i]){
           aboveZero++;
         }
     }
     
 #if DebugKeys
-    SERIAL_IMPL.printf(", Above zero 1: %d", aboveZero);
+    SERIAL_IMPL.printf(", Above zero: %d", aboveZero);
 #endif
-    if (aboveZero >= 4){  
+    if (aboveZero >= 3){  
 #if DebugKeys    
       SERIAL_IMPL.println();
 #endif
       return Keys::KEYPAD_MIDDLE;
     }
-    // Check if its a diagonal button
-    aboveZero = 0;
-    for (int i = 0; i < 4; i++) {
-      if (all[i] > 0.1){
-          aboveZero++;
-        }
-    }
-    
-#if DebugKeys
-    SERIAL_IMPL.printf(", Above zero 2: %d", aboveZero);
+    else if (aboveZero == 0) {
+#if DebugKeys    
+      SERIAL_IMPL.println();
 #endif
-    if (aboveZero == 2){
-      // find the first ind
-      
+        return Keys::KEYPAD_NONE;
+    }
+    else if (aboveZero == 1){
+      // find the first ind      
       for (int i = 0; i < 4; i++) {
-        if (all[i] > 0.1){
+        if (touchReadCache[i]){
+#if DebugKeys
+          SERIAL_IMPL.printf(", %d\n", i * 2 + 1 );
+#endif
+            return (Keys)(i * 2 + 1);
+        }
+      }
+    }
+    else if (aboveZero == 2){
+      // find the first ind      
+      for (int i = 0; i < 4; i++) {
+        if (touchReadCache[i]){
           if (i == 0) {
-            if (all[3] > 0.1) { 
+            if (touchReadCache[3]) { 
               continue;
             }
           }
@@ -70,44 +82,28 @@ Keys touchOnADCKeyPad_getKey(){
           return (Keys)(i * 2 + 2);
         }
       }
-    }
-    // Single Button Detection
-    int maxI = 0;
-    for (int i = 0; i < 4; i++) {
-      if (all[i] > all[maxI])
-        maxI = i;
-    }
-    
-    if (all[maxI] < 0.5){
       
-#if DebugKeys
-      SERIAL_IMPL.printf(", No key\n");
+      // Means it wasn't a diagnol. Could be the middle button
+#if DebugKeys    
+      SERIAL_IMPL.println("~Middle");
 #endif
-      return Keys::KEYPAD_NONE;
-    }
-    else{
-      
-#if DebugKeys
-      SERIAL_IMPL.printf(", One Key %d\n", maxI * 2 + 1 );
-#endif
-      return (Keys)(maxI * 2 + 1);
+      return Keys::KEYPAD_MIDDLE;
     }
 }
 
 #define AddKey(k, i) (Keys)(((k) + (i) > 8) ? ((k) + (i) - 8):(((k) + (i) < 1) ? ((k) + (i) + 8):((k) + (i))))
 
 bool unknwonSwipe = false;
-bool swipeInProcess = false;
+int swipeProgress = 0;
+bool pressInProcess = false;
+long keyDownSince = 0;
 void KeyPad::Loop(MenuHost* host){
-  if (millis() - lastKeyCheck > 20){
-    lastKeyCheck = millis();
-    touchOnADCKeyPad_getKey();
-  }
-  return;
-  if (millis() - lastKeyCheck > (lastKeyDown == Keys::KEYPAD_NONE) ? 30:50){
+  noiseSenseLoop();
+  if (millis() - lastKeyCheck > ((lastKeyDown == Keys::KEYPAD_NONE)?10:50)){
     lastKeyCheck = millis();
     Keys key = touchOnADCKeyPad_getKey();
-
+    if (key || lastKeyDown)
+      SERIAL_IMPL.printf("Got Key: %d\n", key);
     if (key == KEYPAD_NONE && lastKeyDown == KEYPAD_NONE){
       // Idle
       lastKeyDown = key;
@@ -116,60 +112,112 @@ void KeyPad::Loop(MenuHost* host){
     // Its a change. Detect which one    
     if (key == KEYPAD_NONE){ // lastKey cannot be NONE too
       // Its a key Up
-      if (swipeInProcess){ 
+      if (swipeProgress > 1 && !unknwonSwipe){ 
         // End of swipe doesn't mean anything. At least not yet
-        swipeInProcess = false;
+        swipeProgress = 0;
         SERIAL_IMPL.println("End of Swipe");
       }
-      else{
+      else {
         // Send Key up
-        SERIAL_IMPL.printf("Key Up: %d\n", lastKeyDown);
-        //host->HandleKeyUp(lastKeyDown);
+        SERIAL_IMPL.printf("Key Up (%d): %d, %d\n", pressInProcess, lastKeyDown, key);
+        if (!pressInProcess)
+          host->HandleKeyPress(lastKeyDown);
       }
     }
-    else if (lastKeyDown == KEYPAD_NONE) {// Its a Key down.
-        SERIAL_IMPL.printf("Key Down: %d\n", key);
-      // We can't send key down because it might turn into a swipe
-      swipeInProcess = false; // Not needed, but still reset things
+    else if (lastKeyDown == KEYPAD_NONE) {// Its a Key down.      
+      keyDownSince = millis();
+      swipeProgress = 0; // Not needed, but still reset things
       unknwonSwipe = false;
+      pressInProcess = false;
+
+      // We need to give the finger some to settle
+      int settelingTime = 200;
+      if (key == Keys::KEYPAD_MIDDLE) // already too down. Its conclusive
+        settelingTime = 0;
+      // We can't send key down because it might turn into a swipe
+      else if (key == Keys::KEYPAD_UP || key == Keys::KEYPAD_DOWN || key == Keys::KEYPAD_LEFT || key == Keys::KEYPAD_RIGHT) // Single key
+        settelingTime = 100;
+      if (settelingTime){
+        long settleStartAt = millis();
+        while(millis() - settleStartAt < settelingTime){
+          noiseSenseLoop();
+          safe_delay(1);
+        }
+        Keys settledKey = touchOnADCKeyPad_getKey();
+        if (settledKey == Keys::KEYPAD_NONE) { // The press was too fast but conclusive
+          // don't update
+        }
+        else{
+          key = settledKey;
+        }
+      }
+      
+      SERIAL_IMPL.printf("Key Down: %d\n", key);
+      if (key == Keys::KEYPAD_MIDDLE){        
+        pressInProcess = true;
+        host->HandleKeyPress(key);
+        keyDownSince = millis() + 500;
+        lastKeyDown = key;
+        return;
+      }
     }
     else {
-      if (lastKeyDown == key) {// None None Key Hold
-        if (swipeInProcess){
+      if (lastKeyDown == key) { // Key Hold
+        if (swipeProgress > 1){
           // Just skip
         }
         else { // We can process a hold or press here
           // skip for now
+          if (millis() - keyDownSince > 500){
+            host->HandleKeyPress(key);
+            pressInProcess = true;
+            keyDownSince = millis();
+          }
         }
       }
-      else {
+      else if (!pressInProcess){
         // Key to Key swipe
-        swipeInProcess = true;
+        if(swipeProgress == 0)
+          swipeProgress = 1;
         // Detect the gesture
 
+        // test for swipe to middle
+        if (key == Keys::KEYPAD_MIDDLE){
+          // Its not a swipe, its a key down.
+          swipeProgress = 0;
+          pressInProcess = true;
+          host->HandleKeyPress(key);
+          keyDownSince = millis() + 500;
+        }
         // Test for Dial rotate
-        if (key == AddKey(lastKeyDown, 1) && !unknwonSwipe){
+        else if (key == AddKey(lastKeyDown, 1) && !unknwonSwipe){
           SERIAL_IMPL.printf("Dial Inc: %d > %d\n", lastKeyDown, key);
-          host->HandleDialIncrement();
-          if (millis() - lastDialRotateSentAt < 30) 
-              host->HandleDialIncrement(); // accelerate
-          lastDialRotateSentAt = millis(); 
+          swipeProgress++;
+          if (swipeProgress > 1){
+            host->HandleDialIncrement();
+            if (millis() - lastDialRotateSentAt < 30) 
+                host->HandleDialIncrement(); // accelerate
+            lastDialRotateSentAt = millis(); 
+          }
         }
         else if (key == AddKey(lastKeyDown, -1) && !unknwonSwipe){
           SERIAL_IMPL.printf("Dial Dec: %d > %d\n", lastKeyDown, key);
-          host->HandleDialDecrement();
-          if (millis() - lastDialRotateSentAt < 30) 
-              host->HandleDialDecrement(); // accelerate
-          lastDialRotateSentAt = millis(); 
+          swipeProgress++;
+          if (swipeProgress > 1){
+            host->HandleDialDecrement();
+            if (millis() - lastDialRotateSentAt < 30) 
+                host->HandleDialDecrement(); // accelerate
+            lastDialRotateSentAt = millis(); 
+          }
         }
-        else if (key == KEYPAD_MIDDLE && lastKeyDown == KEYPAD_DOWN || key == KEYPAD_UP && lastKeyDown == KEYPAD_MIDDLE){
-          SERIAL_IMPL.printf("Swipe Up: %d > %d\n", lastKeyDown, key);
-          host->HandleDialIncrement();
-        }
-        else if (key == KEYPAD_MIDDLE && lastKeyDown == KEYPAD_UP || key == KEYPAD_DOWN && lastKeyDown == KEYPAD_MIDDLE){
-          SERIAL_IMPL.printf("Swipe Down: %d > %d\n", lastKeyDown, key);
-          host->HandleDialDecrement();
-        }
+        // else if (key == KEYPAD_MIDDLE && lastKeyDown == KEYPAD_DOWN || key == KEYPAD_UP && lastKeyDown == KEYPAD_MIDDLE){
+        //   SERIAL_IMPL.printf("Swipe Up: %d > %d\n", lastKeyDown, key);
+        //   host->HandleDialIncrement();
+        // }
+        // else if (key == KEYPAD_MIDDLE && lastKeyDown == KEYPAD_UP || key == KEYPAD_DOWN && lastKeyDown == KEYPAD_MIDDLE){
+        //   SERIAL_IMPL.printf("Swipe Down: %d > %d\n", lastKeyDown, key);
+        //   host->HandleDialDecrement();
+        // }
         else { // Swipe but not a dial rotate
           SERIAL_IMPL.printf("Unknown Swipe: %d > %d\n", lastKeyDown, key);
           unknwonSwipe = true;

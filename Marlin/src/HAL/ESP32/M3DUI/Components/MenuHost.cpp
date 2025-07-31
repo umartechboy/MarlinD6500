@@ -20,6 +20,8 @@ void MenuHost::GotoNextStep(){
     if (!CurrentStep)
         return;
     if (Retro){
+        if (TargetStep)
+            return; // skip if already busy
         if (!CurrentStep->GetNextStep()){
             PushNotification("No options at the current stage");
             return;
@@ -382,6 +384,7 @@ void MenuHost::Loop(BufferedDisplay* bTft){
 }
 
 void MenuHost::HandleKeyPress(Keys key){    
+    SERIAL_IMPL.printf("HandleKeyPress: %d\n", key);
     if (Retro){
         // Complete Retro navigation
         if (CurrentNotification){
@@ -449,10 +452,12 @@ void MenuHost::HandleKeyPress(Keys key){
     }
 }
 void MenuHost::HandleDialIncrement(){
+    SERIAL_IMPL.println("HandleDialIncrement");
     if (CurrentStep)
         CurrentStep->IncrementValue();
 }
 void MenuHost::HandleDialDecrement(){
+    SERIAL_IMPL.println("HandleDialDecrement");
     if (CurrentStep)
         CurrentStep->DecrementValue();
 }
