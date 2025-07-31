@@ -97,6 +97,7 @@ bool unknwonSwipe = false;
 int swipeProgress = 0;
 bool pressInProcess = false;
 long keyDownSince = 0;
+int pressPeriod = 500;
 void KeyPad::Loop(MenuHost* host){
   noiseSenseLoop();
   if (millis() - lastKeyCheck > ((lastKeyDown == Keys::KEYPAD_NONE)?10:50)){
@@ -129,6 +130,7 @@ void KeyPad::Loop(MenuHost* host){
       swipeProgress = 0; // Not needed, but still reset things
       unknwonSwipe = false;
       pressInProcess = false;
+      pressPeriod = 500;
 
       // We need to give the finger some to settle
       int settelingTime = 200;
@@ -159,7 +161,7 @@ void KeyPad::Loop(MenuHost* host){
       if (key == Keys::KEYPAD_MIDDLE){        
         pressInProcess = true;
         host->HandleKeyPress(key);
-        keyDownSince = millis() + 500;
+        keyDownSince = millis() + pressPeriod;
         lastKeyDown = key;
         return;
       }
@@ -169,9 +171,10 @@ void KeyPad::Loop(MenuHost* host){
         if (swipeProgress > 1){
           // Just skip
         }
-        else { // We can process a hold or press here
-          // skip for now
-          if (millis() - keyDownSince > 500){
+        else { // We process press here
+          if (millis() - keyDownSince > pressPeriod){
+            if (key == Keys::KEYPAD_UP || key == Keys::KEYPAD_DOWN || key == Keys::KEYPAD_LEFT || key == Keys::KEYPAD_RIGHT)
+              pressPeriod = 200;
             host->HandleKeyPress(key);
             pressInProcess = true;
             keyDownSince = millis();
@@ -190,7 +193,7 @@ void KeyPad::Loop(MenuHost* host){
           swipeProgress = 0;
           pressInProcess = true;
           host->HandleKeyPress(key);
-          keyDownSince = millis() + 500;
+          keyDownSince = millis() + pressPeriod;
         }
         // Test for Dial rotate
         else if (key == AddKey(lastKeyDown, 1) && !unknwonSwipe){
