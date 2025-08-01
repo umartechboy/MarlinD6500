@@ -6,6 +6,7 @@
 
 extern int retroNavSectionHeight;
 extern int retroTitleSectionHeight;
+extern int textEntrySourceWidth;
 
 class MenuHost;
 void centerString(BufferedDisplay* g, const char* str,  int16_t x, int16_t y, int16_t* wOut = 0, int16_t* hOut = 0);

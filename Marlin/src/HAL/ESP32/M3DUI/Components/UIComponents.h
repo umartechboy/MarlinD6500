@@ -159,7 +159,7 @@ private:
 class TextEntryField {
 public:
     String Text;
-    void Paint(BufferedDisplay* g, int x, int y, int width, int height);
+    void Paint(BufferedDisplay* g, int x, int y, int width, int height, const GFXfont* font);
     int cursor = -1;
 };
 

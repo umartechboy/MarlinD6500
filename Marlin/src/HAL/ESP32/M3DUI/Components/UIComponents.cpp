@@ -139,7 +139,10 @@ ListItem* VerticalList::operator[](int index) {
     }
     return items[index];
 }
-void VerticalList::Clear(){
+void VerticalList::Clear(){    
+    for (int i = 0; i < items.size(); i++){
+        if (items[i]) delete items[i];
+    }
     items.clear();
     scrollOffset = 0;
     targetScrollOffset = 0;
@@ -155,6 +158,8 @@ int VerticalList::Count(){
     return items.size();
 }
 void VerticalList::scrollDown(){ // List goes down, selection goes up
+    if (Count() == 0)
+        return;
     int toScroll = 0;
     if (getSelectedIndex() >= 0 && getSelectedIndex() < Count())
         toScroll += items[getSelectedIndex()]->getHeight() / 2;
@@ -172,6 +177,8 @@ void VerticalList::scrollDown(){ // List goes down, selection goes up
     }
 }
 void VerticalList::scrollUp(){ // List goes up, selection goes down
+    if (Count() == 0)
+        return;
     int toScroll = 0;
     if (getSelectedIndex() >= 0 && getSelectedIndex() < Count()) // in case we are coming from indeterminded state
         toScroll += items[getSelectedIndex()]->getHeight() / 2; // Scroll current item's half
@@ -382,7 +389,7 @@ bool MenuStep::IsDummyStep(){
     return isDummy;
 }
 
-void TextEntryField::Paint(BufferedDisplay* g, int x, int y, int width, int height){
+void TextEntryField::Paint(BufferedDisplay* g, int x, int y, int width, int height, const GFXfont* font) {
     int opBkp = g->GetOpacity();
     g->fillRoundRect(x, y, width, height, 3, ST7735_WHITE);
     g->drawRoundRect(x, y, width, height, 3, ST7735_BLACK);
@@ -391,7 +398,7 @@ void TextEntryField::Paint(BufferedDisplay* g, int x, int y, int width, int heig
     String after = Text.substring(cursor, Text.length());
     int16_t wFirst;
     g->setTextColor(ST7735_BLACK);
-    g->setFont(&FreeSansBold9pt7b);
+    g->setFont(font);
     g->SetOpacity(100);
     leftString(g, before.c_str(), x + 3, y + 17, &wFirst);        
     leftString(g, after.c_str(), x + 3 + wFirst + 1, y + 17);

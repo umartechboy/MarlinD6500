@@ -13,6 +13,9 @@
 #include "MenuSteps\BedLevelStep.h"
 #include "MenuSteps\RetroMainMenu.h"
 #include "MenuSteps\InPrintMenuStep.h"
+#include "MenuSteps\TextEntryStep.h"
+#include "MenuSteps\WifiListStep.h"
+#include "MenuSteps\SettingsStep.h"
 
 extern MenuHost menuHost;
 extern FilePreviewStep filePreviewStep;
@@ -27,6 +30,9 @@ extern PrinterInfoStep printerInfoStep;
 extern BedLevelStep bedLevelStep;
 extern RetroMainMenuStep retroMainMenuStep;
 extern InPrintMenuStep inPrintMenuStep;
+extern TextEntryStep textEntryStep;
+extern WifiListStep wifiListStep;
+extern SettingsStep settingsStep;
 
 void BeginApp();
 #ifdef __MARLIN_FIRMWARE__

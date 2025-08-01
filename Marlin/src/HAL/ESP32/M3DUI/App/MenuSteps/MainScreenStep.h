@@ -11,7 +11,6 @@ private:
     float materialAtStart = 0;
     DummyMenuStep* cancelResumeDummyStep;
     DummyMenuStep* beginResumeDummyStep;
-    TextEntryField* textEntryTest;
 public:
     String fileName;
     String DOSFileName;

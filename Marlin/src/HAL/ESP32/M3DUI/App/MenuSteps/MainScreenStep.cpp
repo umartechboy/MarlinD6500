@@ -5,6 +5,7 @@
 #include <Fonts/FreeSans12pt7b.h>
 #include <Fonts/FreeSans9pt7b.h>
 #include "../../Hardware/MarlinSpecific.h"
+// #include "../../../LoadCell/LoadCell.h"
 #include "..\MenuApp.h"
 
 
@@ -52,10 +53,6 @@ MainScreenStep::MainScreenStep(MenuHost* host):MenuStep(host) {
     beginResumeDummyStep->SetLoadCallBack(beginResumeCalled, this);
     Icon = &img_Home;
     TickPeriod = 50;
-
-
-    textEntryTest = new TextEntryField();
-    Host->RequestTextEntry(textEntryTest);
 }
 MainScreenStep::~MainScreenStep(){
     delete cancelResumeDummyStep;
@@ -66,12 +63,21 @@ MenuStep* MainScreenStep::GetPreviousStep(bool returnEvenIfDummy){
         return 0;
     else return MenuStep::GetPreviousStep(returnEvenIfDummy);
 }
+// long lastReset = 0;
+// extern bool ProbeEnable; 
+// extern float lastAnalogReturn;
+// extern void removeLoadCellOffset();
 void MainScreenStep::Tick() {
     NeedsRedraw = true;
     if (printStatus == PrintStatus::FileToPrint){
         if (!printStarted)
             printJobTick();
     }
+    // ProbeEnable = true;
+    // if (millis() - lastReset > 10000){
+    //     removeLoadCellOffset();
+    //     lastReset = millis();
+    // }
 }
 void MainScreenStep::Paint(BufferedDisplay* g) {
     
@@ -102,6 +108,12 @@ void MainScreenStep::Paint(BufferedDisplay* g) {
         if(printStatus == PrintStatus::Idle){
             g->setFont(&FreeSans12pt7b);
             centerString(g, "Ready!", Host->appWidth() / 2, Host->appTop() + Host->appHeight() / 2);
+            // String lStr;
+            // lStr = String(lastAnalogReturn);
+            // if (millis() - lastReset > 9000){
+            //     lStr = "...";
+            // }
+            // centerString(g, lStr.c_str(), Host->appWidth() / 2, Host->appTop() + Host->appHeight() / 2);
         }
         else{        
             int titleHeight = 10;
@@ -154,7 +166,6 @@ void MainScreenStep::Paint(BufferedDisplay* g) {
             g->fillRect(Host->appWidth() / 2 + 1, Host->appHeight() - 2, Host->appWidth() / 2, 2, e1Color);
         }
     }
-    textEntryTest->Paint(g, 10,10,80,40);
 }
 
 void MainScreenStep::HandleKeyPress(Keys key){

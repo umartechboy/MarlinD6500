@@ -13,6 +13,9 @@ PrinterInfoStep printerInfoStep(&menuHost);
 BedLevelStep bedLevelStep(&menuHost);
 RetroMainMenuStep retroMainMenuStep(&menuHost);
 InPrintMenuStep inPrintMenuStep(&menuHost);
+TextEntryStep textEntryStep(&menuHost);
+WifiListStep wifiListStep(&menuHost);
+SettingsStep settingsStep(&menuHost);
 
 void BeginApp(){    
   SERIAL_IMPL.println("Goto menu pushed");

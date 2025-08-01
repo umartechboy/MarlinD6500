@@ -194,7 +194,7 @@ int MenuHost::appHeight(){
     return _appHeight;
 }
 int MenuHost::appWidth(){
-    return _appWidth;
+    return _appWidth - (textEntryTarget?textEntrySourceWidth:0);
 }
 int MenuHost::appTop(){
     if (Retro)
@@ -370,7 +370,7 @@ void MenuHost::Paint(BufferedDisplay* bTft){
     }
 
     if (textEntryTarget){
-        textEntrySource->Paint(bTft, bTft->width() - 20, 0, 20, bTft->height());
+        textEntrySource->Paint(bTft, bTft->width() - textEntrySourceWidth, 0, textEntrySourceWidth, bTft->height());
     }
 
     bTft->update(true, true); 
@@ -388,7 +388,7 @@ void MenuHost::Loop(BufferedDisplay* bTft){
     if (CurrentStep)
     CurrentStep->loop();
     if (TargetStep)
-    TargetStep->loop();
+        TargetStep->loop();
 
 }
 
@@ -488,6 +488,9 @@ void MenuHost::RequestTextEntry(TextEntryField* textField){
     if (textEntryTarget){
         textEntryTarget->cursor = textEntryTarget->Text.length();
     }
+}
+bool MenuHost::HasTextEntry(){
+    return textEntryTarget != 0;
 }
 void MenuHost::ReleaseTextEntry(){
     if (textEntryTarget){ // Already have a target

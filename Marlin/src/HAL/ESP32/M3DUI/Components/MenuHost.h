@@ -47,6 +47,7 @@ public:
     void PushNotification(const char* str, int life = -1);
     void Loop(BufferedDisplay* bTft);
     void RequestTextEntry(TextEntryField* textField);
+    bool HasTextEntry();
     void ReleaseTextEntry();
 private:
     float animationStepProgress = 0.0f;

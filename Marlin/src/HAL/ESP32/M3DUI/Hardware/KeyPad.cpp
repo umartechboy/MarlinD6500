@@ -105,8 +105,8 @@ void KeyPad::Loop(MenuHost* host){
   if (millis() - lastKeyCheck > ((lastKeyDown == Keys::KEYPAD_NONE)?10:50)){
     lastKeyCheck = millis();
     Keys key = touchOnADCKeyPad_getKey();
-    if (key || lastKeyDown)
-      SERIAL_IMPL.printf("Got Key: %d\n", key);
+    // if (key || lastKeyDown)
+    //   SERIAL_IMPL.printf("Got Key: %d\n", key);
     if (key == KEYPAD_NONE && lastKeyDown == KEYPAD_NONE){
       // Idle
       lastKeyDown = key;

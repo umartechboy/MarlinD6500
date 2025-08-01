@@ -9,7 +9,7 @@ static void selectionUpdated(void* caller, ListItem* selectedItem, int selectedI
     if (selectedItem == This->printFromSDOption) This->RetroNextStep = &sdMenuStep;
     if (selectedItem == This->filamentSetupOption) This->RetroNextStep = &materialsMenuStep;
     if (selectedItem == This->bedLevelingOption) This->RetroNextStep = &bedLevelStep;
-    if (selectedItem == This->settingsOption) This->RetroNextStep = 0;
+    if (selectedItem == This->settingsOption) This->RetroNextStep = &settingsStep;
     if (selectedItem == This->infoOption) This->RetroNextStep = &printerInfoStep;
 
     if (This->RetroNextStep)
