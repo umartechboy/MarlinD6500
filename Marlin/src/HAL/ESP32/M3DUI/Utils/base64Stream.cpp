@@ -5,10 +5,17 @@ const char * base64_chars =
 "abcdefghijklmnopqrstuvwxyz"
 "0123456789+/";
 
-byte data_global [Base64DecoderBuffer];
+//byte data_global [Base64DecoderBuffer];
+byte * data_global = 0;
 
+Base64Decoder::Base64Decoder(){
+    if (data_global == 0)
+        data_global = (byte*)malloc(Base64DecoderBuffer);
+    data = data_global;
+}
 Base64Decoder::~Base64Decoder(){
     Reset();
+    // delete data_global; // avoid too much deletion. It will cause more problems infact.
 }
 void Base64Decoder::Feed(char chr){
     // if (data == 0) {

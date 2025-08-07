@@ -4,7 +4,7 @@
 #include <Arduino.h>
 
 #define Base64DecoderBuffer 1024*8*2
-extern byte data_global [];
+extern byte * data_global;
 
 extern const char * base64_chars;
 
@@ -14,7 +14,9 @@ public:
     byte b3 [4];
     int b4Count = 0;
     int bytesDecoded = 0;
+    //byte* data = data_global;
     byte* data = data_global;
+    Base64Decoder();
     ~Base64Decoder();
     void Feed(char chr);
     void Reset();

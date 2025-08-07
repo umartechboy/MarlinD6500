@@ -169,7 +169,16 @@ struct SerialBase {
 
 
   void print(EnsureDouble c, int digits)           { printFloat(c, digits); }
-
+  #ifdef ESP3D_WIFISUPPORT
+  void printf(const char *format, ...) {
+    char buf[128];  // Adjust size for your platform's available stack
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buf, sizeof(buf), format, args);
+    va_end(args);
+    write(buf);  // Use your existing write(const char*) method
+  }
+  #endif
   // Forward the call to the former's method
 
   // Default implementation for anything without a specialization
