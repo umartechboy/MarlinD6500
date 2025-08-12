@@ -6,6 +6,8 @@
 #include "..\..\..\..\..\module\printcounter.h"
 #include <WiFi.h>
 #include "..\MenuApp.h"
+#include <Preferences.h>
+#include "wificonfig.h"
 
 PrinterInfoStep::PrinterInfoStep(MenuHost* host):MenuStep(host)
 {
@@ -36,10 +38,19 @@ void PrinterInfoStep::Paint(BufferedDisplay* g){
     y += 10;
     int div = 41;
     int px = 2;
-    printInfoPair("WiFi", WiFi.isConnected() ? WiFi.SSID().c_str():("--"));
+    Preferences prefs;
+    prefs.begin(NAMESPACE, true);
+    String defV = DEFAULT_HOSTNAME;
+    String h = prefs.getString(HOSTNAME_ENTRY, defV);
+    defV = DEFAULT_STA_SSID;
+    String s = prefs.getString(STA_SSID_ENTRY, defV);
+    prefs.end();
+
+    printInfoPair("WiFi", s.c_str());
     printInfoPair("Status", WiFi.isConnected() ? "Connected":"Disconnected");
-    printInfoPair("Host" ,  WiFi.getHostname());
-    printInfoPair("IP", WiFi.isConnected() ? WiFi.localIP().toString().c_str():"--");
+    printInfoPair("Host" ,  h.c_str());
+    
+    printInfoPair("IP", WiFi.isConnected() ? WiFi.localIP().toString().c_str():WiFi.softAPIP().toString().c_str());
     printInfoPair("AP", WiFi.softAPSSID().c_str());
 
     char str[30] = "";

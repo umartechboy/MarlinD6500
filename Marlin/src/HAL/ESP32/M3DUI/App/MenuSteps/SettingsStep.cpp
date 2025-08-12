@@ -13,6 +13,11 @@ void OnSelectionUpdatedCallback(void* caller, ListItem* selectedItem, int select
         This->RetroNextStep = &wifiListStep;
         SERIAL_IMPL.printf("Setting next step: %s\n", ((StringListItem*)selectedItem)->ItemText.c_str());
     }
+    else if (selectedItem == This->updatesOption){
+        This->RetroNextStep = &updateStep;
+        updateStep.PreviousStep = This;
+        SERIAL_IMPL.printf("Setting next step: %s\n", ((StringListItem*)selectedItem)->ItemText.c_str());
+    }
     else {
         This->RetroNextStep = 0;
     }
@@ -27,8 +32,10 @@ SettingsStep::SettingsStep(MenuHost* host):MenuStep(host)
     Title = "Settings";
     options = new VerticalList(host);
     setNetworkOption = new StringListItem(host, 0, "Change Network", 0, 16);
+    updatesOption = new StringListItem(host, 0, "Check for updates", 0, 16);
     sensorsOption = new StringListItem(host, 0, "Test Sensors", 0, 16);
     options->Add(setNetworkOption);
+    options->Add(updatesOption);
     options->Add(sensorsOption);
     options->SetOnSelectionUpdated(this, OnSelectionUpdatedCallback);
     //options->InvokeSelectionChanged();

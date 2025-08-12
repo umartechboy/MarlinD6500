@@ -16,6 +16,7 @@ public:
     void Tick() override;   
     VerticalList* options;
     StringListItem* setNetworkOption;
+    StringListItem* updatesOption;
     StringListItem* sensorsOption;
 };
 

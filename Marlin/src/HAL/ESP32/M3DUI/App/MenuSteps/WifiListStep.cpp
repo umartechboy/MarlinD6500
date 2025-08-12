@@ -4,6 +4,8 @@
 #include "esp_wifi.h"
 #include "..\MenuApp.h"
 #include "..\Images.h"
+#include <Preferences.h>
+#include "wificonfig.h"
 
 void gotPassword(String& password, MenuStep* owner){
     SERIAL_IMPL.printf("Got Password: %s\n", password.c_str());
@@ -131,14 +133,27 @@ void WifiListStep::LoadComplete(){
         getttingPassword = false;
         if(attemptConnectAtLoad) {
             connectBegan = true;
-            SERIAL_IMPL.printf("Connecting: %s with %s\n", connectingNetworkSSID.c_str(), connectingNetworkPassword.c_str()); // Not needed
+            SERIAL_IMPL.printf("Saving and connecting: %s with %s\n", connectingNetworkSSID.c_str(), connectingNetworkPassword.c_str()); // Not needed
             esp_wifi_disconnect();
             esp_wifi_scan_stop();
             WiFi.begin(connectingNetworkSSID, connectingNetworkPassword);
+            Preferences prefs;
+            prefs.begin(NAMESPACE, false);
+            prefs.putChar(ESP_RADIO_MODE, ESP_WIFI_STA);
+            prefs.putString(STA_SSID_ENTRY, connectingNetworkSSID);
+            prefs.putString(STA_PWD_ENTRY, connectingNetworkPassword);
+            prefs.end();
+            
             connectionBeginAt = millis();
         }
         else {
-            SERIAL_IMPL.println("Connect cancelled");
+            
+            SERIAL_IMPL.println("Connect cancelled, reverting to AP.");
+            Preferences prefs;
+            prefs.begin(NAMESPACE, false);
+            int8_t wifiMode = prefs.putChar(ESP_RADIO_MODE, ESP_WIFI_AP);
+            prefs.end();
+            
         }
     }
     else {

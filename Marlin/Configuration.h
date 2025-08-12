@@ -134,7 +134,7 @@
 
 #if EITHER(WIFISUPPORT, ESP3D_WIFISUPPORT)
   #define WEBSUPPORT          // Start a webserver (which may include auto-discovery)
-  #define OTASUPPORT          // Support over-thMe-air firmware updates
+  //#define OTASUPPORT          // Support over-thMe-air firmware updates
   #define WIFI_CUSTOM_COMMAND // Accept feature config commands (e.g., WiFi ESP3D) from the host
 
   /**

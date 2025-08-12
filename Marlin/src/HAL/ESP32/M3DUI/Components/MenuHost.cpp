@@ -25,7 +25,7 @@ void MenuHost::GotoNextStep(){
         if (TargetStep)
             return; // skip if already busy
         if (!CurrentStep->GetNextStep()){
-            PushNotification("No options at the current stage");
+            //PushNotification("No options at the current stage");
             return;
         }
         if (CurrentStep->GetNextStep()->IsDummyStep()){
