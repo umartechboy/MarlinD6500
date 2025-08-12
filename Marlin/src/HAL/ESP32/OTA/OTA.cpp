@@ -1,6 +1,6 @@
 #include "OTA.h"
 #include <WiFi.h>
-//#include <AsyncJson.h>
+#include <AsyncJson.h>
 #include <Update.h>    
 #include <HTTPClient.h>
 #include "..\M3DUI\App\MenuApp.h"
@@ -21,6 +21,7 @@ void TryOTAUpdate(void*){
     //     return;
     inUpdate = true;
     _TryOTAUpdate_();
+    vTaskDelete(NULL);
     inUpdate = false;
 }
 void _TryOTAUpdate_()
@@ -44,10 +45,10 @@ void _TryOTAUpdate_()
     //Get Firmware JSON
     String httpData = httpGETRequest(FIRMWARE_INFO_URL);
 
-    // StaticJsonDocument<2048> doc;
-    // DeserializationError error = deserializeJson(doc, httpData);
+    StaticJsonDocument<2048> doc;
+    DeserializationError error = deserializeJson(doc, httpData);
 
-    // if (error)
+    if (error)
     {
         SERIAL_IMPL.print("deserializeJson() failed: ");
         // SERIAL_IMPL.println(error.f_str());
@@ -56,15 +57,14 @@ void _TryOTAUpdate_()
     }
 
     //Check Firmware Version
-    // float web_version = doc["version"]; // "2.0"
-    //float web_version = atof(version);
+    float web_version = doc["version"]; // "2.0"
     SERIAL_IMPL.print("Web Version: ");
-    // SERIAL_IMPL.println(web_version);
+    SERIAL_IMPL.println(web_version);
 
     SERIAL_IMPL.print("CURRENT FIRMWARE: ");
     SERIAL_IMPL.println(FRIMWARE_VERSION);
 
-    // if ((float)FRIMWARE_VERSION >= web_version)
+    if ((float)FRIMWARE_VERSION >= web_version)
     {
         updateStep.NotifyOTAProgressChange("Already Up-to-date");
         return;
@@ -280,7 +280,7 @@ String httpGETRequest(const char *serverName)
     // Send HTTP POST request
     int httpResponseCode = http.GET();
 
-    String payload = "{}";
+    String payload = "";
 
     if (httpResponseCode > 0)
     {
