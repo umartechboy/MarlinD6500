@@ -52,7 +52,7 @@ void UpdateStep::Paint(BufferedDisplay* g) {
 }
 
 void UpdateStep::LoadComplete(){
-    xTaskCreate(TryOTAUpdate, "ota", 4096, 0, 1, &otaHandle);
+    TryOTAUpdate();
     retroPreviousStepBkp = RetroPreviousStep;
     RetroPreviousStep = 0;
 }

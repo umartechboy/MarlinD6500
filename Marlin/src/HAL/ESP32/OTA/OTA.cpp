@@ -2,6 +2,7 @@
 #include <WiFi.h>
 #include <AsyncJson.h>
 #include <Update.h>    
+//#include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include "..\M3DUI\App\MenuApp.h"
 #include "..\M3DUI\Components\M3DUI.h"
@@ -9,20 +10,36 @@
 
 WiFiClient wifiClient; 
 String httpGETRequest(const char *serverName);
+//String httpsGETRequest(const char *serverName);
 String getHeaderValue(String header, String headerName);
 
 void _TryOTAUpdate_();
 //Check Firmware
 bool inUpdate = false;
-void TryOTAUpdate(void*){
-    if (inUpdate)
+bool requestOtaUpdate = false;
+bool otaLoopRunning = false;
+TaskHandle_t otaLoopHandle;
+void OTALoop(void*);
+
+void TryOTAUpdate(){
+    if (!otaLoopRunning){ 
+        xTaskCreate(OTALoop, "ota", 4096, 0, 1, &otaLoopHandle);
+    }
+    if (inUpdate){ // dont put a double request
         return;
-    // if (card.isPrinting() || card.isPaused())
-    //     return;
-    inUpdate = true;
-    _TryOTAUpdate_();
-    vTaskDelete(NULL);
-    inUpdate = false;
+    }
+    requestOtaUpdate = true; // put the request
+}
+void OTALoop(void*){    
+    otaLoopRunning = true;       
+    while(1){ // Can't exit a Task
+        while(!requestOtaUpdate) // wait for request
+            delay(100);
+        requestOtaUpdate = false; // remove the flag for request
+        inUpdate = true;
+        _TryOTAUpdate_();
+        inUpdate = false;
+    }
 }
 void _TryOTAUpdate_()
 {
@@ -57,7 +74,7 @@ void _TryOTAUpdate_()
     }
 
     //Check Firmware Version
-    float web_version = doc["version"]; // "2.0"
+    int web_version = doc["version"]; // "2.0"
     SERIAL_IMPL.print("Web Version: ");
     SERIAL_IMPL.println(web_version);
 
@@ -73,7 +90,8 @@ void _TryOTAUpdate_()
 
     updateStep.NotifyOTAProgressChange("Downloading...");
     //Execute OTA
-    if (!wifiClient.connect(FIRMWARE_HOST, 80))
+    //wifiClient.setInsecure(); // or setCACert(root_ca)
+    if (!wifiClient.connect(FIRMWARE_HOST, FIRMWARE_PORT))  // FIRMWARE_PORT = 443
     {
         // Connect to S3 failed
         // May be try?
@@ -89,10 +107,10 @@ void _TryOTAUpdate_()
     SERIAL_IMPL.println("Fetching Bin: " FIRMWARE_BIN);
 
     // Get the contents of the bin file
-    wifiClient.print(String("GET " FIRMWARE_BIN " HTTP/1.1\r\n"
-                     "Host: " FIRMWARE_HOST "\r\n" 
-                     "Cache-Control: no-cache\r\n" 
-                     "Connection: close\r\n\r\n"));
+    wifiClient.print(String("GET ") + FIRMWARE_PATH + " HTTP/1.1\r\n" +
+                 "Host: " + FIRMWARE_HOST + "\r\n" +
+                 "Cache-Control: no-cache\r\n" +
+                 "Connection: close\r\n\r\n");
 
     updateStep.NotifyOTAProgressChange(26);
 
@@ -267,6 +285,98 @@ String getHeaderValue(String header, String headerName)
 {
     return header.substring(strlen(headerName.c_str()));
 }
+// String httpsGETRequest(const char *serverName)
+// {
+//     // Step 1: Check Wi-Fi connection
+//     if (WiFi.status() != WL_CONNECTED) {
+//         SERIAL_IMPL.println("[DEBUG] WiFi not connected!");
+//         SERIAL_IMPL.print("[DEBUG] WiFi status: ");
+//         SERIAL_IMPL.println(WiFi.status());
+//         return "";
+//     }
+//     SERIAL_IMPL.print("[DEBUG] Connected to WiFi, IP: ");
+//     SERIAL_IMPL.println(WiFi.localIP().toString().c_str());
+
+//     // Step 2: Try DNS resolution
+//     String host = serverName;
+//     // Extract hostname from URL (e.g., "https://example.com/path" → "example.com")
+//     int idx1 = host.indexOf("://");
+//     if (idx1 > 0) host = host.substring(idx1 + 3);
+//     int idx2 = host.indexOf('/');
+//     if (idx2 > 0) host = host.substring(0, idx2);
+
+//     IPAddress resolvedIP;
+//     if (WiFi.hostByName(host.c_str(), resolvedIP)) {
+//         SERIAL_IMPL.print("[DEBUG] DNS resolved ");
+//         SERIAL_IMPL.print(host.c_str());
+//         SERIAL_IMPL.print(" -> ");
+//         SERIAL_IMPL.println(resolvedIP.toString().c_str());
+//     } else {
+//         SERIAL_IMPL.print("[DEBUG] DNS resolution failed for: ");
+//         SERIAL_IMPL.println(host.c_str());
+//         return "";
+//     }
+
+//     // Step 3: HTTPS request
+//     WiFiClientSecure client;
+//     client.setInsecure(); // quick way to skip SSL cert check (not for production)
+
+//     HTTPClient http;
+//     SERIAL_IMPL.print("[DEBUG] Beginning HTTPS request to: ");
+//     SERIAL_IMPL.println(serverName);
+
+//     if (!http.begin(client, serverName)) {
+//         SERIAL_IMPL.println("[DEBUG] http.begin() failed!");
+//         return "";
+//     }
+
+//     int httpResponseCode = http.GET();
+
+//     String payload = "";
+
+//     if (httpResponseCode > 0)
+//     {
+//         SERIAL_IMPL.print("[DEBUG] HTTP Response code: ");
+//         SERIAL_IMPL.println(httpResponseCode);
+//         payload = http.getString();
+//     }
+//     else
+//     {
+//         SERIAL_IMPL.print("[DEBUG] HTTP GET failed, error code: ");
+//         SERIAL_IMPL.println(httpResponseCode);
+
+//         // Optional: interpret common error codes
+//         switch (httpResponseCode) {
+//             case HTTPC_ERROR_CONNECTION_REFUSED:
+//                 SERIAL_IMPL.println("[DEBUG] Connection refused by server");
+//                 break;
+//             case HTTPC_ERROR_SEND_HEADER_FAILED:
+//                 SERIAL_IMPL.println("[DEBUG] Send header failed");
+//                 break;
+//             case HTTPC_ERROR_SEND_PAYLOAD_FAILED:
+//                 SERIAL_IMPL.println("[DEBUG] Send payload failed");
+//                 break;
+//             case HTTPC_ERROR_NOT_CONNECTED:
+//                 SERIAL_IMPL.println("[DEBUG] Not connected");
+//                 break;
+//             case HTTPC_ERROR_CONNECTION_LOST:
+//                 SERIAL_IMPL.println("[DEBUG] Connection lost");
+//                 break;
+//             case HTTPC_ERROR_NO_STREAM:
+//                 SERIAL_IMPL.println("[DEBUG] No stream");
+//                 break;
+//             case HTTPC_ERROR_NO_HTTP_SERVER:
+//                 SERIAL_IMPL.println("[DEBUG] No HTTP server");
+//                 break;
+//             default:
+//                 SERIAL_IMPL.println("[DEBUG] Unknown error");
+//                 break;
+//         }
+//     }
+
+//     http.end();
+//     return payload;
+// }
 
 //HTTP - GET
 String httpGETRequest(const char *serverName)
@@ -290,7 +400,7 @@ String httpGETRequest(const char *serverName)
     }
     else
     {
-        SERIAL_IMPL.print("Error code: ");
+        SERIAL_IMPL.print("HTTP Get Error code: ");
         SERIAL_IMPL.println(httpResponseCode);
     }
     // Free resources

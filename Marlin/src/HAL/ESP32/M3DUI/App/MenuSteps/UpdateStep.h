@@ -5,7 +5,6 @@
 
 class UpdateStep: public MenuStep {
 private:    
-    TaskHandle_t otaHandle;
     MenuStep* retroPreviousStepBkp;
     String StatusMessage;
     int Progress = 0;
