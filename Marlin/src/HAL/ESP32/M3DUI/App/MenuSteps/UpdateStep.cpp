@@ -60,7 +60,7 @@ void UpdateStep::LoadComplete(){
 void UpdateStep::NotifyOTAProgressChange(String str){
     StatusMessage = str; NeedsRedraw = true;
 }
-void UpdateStep::NotifyOTAProgressChange(int progress){
+void UpdateStep::NotifyOTAProgressChange(float progress){
     Progress = progress;
     NeedsRedraw = true;
 }

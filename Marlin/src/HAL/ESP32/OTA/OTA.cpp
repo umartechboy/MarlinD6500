@@ -112,7 +112,7 @@ void _TryOTAUpdate_()
                  "Cache-Control: no-cache\r\n" +
                  "Connection: close\r\n\r\n");
 
-    updateStep.NotifyOTAProgressChange(26);
+    updateStep.NotifyOTAProgressChange(1);
 
     unsigned long timeout = millis();
     while (wifiClient.available() == 0)
@@ -179,8 +179,6 @@ void _TryOTAUpdate_()
     // Check what is the contentLength and if content type is `application/octet-stream`
     SERIAL_IMPL.printf("contentLength : %d, isValidContentType : %d\n", contentLength, isValidContentType);
 
-    updateStep.NotifyOTAProgressChange(27);
-
     // check contentLength and content type
     if (contentLength && isValidContentType)
     {
@@ -190,7 +188,6 @@ void _TryOTAUpdate_()
         // BEGINNING OTA
         if (canBegin)
         {
-            updateStep.NotifyOTAProgressChange(30);
             updateStep.NotifyOTAProgressChange("Downloading firmware");
             SERIAL_IMPL.println("Begin OTA. This may take 2 - 5 mins to complete. Things might be quite for a while.. Patience!");
             // No activity would appear on the SERIAL_IMPL monitor
@@ -216,8 +213,8 @@ void _TryOTAUpdate_()
                 Update.write(buffer, thisPacket);   
                 SERIAL_IMPL.printf("Dumped: %i\n", thisPacket);
 
-                updateStep.NotifyOTAProgressChange((written * 65) / totalToWrite + 30);
-                SERIAL_IMPL.printf("Progress: %d\n", (written * 65) / totalToWrite + 30);
+                updateStep.NotifyOTAProgressChange((float)(written * 99) / (float)totalToWrite + 1);
+                SERIAL_IMPL.printf("Progress: %d\n", (float)(written * 99) / (float)totalToWrite + 1);
                 written += thisPacket;
                 delay(100); // otherwise the wifi client doesn't read too much
             }

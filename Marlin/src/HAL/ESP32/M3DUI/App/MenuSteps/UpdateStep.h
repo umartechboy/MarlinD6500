@@ -15,7 +15,7 @@ public:
     void Paint(BufferedDisplay* g) override;
     void LoadComplete() override;
     void NotifyOTAProgressChange(String str);
-    void NotifyOTAProgressChange(int progress);
+    void NotifyOTAProgressChange(float progress);
     void NotifyOTAComplete();
     void NotifyOTAFailed();
 };
