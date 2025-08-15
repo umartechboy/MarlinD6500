@@ -113,12 +113,18 @@ void SDMenuStep::HandleKeyPress(Keys key) {
 //         }
 //     }      
 // }
-
-void OnFileFound(void* caller, const char* dosName){
+void OnFileFound(void* caller, const char* dosName) {
     SDMenuStep* This = (SDMenuStep*)caller;
-    //String fName = card.getLongPath(dosName);
-    SERIAL_IMPL.printf("Adding File: %s\n", dosName);
-    This->list->Add(new FileNameListItem(This->Host, "", dosName, 6, 14));
+
+    // Check if the filename ends with ".GCO" (case-insensitive)
+    const char *ext = strrchr(dosName, '.');  // find last dot
+    if (ext && strcasecmp(ext, ".GCO") == 0) {
+        SERIAL_IMPL.printf("Adding File: %s\n", dosName);
+        This->list->Add(new FileNameListItem(This->Host, "", dosName, 0, 14));
+    }
+    else {
+        SERIAL_IMPL.printf("Skipping non-GCO file: %s\n", dosName);
+    }
 }
 void SDMenuStep::LoadComplete(){   
   SERIAL_IMPL.println("Starting SD");
@@ -139,27 +145,16 @@ void SDMenuStep::LoadComplete(){
     card.ls(this, OnFileFound);
     SERIAL_IMPL.println("All Done. Finding long names:");
     for(int i = 0; i < list->Count(); i++){
-        SERIAL_IMPL.printf("Existing Long: %s\n", ((FileNameListItem*)list->At(i))->ItemText.c_str());
-        delay(1);
-        SERIAL_IMPL.printf("Existing DOS: %s\n", ((FileNameListItem*)list->At(i))->DOSName.c_str());
-        delay(1);
         const char* dosChar = ((FileNameListItem*)list->At(i))->DOSName.c_str();
-        SERIAL_IMPL.println("Made Dos char*");
-        delay(1);
-        SERIAL_IMPL.printf("Existing DOS char *: %s\n", dosChar);
-        delay(1);
-        SERIAL_IMPL.printf("Existing DOS char * len: %d\n", strlen(dosChar));
-        delay(1);
         char lp[128];  // choose a capacity that fits your deepest expected path
         if (card.getLongPath(dosChar, lp, sizeof(lp))) {
             String longName(lp);  // if you still want a String
-            SERIAL_IMPL.printf("Long: %s\n", longName.c_str());
+            longName = longName.substring(1, longName.length() - 6); // Trim / and .gcode
+            SERIAL_IMPL.printf("%s > %s\n", dosChar, longName.c_str());
             ((FileNameListItem*)list->At(i))->ItemText = longName;
         } else {
             SERIAL_IMPL.println("getLongPath failed or overflow.");
         }
-        
-        SERIAL_IMPL.println(((FileNameListItem*)list->At(i))->ItemText.c_str());
     }
 
     //GetSDFilesList(this, OnFileFound);
