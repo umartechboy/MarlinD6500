@@ -140,7 +140,7 @@ void MainScreenStep::Paint(BufferedDisplay* g) {
             g->setFont();
             centerString(g, (String(pcCommplete, 1) + String("%")).c_str(), Host->appWidth() / 2, Host->appTop() + Host->appHeight() / 2 - 14);
             g->setFont();
-            centerString(g, fileName.substring(1, fileName.length() - 6).c_str(), Host->appWidth() / 2, Host->appTop() + Host->appHeight() / 2 + pbh + 5);
+            centerString(g, fileName.c_str(), Host->appWidth() / 2, Host->appTop() + Host->appHeight() / 2 + pbh + 5);
         }
         if (Host->Retro){
         }

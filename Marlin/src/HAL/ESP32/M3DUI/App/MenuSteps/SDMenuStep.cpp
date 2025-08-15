@@ -15,9 +15,9 @@ static void selectionUpdated(void* caller, ListItem* selectedItem, int selectedI
     else {
         This->NextStep = &filePreviewStep;
         This->RetroNextStep = &filePreviewStep; // same in retro
-        mainScreenStep.fileName = String("/") + ((FileNameListItem*)selectedItem)->ItemText;
-        mainScreenStep.DOSFileName = String("/") + ((FileNameListItem*)selectedItem)->DOSName;
-        filePreviewStep.Title = mainScreenStep.fileName.substring(1, mainScreenStep.fileName.length() - 6);
+        mainScreenStep.fileName = ((FileNameListItem*)selectedItem)->ItemText;
+        mainScreenStep.DOSFileName = ((FileNameListItem*)selectedItem)->DOSName;
+        filePreviewStep.Title = mainScreenStep.fileName;
         This->NeedsRedraw = true;
     }
 }

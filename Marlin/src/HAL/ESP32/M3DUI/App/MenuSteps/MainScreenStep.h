@@ -12,7 +12,9 @@ private:
     DummyMenuStep* cancelResumeDummyStep;
     DummyMenuStep* beginResumeDummyStep;
 public:
+    // Clean, trimmed, name without extensions
     String fileName;
+    // System name, as reported by Marlin
     String DOSFileName;
     PrintStatus printStatus = PrintStatus::Idle;
     int minX = -1, maxX = -1, minY = -1, maxY = -1, maxZ = -1;
