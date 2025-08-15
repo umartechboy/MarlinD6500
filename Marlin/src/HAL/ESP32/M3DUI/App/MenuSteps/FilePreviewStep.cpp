@@ -1,5 +1,4 @@
 #include "FilePreviewStep.h"
-#include <SD.h>
 #include "..\MenuApp.h"
 #include "..\Images.h"
 #include "..\MenuApp.h"
@@ -130,17 +129,46 @@ void FilePreviewStep::LoadBegin() {
     // Read the file and load data
     SERIAL_IMPL.printf("Begin SD Read: %s\n",  mainScreenStep.fileName.c_str());
     pngParams.thumbnailData.Reset();
-    File f = SD.open(mainScreenStep.fileName);
+    card.openFileRead(mainScreenStep.DOSFileName.c_str());
+
     bool inThumbnail = false;
     bool isMarlin = false;
-    if (f.available()){
+    if (card.isFileOpen()){
         SERIAL_IMPL.printf("File opened for thumbnail: %s\n", mainScreenStep.fileName.c_str());
     }
+    // Temporary buffer for line reading
+    char linebuf[256];
+
+    auto readLine = [&](char* buf, size_t bufsize) -> bool {
+        size_t idx = 0;
+        if(card.eof()){
+            SERIAL_IMPL.println("EOF");
+        }
+        if(idx >= bufsize - 1){
+            SERIAL_IMPL.println("Out of memory");
+        }
+        while (!card.eof() && idx < bufsize - 1) {
+            int16_t c = card.get();
+            if (c < 0) break;
+            if (c == '\r') continue; // skip CR
+            if (c == '\n') break;
+            buf[idx++] = (char)c;
+        }
+        buf[idx] = '\0';
+        return idx >= 0;
+    };
+
     bool weAreNearTheEnd = false;
-    while (f.available())
+    while (!card.eof())
     {
         bool parsed = true;
-        String line = f.readStringUntil('\n');
+        if (!readLine(linebuf, sizeof(linebuf))){
+            SERIAL_IMPL.println("EOF or out of memory. Breaking...");
+            break;
+        }
+
+        String line(linebuf);
+        //SERIAL_IMPL.printf(">> %s\n", linebuf);
         if (line.startsWith("G1"))
         {
             if(isMarlin){                
@@ -151,11 +179,11 @@ void FilePreviewStep::LoadBegin() {
                 weAreNearTheEnd = true;
                 // Lets seek near the end
                 SERIAL_IMPL.println("Seeking near the end");
-                if (f.size() < 20000){
-                    SERIAL_IMPL.printf("File not big enough: %d\n", f.size());
+                if (card.getFileSize() < 20000){
+                    SERIAL_IMPL.printf("File not big enough: %d\n", card.getFileSize());
                     break;
                 }
-                f.seek(f.size() - 20000, SeekMode::SeekSet);
+                card.setIndex(card.getFileSize() - 20000);
                 continue;
             }
         }
@@ -288,7 +316,7 @@ void FilePreviewStep::LoadBegin() {
         if (parsed)
             SERIAL_IMPL.printf("Parsed: %s\n", line.c_str());
     }    
-    f.close();
+    card.closefile();
 }
 void FilePreviewStep::HandleKeyPress(Keys key){    
     if (!Host->Retro){

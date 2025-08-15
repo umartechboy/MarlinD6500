@@ -1,5 +1,4 @@
 #include "SDMenuStep.h"
-//#include <SD.h>
 #include "..\MenuApp.h"
 #include "..\Images.h"
 #include "..\..\..\..\..\sd\cardreader.h"
@@ -71,48 +70,6 @@ void SDMenuStep::HandleKeyPress(Keys key) {
             Host->GotoPreviousStep();
     }
 }    
-// void GetSDFilesList(void* caller, void (*callBack)(void* caller, String& dosName, String& fName)){    
-//     seen.clear();
-//     File root = SD.open("/");
-//     if(callBack){
-//         String dummyFileName = "Dummy File Name.gcode";
-//         String dummyDosName = "DUMMYF~1.GCO";
-//         callBack(caller, dummyFileName, dummyDosName);
-//     }
-//     while (root)
-//     {
-//         File f = root.openNextFile(); 
-//         if (!f)
-//             break;
-//         String fName = String(f.name());
-//         fName.toUpperCase();
-//         if (fName.endsWith(".GCODE")){
-            
-//             // SERIAL_IMPL.printf("G code: %s\n", fName.c_str());
-//             // See if the first 150 lines contain the printer stamp
-//             // bool isCompatible = false;
-//             // for (int i; i < 200; i++){
-//             //     if (!f.available())
-//             //         break;
-//             //     String line =  f.readStringUntil('\n');
-//             //     if (line.indexOf("M3D_D8500_GCode") >= 0){
-//             //         isCompatible = true;
-//             //         break;
-//             //     }
-//             // }
-//             // f.close();
-//             // if (isCompatible){
-//             String dosName = toDOSNameFixed(fName, seen);
-//             SERIAL_IMPL.printf("Compatible G code: {%s}, {%s}\n", fName.c_str(), dosName.c_str());
-//             if (callBack)
-//                 callBack(caller, dosName, fName);
-//             // }
-//             // else{                
-//             //     SERIAL_IMPL.printf("Incompatible G code: %s\n", fName.c_str());
-//             // }
-//         }
-//     }      
-// }
 void OnFileFound(void* caller, const char* dosName) {
     SDMenuStep* This = (SDMenuStep*)caller;
 
