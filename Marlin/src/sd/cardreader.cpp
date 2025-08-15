@@ -360,6 +360,169 @@ void CardReader::ls(const uint8_t lsflags) {
     printListing(root, nullptr, lsflags);
   }
 }
+//
+// List all files on the SD card
+//
+void CardReader::ls(void* context, Dos83ListCB cb) {
+  if (flag.mounted) {
+    root.rewind();
+    printListing(root, nullptr,  TERN0(LONG_FILENAME_HOST_SUPPORT, parser.boolval('L') << LS_LONG_FILENAME), context, cb);
+  }
+}
+// ----------------------------------------------------------------------------
+// DOS (8.3) listing with callback (no printing, no long names)
+// ----------------------------------------------------------------------------
+
+
+// ---------------------------------------------------------------------------
+// Recursive method to walk all visible files within a folder in flat DOS 8.3
+// format and push them to a callback. Matches printListing traversal behavior
+// but avoids printing and long filenames.
+// ---------------------------------------------------------------------------
+void CardReader::printListing(
+  SdFile parent,
+  const char * const prepend,
+  const uint8_t lsflags,
+  void* context,
+  Dos83ListCB cb
+) {
+  #if ENABLED(CUSTOM_FIRMWARE_UPLOAD)
+    const bool onlyBin = TEST(lsflags, LS_ONLY_BIN);
+  #endif
+  // If lsflags isn't otherwise used, keep this to silence warnings
+  UNUSED(lsflags);
+
+  dir_t p;
+
+  while (parent.readDir(&p, longFilename) > 0) {
+    if (DIR_IS_SUBDIR(&p)) {
+
+      // Build short (DOS 8.3) path to the child directory
+      const size_t lenPrepend = prepend ? strlen(prepend) + 1 : 0;   // +1 for '/'
+      // Enough for "prepend/XXXXXXXX.XXX\0"
+      char path[lenPrepend + FILENAME_LENGTH];
+      if (prepend) { strcpy(path, prepend); path[lenPrepend - 1] = '/'; }
+
+      // Append this entry's DOS 8.3 directory name
+      char* dosDirName = path + lenPrepend;
+      createFilename(dosDirName, p);  // fills dosDirName with 8.3
+
+      // Open child directory and recurse
+      SdFile child; // auto-closed by destructor
+      if (child.open(&parent, dosDirName, O_READ)) {
+        printListing(child, path, lsflags, context, cb);
+      }
+      else {
+        // Optional: mirror printListing behavior or just continue
+        // SERIAL_ECHO_MSG(STR_SD_CANT_OPEN_SUBDIR, dosDirName);
+        // return; // or continue;
+      }
+    }
+    else if (is_visible_entity(p OPTARG(CUSTOM_FIRMWARE_UPLOAD, onlyBin))) {
+      // This is a visible file entry. Produce a full DOS 8.3 path and send to callback.
+
+      // Get 8.3 filename for this entry
+      createFilename(filename, p);  // 'filename' is CardReader's short-name buffer
+
+      if (!cb) continue;  // nothing to do
+
+      // Compose "prepend/filename" or just "filename"
+      const size_t lenPrepend = prepend ? strlen(prepend) + 1 : 0;   // +1 for '/'
+      const size_t lenFile = strlen(filename);
+      char out[lenPrepend + lenFile + 1];
+
+      if (prepend) {
+        strcpy(out, prepend);
+        out[lenPrepend - 1] = '/';
+        strcpy(out + lenPrepend, filename);
+      }
+      else {
+        strcpy(out, filename);
+      }
+
+      cb(context, out);
+    }
+  }
+}
+#if ENABLED(LONG_FILENAME_HOST_SUPPORT)
+
+// Returns true on success, false on failure/overflow.
+// Fills 'out' with a leading '/' + pretty long path, or empty string on failure.
+bool CardReader::getLongPath(const char* inPath, char* out, const size_t outcap) {
+  if (!out || outcap == 0) return false;
+  out[0] = '\0';
+
+  if (!inPath || !*inPath) return false;
+
+  // Make a mutable local copy because we need to insert NULs between segments
+  const size_t inlen = strlen(inPath);
+  if (inlen >= 512) {               // sanity limiter; tune as you like
+    return false;
+  }
+  char tempPath[512];
+  memcpy(tempPath, inPath, inlen + 1);
+
+  // Replace '/' with '\0' to walk segments
+  for (size_t i = 0; i < inlen; i++)
+    if (tempPath[i] == '/')
+      tempPath[i] = '\0';
+
+  SdFile diveDir = root; // start at root
+
+  size_t i = 0;
+  // Reserve 1 char for final NUL; prepend leading '/'
+  if (outcap < 2) return false;
+  out[0] = '/';
+  out[1] = '\0';
+
+  while (i < inlen) {
+    if (tempPath[i] == '\0') { i++; continue; }  // skip repeated slashes / empty segs
+
+    char* segment = &tempPath[i];
+    while (i < inlen && tempPath[++i]) { }       // advance to the next '\0'
+
+    // Look for this segment in current dir; sets longFilename / filename / flag.filenameIsDir
+    diveDir.rewind();
+    selectByName(diveDir, segment);
+
+    const char* part = longFilename[0] ? longFilename : filename;
+
+    // Append '/' + part to out (we already have a leading '/', so just append part +
+    // a preceding '/' only if the current out doesn't just end with '/')
+    // But since we started with '/', always append another '/' then part for subsegments.
+    const size_t need = strlen(out) + 1 /*'/'*/ + strlen(part) + 1 /*NUL*/;
+    if (need > outcap) {
+      // Not enough space
+      out[0] = '\0';
+      return false;
+    }
+    strcat(out, "/");     // results in '//' for first segment; harmless but tidy it:
+    if (out[1] == '/' && out[2] == '\0') {
+      // If we accidentally got "//", collapse to single '/'
+      out[1] = '\0';
+    }
+    strcat(out, part);
+
+    if (!flag.filenameIsDir) break;  // reached a file; done
+
+    // Open subdirectory for the next descent
+    SdFile dir;
+    if (!dir.open(&diveDir, segment, O_READ)) {
+      // Can't open next dir; stop and return what we have
+      break;
+    }
+    diveDir.close();
+    diveDir = dir;
+  }
+
+  // Normalize any accidental '//' at start (if any logic above left it)
+  if (out[0] == '/' && out[1] == '/')
+    memmove(out, out + 1, strlen(out));  // shift left to a single '/'
+
+  return true;
+}
+
+#endif // LONG_FILENAME_HOST_SUPPORT
 
 #if ENABLED(LONG_FILENAME_HOST_SUPPORT)
 

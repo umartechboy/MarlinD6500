@@ -139,6 +139,12 @@ ListItem* VerticalList::operator[](int index) {
     }
     return items[index];
 }
+ListItem* VerticalList::At(int index) {
+    if (index < 0 || index >= items.size()) {
+        return 0;
+    }
+    return items[index];
+}
 void VerticalList::Clear(){    
     for (int i = 0; i < items.size(); i++){
         if (items[i]) delete items[i];

@@ -91,6 +91,9 @@ typedef struct {
 
 enum ListingFlags : uint8_t { LS_LONG_FILENAME, LS_ONLY_BIN, LS_TIMESTAMP };
 
+// Callback type: receives full DOS 8.3 path (optionally with short 'prepend' path)
+typedef void (*Dos83ListCB)(void* ctx, const char* dos83);
+
 #if ENABLED(AUTO_REPORT_SD_STATUS)
   #include "../libs/autoreport.h"
 #endif
@@ -146,6 +149,7 @@ public:
   static char* longest_filename() { return longFilename[0] ? longFilename : filename; }
   #if ENABLED(LONG_FILENAME_HOST_SUPPORT)
     static void printLongPath(char * const path);   // Used by M33
+    static bool getLongPath(const char* inPath, char* out, const size_t outcap);
   #endif
 
   // Working Directory for SD card menu
@@ -210,6 +214,7 @@ public:
   #endif
 
   static void ls(const uint8_t lsflags);
+  static void ls(void* context, Dos83ListCB cb);
 
   #if ENABLED(POWER_LOSS_RECOVERY)
     static bool jobRecoverFileExists();
@@ -348,6 +353,18 @@ private:
     OPTARG(LONG_FILENAME_HOST_SUPPORT, const char * const prependLong=nullptr)
   );
 
+// ---------------------------------------------------------------------------
+// Recursive method to walk all visible files within a folder in flat DOS 8.3
+// format and push them to a callback. Matches printListing traversal behavior
+// but avoids printing and long filenames.
+// ---------------------------------------------------------------------------
+static void printListing(
+  SdFile parent,
+  const char * const prepend,
+  const uint8_t lsflags,
+  void* context,
+  Dos83ListCB cb
+);
   #if ENABLED(SDCARD_SORT_ALPHA)
     static void flush_presort();
   #endif

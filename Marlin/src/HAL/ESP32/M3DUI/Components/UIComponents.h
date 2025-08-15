@@ -83,6 +83,7 @@ class VerticalList{
         // Overload operator[] for non-const access
         ListItem* operator[](int index);
         void Clear();
+        ListItem* At(int index);
         void Add(ListItem* item);
         int Count();
         void scrollDown();
