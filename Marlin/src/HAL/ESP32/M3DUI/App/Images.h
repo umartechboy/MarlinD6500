@@ -48,5 +48,6 @@ extern Image img_RetroPrintPosition;
 extern Image img_RetroM3D;
 extern Image img_RetroRedM3D;
 extern Image img_RetroOptionsKey;
+extern Image img_splash;
 
 #endif

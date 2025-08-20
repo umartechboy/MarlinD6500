@@ -35,23 +35,16 @@ void TFT_endWrite()
 }
 BufferedDisplay* bTft;
 
-#ifdef __MARLIN_FIRMWARE__
-void UISetup()
-#else
-void setup()
-#endif
-{
-#ifndef __MARLIN_FIRMWARE__
-  Serial.begin(115200);
-#endif
-    // for (int i = 0; i < 5; i++){
-    //     delay(1000);
-    //     Serial.print(".");
-    // }
-SERIAL_IMPL.println("UI Starting up...");
-#ifndef __MARLIN_FIRMWARE__
-  beginDigitalIO(); // Initialize digital IO
-#endif
+extern void DrawSplash(BufferedDisplay* g);
+bool displayHasInit = false;
+void InitDisplayBasic(){
+  if (displayHasInit)
+    return;
+  displayHasInit = true;
+  //SERIAL_IMPL.println("UI Starting up...");
+  #ifndef __MARLIN_FIRMWARE__
+    beginDigitalIO(); // Initialize digital IO
+  #endif
   digitalWrite(TFT_RST, 0);
   delay(1);
   digitalWrite(TFT_RST, 1);
@@ -61,7 +54,23 @@ SERIAL_IMPL.println("UI Starting up...");
   tft.fillScreen(ST77XX_WHITE);
   tft.setRotation(3);
   bTft = new BufferedDisplay(tft, TFT_startWrite, TFT_setAddressWindow, TFT_writePixels, TFT_endWrite);
-
+  // Lets show the Splash.
+  DrawSplash(bTft);
+}
+#ifdef __MARLIN_FIRMWARE__
+void UISetup()
+#else
+void setup()
+#endif
+{
+#ifndef __MARLIN_FIRMWARE__
+  Serial.begin(115200);
+#endif
+  InitDisplayBasic(); // safe to recall
+    // for (int i = 0; i < 5; i++){
+    //     delay(1000);
+    //     Serial.print(".");
+    // }
   // initialize the menu step linkage
   BeginApp(); 
 }

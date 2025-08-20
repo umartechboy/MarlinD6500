@@ -70,3 +70,9 @@ void PrinterInfoStep::HandleKeyPress(Keys key) {
         Host->GotoNextStep(); // back to options menu
     }
 }
+
+void DrawSplash(BufferedDisplay* g){
+    g->fillScreen(0);
+    img_splash.Draw(g, g->width() / 2 - img_splash.width() / 2, g->height() / 2 - img_splash.height() / 2);
+    g->update();
+}

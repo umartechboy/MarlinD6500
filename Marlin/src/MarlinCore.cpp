@@ -1136,10 +1136,11 @@ inline void tmc_standby_setup() {
  *  - Set Marlin to RUNNING State
  */
 extern void InitIOExpanders();
+extern void InitDisplayBasic();
 extern void LoadCellLoop();
 void setup() {
   InitIOExpanders(); // Turn it on as soon as possible
-  
+  InitDisplayBasic();
   #ifdef FASTIO_INIT
     FASTIO_INIT();
   #endif
