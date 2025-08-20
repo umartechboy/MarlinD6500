@@ -1674,10 +1674,11 @@ void setup() {
  *    card, host, or by direct injection. The queue will continue to fill
  *    as long as idle() or manage_inactivity() are being called.
  */
+extern void ESP3DLIBLOOP();
 void loop() {
   do {
     idle();
-
+    ESP3DLIBLOOP();
     #if ENABLED(SDSUPPORT)
       if (card.flag.abort_sd_printing) abortSDPrinting();
       if (marlin_state == MF_SD_COMPLETE) finishSDPrinting();
