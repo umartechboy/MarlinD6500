@@ -46,7 +46,8 @@ volatile bool pcf1_write_pending = false;
 volatile bool pcf2_write_pending = false;
 volatile bool pcf1_read_pending = false;
 volatile bool pcf2_read_pending = false;
-volatile uint16_t pcfMap = 0xFFFF;
+volatile uint16_t pcfMapToSync = 0xFFFF;
+volatile uint16_t pcfWriteMapConfirmed = 0xFFFF;
 
 //Adafruit_ADS1115 ads;  /* Use this for the 16-bit version */
 #if ENABLED(USE_ESP32_TASK_WDT)
@@ -168,14 +169,16 @@ bool PCFSync(bool force){
     return false;
   pcfIsSyncing = true;
   if (pcf1_write_pending) {
-    pcf1.write8(pcfMap & 0xFF);
+    pcf1.write8(pcfMapToSync & 0xFF);
     pcf1_write_pending = false;
   }
 
   if (pcf2_write_pending) {
-    pcf2.write8((pcfMap >> 8) & 0xFF);
+    pcf2.write8((pcfMapToSync >> 8) & 0xFF);
     pcf2_write_pending = false;
   }
+
+  pcfWriteMapConfirmed = pcfMapToSync;
 
   if (pcf1_read_pending) {
     pcfReadCache &= 0xFF00;
@@ -228,9 +231,9 @@ void InitIOExpanders(){
   //   SERIAL_IMPL.println("ADS1115 Failed");
 
   //SERIAL_IMPL.println("Expanders On.");
-  pcfMap = 0b00000000 | (0b10100000 << 8);
-  pcf1.write8(pcfMap); // 200-207
-  pcf2.write8(pcfMap >> 8); // 208-215, 1 for X and Z stops
+  pcfMapToSync = 0b00000000 | (0b10100000 << 8);
+  pcf1.write8(pcfMapToSync); // 200-207
+  pcf2.write8(pcfMapToSync >> 8); // 208-215, 1 for X and Z stops
   
 }
 
@@ -365,20 +368,20 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
   if (pin >= 200 && pin < 216) {
     uint8_t bit = pin - 200;
 
-    if (((pcfMap >> bit) & 1) == val) return; // already up to date
+    if (((pcfWriteMapConfirmed >> bit) & 1) == val) return; // already up to date
 
     if (val) {
-      pcfMap |= (1 << bit);
+      pcfMapToSync |= (1 << bit);
     }
     else {
-      pcfMap &= ~(1 << bit);
+      pcfMapToSync &= ~(1 << bit);
     }
     if (bit < 8)
       pcf1_write_pending = true;
     else
       pcf2_write_pending = true;
 
-    if (PCFIsBusy){
+    if (PCFIsBusy){ // PCF is busy. We need to see if this is a high priority request
       // we can let it go through only if we have a lock on the bits
       if ((1 << bit) & lockedBits){        
         PCFSync(true);
@@ -387,7 +390,7 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
       // We have already set the flags, priority user will sync when the lock is released
       return;
     }
-    if (pin == Z_DIR_PIN) {// 2nd priority by default
+    if (pin == Z_DIR_PIN) {// 2nd highest priority by default
       if (PCFSync()) // Done! Return
         return;
       else { // Give it one more try. Most probably will fail too. Its a soft failure, not a hard one.
@@ -412,6 +415,7 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
      PCFSync();
       xSemaphoreGive(xPCFIOMutex);
     }
+    // This is double write. Can only happen in task from another core.
     return;
   }
   else if (pin == 217){ // Probe enable disable
@@ -562,7 +566,7 @@ void MarlinHAL::adc_start(const pin_t pin) {
   // 370          | 505
 
   uint32_t mvToReturn = mv;
-  if ((pcfMap >> 10) & 0b1 && pin == 34) {// Heater 1
+  if ((pcfMapToSync >> 10) & 0b1 && pin == 34) {// Heater 1
     // Do the linearization
     mvToReturn = map(mv, 505, 3195, 370, 3197);
   }
