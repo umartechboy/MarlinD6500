@@ -140,9 +140,9 @@ class MenuStep {
         virtual bool CanJumpToMainMenu();
         void loop();
         bool IsDummyStep();
+        long TickPeriod = 0;
     protected: 
         long lastTick = 0;
-        long TickPeriod = 0;
         bool isDummy = false;
         virtual void Tick() {}
 };

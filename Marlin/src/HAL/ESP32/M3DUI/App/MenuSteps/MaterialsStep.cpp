@@ -2,32 +2,30 @@
 #include "..\Images.h"
 #include "..\MenuApp.h"
 
-DummyMenuStep* dummyColorChangeStep;
+// DummyMenuStep* dummyColorChangeStep;
 void materilaOptionChange(void* caller, ListItem* selectedItem, int selectedIndex){
-    MaterialsStep* owner = (MaterialsStep*)caller;
-    if (selectedItem == owner->change0 || selectedItem == owner->change1){
-        owner->NextActionString = "Change";
-        owner->RetroNextStep = dummyColorChangeStep;
-        filament0ChangeStep.RetroPreviousStep = owner;
+    MaterialsStep* This = (MaterialsStep*)caller;
+    if (selectedItem == This->change0 || selectedItem == This->change1){
+        This->NextActionString = "Change";
+        This->RetroNextStep = selectedItem == This->change0?(&filament0ChangeStep):(&filament1ChangeStep);
         // Normal mode
-        owner->PreviousStep = &filament0ChangeStep;
-        filament0ChangeStep.NextStep = owner;
+        This->PreviousStep = &filament0ChangeStep;
+        filament0ChangeStep.NextStep = This;
     }
-    else if (selectedItem == owner->extruder0Color || selectedItem == owner->extruder1Color)
+    else if (selectedItem == This->extruder0Color || selectedItem == This->extruder1Color)
     {   
-        owner->NextActionString = "Select";
-        owner->RetroNextStep = &filament1ChangeStep;
-        filament1ChangeStep.RetroPreviousStep = owner;
+        This->NextActionString = "Select";
+        This->RetroNextStep = 0;
         // Normal mode
-        owner->PreviousStep = &filament1ChangeStep;
-        filament1ChangeStep.NextStep = owner;
+        This->PreviousStep = &filament1ChangeStep;
+        filament1ChangeStep.NextStep = This;
 
     }
     else {
-        owner->NextActionString = "";
-        owner->RetroNextStep = 0;
+        This->NextActionString = "";
+        This->RetroNextStep = 0;
         // Normal mode
-        owner->PreviousStep = 0;
+        This->PreviousStep = 0;
     }
 }
 MaterialsStep::MaterialsStep(MenuHost* host):MenuStep(host) {
@@ -37,8 +35,8 @@ MaterialsStep::MaterialsStep(MenuHost* host):MenuStep(host) {
     Icon = &img_ChangeFilament;    
     NextStep = &toolsMenuStep;    
 
-    dummyColorChangeStep = new DummyMenuStep(Host);
-    dummyColorChangeStep->RetroIcon = &img_RetroHorizontal;
+    // dummyColorChangeStep = new DummyMenuStep(Host);
+    // dummyColorChangeStep->RetroIcon = &img_RetroHorizontal;
     
     Title = "Materials";
     RetroPreviousStep = &retroMainMenuStep;
@@ -46,6 +44,9 @@ MaterialsStep::MaterialsStep(MenuHost* host):MenuStep(host) {
     extruder1Color = new ColorSelectorListItem(Host,"Extruder 2", 1, 24);
     change0 = new StringListItem(Host, 0, "Change Filament", 0, 24);
     change1 = new StringListItem(Host, 0, "Change Filament", 0, 24);
+    
+    filament0ChangeStep.RetroPreviousStep = this;
+    filament1ChangeStep.RetroPreviousStep = this;
 
     extruder0Color->selectedColorIndex = 0;
     extruder1Color->selectedColorIndex = 1;
@@ -68,7 +69,7 @@ MaterialsStep::MaterialsStep(MenuHost* host):MenuStep(host) {
     TickPeriod = 50;
 }
 MaterialsStep::~MaterialsStep(){
-    delete dummyColorChangeStep;
+    // delete dummyColorChangeStep;
     delete options;
 }
 void MaterialsStep::LoadBegin(){

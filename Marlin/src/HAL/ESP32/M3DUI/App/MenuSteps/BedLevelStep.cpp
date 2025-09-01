@@ -73,7 +73,8 @@ void BedLevelStep::Tick()
     }
     else if (millis() - levelingDoneSince > 5000 && levelingDoneSince != 0 && !checkABLFailed()){ // auto procede in case of success
         TickPeriod = 0; // remove the tick
-        Host->GotoNextStep();
+        this->RetroPreviousStep = &retroMainMenuStep;
+        Host->GotoPreviousStep();
     }
 }
 
@@ -136,8 +137,8 @@ void BedLevelStep::Paint(BufferedDisplay* g){
     else {
         if (checkABLComplete() && !checkABLFailed()){
             g->setFont(&FreeSans9pt7b);
-            centerString(g, "Leveling", Host->appWidth() / 2, Host->appHeight() / 2 - 10);
-            centerString(g, "Successful", Host->appWidth() / 2, Host->appHeight() / 2 + 10);
+            centerString(g, "Leveling", Host->appWidth() / 2,  retroTitleSectionHeight + Host->appHeight() / 2 - 10);
+            centerString(g, "Successful", Host->appWidth() / 2, retroTitleSectionHeight + Host->appHeight() / 2 + 10);
         }
         else { // Going on or done with failure
             // Draw the bed

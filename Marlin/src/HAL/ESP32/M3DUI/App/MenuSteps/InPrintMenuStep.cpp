@@ -26,6 +26,7 @@ static void abortPrintSelected(void* caller){
     mainScreenStep.DOSFileName = "";
     mainScreenStep.printStatus = PrintStatus::Idle;
     This->Host->GotoNextStep();
+    This->RetroPreviousStep = 0; // we are now in the main menu
 }
 
 static void selectionUpdated(void* caller, ListItem* selectedItem, int selectedIndex){

@@ -11,6 +11,7 @@ public:
     void Paint(BufferedDisplay* g) override;
     void HandleKeyPress(Keys key) override;  
     void Tick() override;   
+    void LoadComplete() override;
 };
 
 #endif

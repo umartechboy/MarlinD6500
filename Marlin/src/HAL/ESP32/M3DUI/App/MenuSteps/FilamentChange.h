@@ -32,6 +32,7 @@ public:
     void Paint(BufferedDisplay* g) override;
     void HandleKeyPress(Keys key) override;         
     void Tick() override;
+    bool CanJumpToMainMenu() override;
 };
 
 #endif

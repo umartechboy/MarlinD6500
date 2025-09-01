@@ -15,6 +15,7 @@ void printComSent(void* sender){
     This->NextActionString = "Pause";
     This->printStarted = true;
     This->printStatus = PrintStatus::Printing;
+    This->TickPeriod = 3000;
 }
 void cancelResumeCalled(void* sender){
     MainScreenStep* This = (MainScreenStep*)sender;
@@ -69,9 +70,21 @@ MenuStep* MainScreenStep::GetPreviousStep(bool returnEvenIfDummy){
 // extern void removeLoadCellOffset();
 void MainScreenStep::Tick() {
     NeedsRedraw = true;
+    if (printStatus == PrintStatus::Idle && card.isPrinting()) { // Print sent via g code
+        printComSent(this);
+    }
     if (printStatus == PrintStatus::FileToPrint){
         if (!printStarted)
             printJobTick();
+    }
+    if (printStatus == PrintStatus::Printing){
+        TickPeriod = 5000;
+        if (!card.isPrinting()) { // The print must have ended
+            TickPeriod = 50;
+            printStatus = PrintStatus::Idle;
+            RetroNextStep = &retroMainMenuStep;
+            RetroPreviousStep = 0;
+        }
     }
     // ProbeEnable = true;
     // if (millis() - lastReset > 10000){
@@ -128,19 +141,19 @@ void MainScreenStep::Paint(BufferedDisplay* g) {
                 centerLeftString(g, "All Done!", 2, titleHeight);
             }
 
-            centerRightString(g, (String((print_job_timer.getStats().filamentUsed - materialAtStart) / 1000, 3) + String("m")).c_str(), Host->appWidth() - 2, titleHeight);
+            //centerRightString(g, (String((print_job_timer.getStats().filamentUsed - materialAtStart) / 1000, 3) + String("m")).c_str(), Host->appWidth() - 2, titleHeight);
             
             int pbh = 8;
             g->SetOpacity(50);
             float pcCommplete = card.percentDone();
             //pcCommplete = 24.4;
-            g->drawRoundRect(1, Host->appTop() + Host->appHeight() / 2 - 5, Host->appWidth() - 2, pbh, pbh / 2, TextColor);
+            g->drawRoundRect(1, Host->appTop() + (Host->appHeight() + 16) / 2 - 5, Host->appWidth() - 2, pbh, pbh / 2, TextColor);
             g->SetOpacity(100);
-            g->fillRoundRect(1, Host->appTop() + Host->appHeight() / 2 - 5, ((Host->appWidth() - 2) * pcCommplete) / 100, pbh, pbh / 2, TextColor);    
+            g->fillRoundRect(1, Host->appTop() + (Host->appHeight() + 16) / 2 - 5, ((Host->appWidth() - 2) * pcCommplete) / 100, pbh, pbh / 2, TextColor);    
             g->setFont();
-            centerString(g, (String(pcCommplete, 1) + String("%")).c_str(), Host->appWidth() / 2, Host->appTop() + Host->appHeight() / 2 - 14);
+            //centerString(g, (String(pcCommplete, 1) + String("%")).c_str(), Host->appWidth() / 2, Host->appTop() + (Host->appHeight() + 16) / 2 - 14);
             g->setFont();
-            centerString(g, fileName.c_str(), Host->appWidth() / 2, Host->appTop() + Host->appHeight() / 2 + pbh + 5);
+            centerString(g, fileName.c_str(), Host->appWidth() / 2, Host->appTop() + (Host->appHeight() + 16) / 2 + pbh + 5);
         }
         if (Host->Retro){
         }
@@ -222,12 +235,14 @@ void MainScreenStep::LoadComplete(){
             RetroPreviousStep = 0;
             RetroNextStep = 0;
             NextActionString = "";
-            printStarted = false;
+            printStarted = false;            
+            TickPeriod = 5000;
             prepareForPrint(DOSFileName, true, true, printComSent, this);            
         }
         else if (printStatus == PrintStatus::Printing) {
             if (card.isPaused()) { // came back from the menu with back button
-                card.startOrResumeFilePrinting();
+                card.startOrResumeFilePrinting();                
+                TickPeriod = 5000;
             }
         }
     }
@@ -243,7 +258,8 @@ void MainScreenStep::LoadComplete(){
         } else if (printStatus == PrintStatus::ChangingFilament) { // Back from changing the filament
             materialsMenuStep.NextStep = &toolsMenuStep; // reset the route
             SERIAL_IMPL.println("Back to print (1)");
-            card.startOrResumeFilePrinting();
+            card.startOrResumeFilePrinting();            
+            TickPeriod = 5000;
         }
         else {
             SERIAL_IMPL.println("Idle home screen.");
@@ -251,6 +267,7 @@ void MainScreenStep::LoadComplete(){
             {
                 SERIAL_IMPL.println("Recovery file exists");
                 printStatus = PrintStatus::PrintToResume;
+                TickPeriod = 50;
                 // Remove the steps to restrict access to the print alone
                 NextStep = 0;
                 PreviousStep = 0;
@@ -270,7 +287,8 @@ void MainScreenStep::UnloadBegin(){
 void MainScreenStep::UnloadComplete(){
     if (printStatus == PrintStatus::FileToPrint) {
         if (card.isPaused()) {// going to in-print utilities            
-            printStatus = PrintStatus::ChangingFilament;
+            printStatus = PrintStatus::ChangingFilament;            
+            TickPeriod = 50;
 
             if (!Host->Retro)
                 Host->GotoPreviousStep();

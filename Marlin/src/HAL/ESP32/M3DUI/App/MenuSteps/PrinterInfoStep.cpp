@@ -61,6 +61,15 @@ void PrinterInfoStep::Paint(BufferedDisplay* g){
     g->SetOpacity(opBkp);
 
 }
+void PrinterInfoStep::LoadComplete(){    
+    Preferences prefs;
+    prefs.begin(NAMESPACE, true);
+    String defV = "";
+    String ssid = prefs.getString(STA_SSID_ENTRY, defV);
+    String pwd = prefs.getString(STA_PWD_ENTRY, defV);
+    prefs.end();
+    SERIAL_IMPL.printf("SSID: %s, PWD: %s\n", ssid.c_str(), pwd.c_str());
+}
 void PrinterInfoStep::Tick(){
     NeedsRedraw = true;
 }

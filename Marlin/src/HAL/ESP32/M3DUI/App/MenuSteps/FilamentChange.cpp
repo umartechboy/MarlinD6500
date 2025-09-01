@@ -18,6 +18,9 @@ FilamentChangeStep::FilamentChangeStep(MenuHost* host, int index):MenuStep(host)
 FilamentChangeStep::~FilamentChangeStep()
 {
 }
+bool FilamentChangeStep::CanJumpToMainMenu(){
+    return false;
+}
 
 void FilamentChangeStep::Tick()
 {
@@ -93,30 +96,30 @@ void FilamentChangeStep::Paint(BufferedDisplay* g){
     if (stage == FilamentChangeStage::Preheat){
         
         g->setFont(&FreeSans9pt7b);
-        centerString(g, "Heating up...", Host->appWidth() / 2, Host->appHeight() / 2 - 10);
+        centerString(g, "Heating up...", retroTitleSectionHeight + Host->appWidth() / 2, Host->appHeight() / 2 - 10);
         g->setFont();
         String tempStatus = String("(") + String(readTemp(filamentIndex), 0) + "/" + String(preHeatTemp, 0) + String(")");
-        centerString(g, tempStatus.c_str(), Host->appWidth() / 2, Host->appHeight() / 2 + 10);
+        centerString(g, tempStatus.c_str(), Host->appWidth() / 2, retroTitleSectionHeight + Host->appHeight() / 2 + 10);
     }
     else if (stage == FilamentChangeStage::ProcessSelection){
         int trSz = 12;
         int yo = -20;
         g->setFont(&FreeSans12pt7b);
         g->SetOpacity(100);
-        centerLeftString(g, "Unload", 5, Host->appHeight() / 2 + yo);
+        centerLeftString(g, "Unload", 5, retroTitleSectionHeight + Host->appHeight() / 2 + yo);
         g->fillTriangle(
-            Host->appWidth() - 5 - trSz / 2, Host->appHeight() / 2 + yo - trSz / 2, 
-            Host->appWidth() - 5 - trSz, Host->appHeight() / 2 + yo + trSz / 2, 
-            Host->appWidth() - 5, Host->appHeight() / 2 + yo + trSz / 2,
+            Host->appWidth() - 5 - trSz / 2, retroTitleSectionHeight + Host->appHeight() / 2 + yo - trSz / 2, 
+            Host->appWidth() - 5 - trSz, retroTitleSectionHeight + Host->appHeight() / 2 + yo + trSz / 2, 
+            Host->appWidth() - 5, retroTitleSectionHeight + Host->appHeight() / 2 + yo + trSz / 2,
             TextColor
         );
         
         yo = +20;
-        centerLeftString(g, "Load", 5, Host->appHeight() / 2 + yo);
+        centerLeftString(g, "Load", 5, retroTitleSectionHeight + Host->appHeight() / 2 + yo);
         g->fillTriangle(
-            Host->appWidth() - 5 - trSz / 2, Host->appHeight() / 2 + yo + trSz / 2, 
-            Host->appWidth() - 5 - trSz, Host->appHeight() / 2 + yo - trSz / 2, 
-            Host->appWidth() - 5, Host->appHeight() / 2 + yo - trSz / 2,
+            Host->appWidth() - 5 - trSz / 2, retroTitleSectionHeight + Host->appHeight() / 2 + yo + trSz / 2, 
+            Host->appWidth() - 5 - trSz, retroTitleSectionHeight + Host->appHeight() / 2 + yo - trSz / 2, 
+            Host->appWidth() - 5, retroTitleSectionHeight + Host->appHeight() / 2 + yo - trSz / 2,
             TextColor
         );
         
