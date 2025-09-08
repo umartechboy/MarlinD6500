@@ -34,7 +34,7 @@
 #include "M3DUI/App/MenuApp.h"
 //#include "SoftWireLibs/ADS1x15/Adafruit_ADS1X15.h"
 #include <map>
-
+#include "LoadCell/LoadCell.h"
 std::map<int, uint16_t> adcMap;
 SoftWire sWire;
 PCF8574 pcf1(0x20, &sWire);
@@ -207,7 +207,6 @@ void pcfServiceTask(void *param) {
 
 
 void InitIOExpanders(){
-
   xPCFIOMutex = xSemaphoreCreateMutex();
   xTaskCreatePinnedToCore(pcfServiceTask, "PCFService", 2048, NULL, 1, &pcfTaskHandle, 1);
   //SERIAL_IMPL.println("Starting Wire and IO Expander");
@@ -231,10 +230,18 @@ void InitIOExpanders(){
   //   SERIAL_IMPL.println("ADS1115 Failed");
 
   //SERIAL_IMPL.println("Expanders On.");
-  pcfMapToSync = 0b00000000 | (0b10100000 << 8);
+  delay(20);
+  #define pcfBitOne(pin) (1 << (pin - 200))
+  pcfMapToSync = 0 | 
+    pcfBitOne(X_ENABLE_PIN) |
+    pcfBitOne(Y_ENABLE_PIN) |
+    pcfBitOne(E0_ENABLE_PIN) |
+    pcfBitOne(E1_ENABLE_PIN) |
+    pcfBitOne(X_STOP_PIN) |
+    pcfBitOne(Z_STOP_PIN) |
+    pcfBitOne(HxData);
   pcf1.write8(pcfMapToSync); // 200-207
   pcf2.write8(pcfMapToSync >> 8); // 208-215, 1 for X and Z stops
-  
 }
 
 void MarlinHAL::init_board() {

@@ -20,6 +20,7 @@ class RetroMainMenuStep: public MenuStep {
     StringListItem* filamentSetupOption;
     StringListItem* bedLevelingOption;
     StringListItem* settingsOption;
+    StringListItem* unmountSDOption;
     StringListItem* infoOption;
 };
 

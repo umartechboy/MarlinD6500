@@ -1676,10 +1676,15 @@ void setup() {
  *    as long as idle() or manage_inactivity() are being called.
  */
 extern void ESP3DLIBLOOP();
+#include "sd/cardreader.h"
+long lastEsp3DLoop = 0;
 void loop() {
   do {
     idle();
-    ESP3DLIBLOOP();
+    if (!card.isPrinting() || millis() - lastEsp3DLoop > 5000){
+      ESP3DLIBLOOP();
+      lastEsp3DLoop = millis();
+    }
     #if ENABLED(SDSUPPORT)
       if (card.flag.abort_sd_printing) abortSDPrinting();
       if (marlin_state == MF_SD_COMPLETE) finishSDPrinting();

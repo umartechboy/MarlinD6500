@@ -13,11 +13,11 @@ private:
     int cleaningWipeSentIndex = -1;
     long levelingDoneSince = 0;
     void notifyLevelingDone();
-    int wipeAreaWidth = 10;
-    int wipeAreaHeight = 10;
-    int wipeRungHeight = 2;
-    int pxStart = ((X_BED_SIZE - 2 * PROBING_MARGIN) * 3) / 4 - wipeAreaWidth;
-    int pyStart = ((Y_BED_SIZE - 2 * PROBING_MARGIN) * 3) / 4 - wipeAreaHeight;
+    int wipeAreaWidth = 15;
+    int wipeAreaHeight = 25;
+    int wipeRungHeight = 5;
+    int pxStart = 18 + PROBING_MARGIN + ((X_BED_SIZE - 2 * PROBING_MARGIN) * 3) / 4 - wipeAreaWidth / 2 ;
+    int pyStart = PROBING_MARGIN + ((Y_BED_SIZE - 2 * PROBING_MARGIN) * 3) / 4 - wipeAreaHeight;
 public:
     BedLevelStep(MenuHost* host);
     ~BedLevelStep();

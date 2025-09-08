@@ -860,7 +860,7 @@ float Probe::run_z_probe(const bool sanity_check/*=true*/) {
     if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPGM("2nd Probe Z:", z2, " Discrepancy:", first_probe_z - z2);
 
     // Return a weighted average of the fast and slow probes
-    const float measured_z = (z2 * 4.5 + first_probe_z * 0.5) * 0.2 + 0.08/* Compensate for pressure down */;
+    const float measured_z = (z2 * 4.5 + first_probe_z * 0.5) * 0.2 + 0.3/* Compensate for pressure down */;
 
   #else
 

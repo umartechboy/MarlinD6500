@@ -1,5 +1,6 @@
 #include "FilamentChange.h"
 #include "..\..\Hardware\MarlinSpecific.h"
+#include "..\MenuApp.h"
 #include "..\Images.h"
 #include <Fonts/FreeSans9pt7b.h>
 #include <Fonts/FreeSans12pt7b.h>
@@ -28,13 +29,21 @@ void FilamentChangeStep::Tick()
     if (stage == FilamentChangeStage::Preheat){
         if (readTemp(filamentIndex) > preHeatTemp) {// Done preheating
             stage = FilamentChangeStage::ProcessSelection;
+            RetroPreviousStep = &retroMainMenuStep;
         }
+        else
+            RetroPreviousStep = 0;
     }
     else if (stage  == FilamentChangeStage::Wait){
         if (!hasComsQueued()) {// all done
             stage = FilamentChangeStage::ProcessSelection;
+            RetroPreviousStep = &retroMainMenuStep;
         }
+        else
+            RetroPreviousStep = 0;
     }
+    else
+        RetroPreviousStep = 0;
 }
 
 void FilamentChangeStep::LoadComplete(){
@@ -96,14 +105,14 @@ void FilamentChangeStep::Paint(BufferedDisplay* g){
     if (stage == FilamentChangeStage::Preheat){
         
         g->setFont(&FreeSans9pt7b);
-        centerString(g, "Heating up...", retroTitleSectionHeight + Host->appWidth() / 2, Host->appHeight() / 2 - 10);
+        centerString(g, "Heating up...", Host->appWidth() / 2, Host->appHeight() / 2 - 10);
         g->setFont();
         String tempStatus = String("(") + String(readTemp(filamentIndex), 0) + "/" + String(preHeatTemp, 0) + String(")");
         centerString(g, tempStatus.c_str(), Host->appWidth() / 2, retroTitleSectionHeight + Host->appHeight() / 2 + 10);
     }
     else if (stage == FilamentChangeStage::ProcessSelection){
         int trSz = 12;
-        int yo = -20;
+        int yo = -25;
         g->setFont(&FreeSans12pt7b);
         g->SetOpacity(100);
         centerLeftString(g, "Unload", 5, retroTitleSectionHeight + Host->appHeight() / 2 + yo);

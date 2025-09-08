@@ -45,8 +45,6 @@ void InitDisplayBasic(){
   #ifndef __MARLIN_FIRMWARE__
     beginDigitalIO(); // Initialize digital IO
   #endif
-  digitalWrite(TFT_RST, 0);
-  delay(1);
   digitalWrite(TFT_RST, 1);
   delay(1);
 

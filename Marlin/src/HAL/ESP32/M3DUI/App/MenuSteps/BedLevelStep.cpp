@@ -36,7 +36,7 @@ void BedLevelStep::Tick()
         if(cleaningWipeDueIndex < wipeAreaHeight / wipeRungHeight){
             if (cleaningWipeSentIndex != cleaningWipeDueIndex) {
                 // Send now                
-                String wipeCom1 = String("G1 X") + String(wipeAreaWidth) + String(" E-10 F300");
+                String wipeCom1 = String("G1 X") + String(wipeAreaWidth) + String(" E-15 F300");
                 String wipeCom2 = String("G1 E6 Z2 F2000"); // force ooze out too
                 String wipeCom3 = String("G1 X") + String(-wipeAreaWidth) + String(" Y") + String(wipeRungHeight);// Force ooze out
                 String wipeCom4 = String("G30"); // Find new Z
@@ -71,7 +71,7 @@ void BedLevelStep::Tick()
         }
         
     }
-    else if (millis() - levelingDoneSince > 5000 && levelingDoneSince != 0 && !checkABLFailed()){ // auto procede in case of success
+    else if (millis() - levelingDoneSince > 5000 && levelingDoneSince != 0 && checkABLComplete()){ // auto procede in case of success
         TickPeriod = 0; // remove the tick
         this->RetroPreviousStep = &retroMainMenuStep;
         Host->GotoPreviousStep();
@@ -188,8 +188,8 @@ void BedLevelStep::Paint(BufferedDisplay* g){
             }
             else{           
                 g->setFont();     
-                centerString(g, "Leveling build plate", retroTitleSectionHeight +Host->appWidth() / 2, Host->appHeight() / 2 - 8);
-                centerString(g, "Please wait...", retroTitleSectionHeight + Host->appWidth() / 2, Host->appHeight() / 2 + 8);
+                centerString(g, "Leveling build plate", Host->appWidth() / 2, Host->appHeight() / 2 - 8);
+                centerString(g, "Please wait...", Host->appWidth() / 2, Host->appHeight() / 2 + 8);
             }
         }
     }

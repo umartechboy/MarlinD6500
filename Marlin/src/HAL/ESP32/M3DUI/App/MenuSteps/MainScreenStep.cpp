@@ -141,7 +141,7 @@ void MainScreenStep::Paint(BufferedDisplay* g) {
                 centerLeftString(g, "All Done!", 2, titleHeight);
             }
 
-            //centerRightString(g, (String((print_job_timer.getStats().filamentUsed - materialAtStart) / 1000, 3) + String("m")).c_str(), Host->appWidth() - 2, titleHeight);
+            centerRightString(g, (String((print_job_timer.getStats().filamentUsed - materialAtStart) / 1000, 3) + String("m")).c_str(), Host->appWidth() - 2, titleHeight);
             
             int pbh = 8;
             g->SetOpacity(50);
@@ -151,7 +151,7 @@ void MainScreenStep::Paint(BufferedDisplay* g) {
             g->SetOpacity(100);
             g->fillRoundRect(1, Host->appTop() + (Host->appHeight() + 16) / 2 - 5, ((Host->appWidth() - 2) * pcCommplete) / 100, pbh, pbh / 2, TextColor);    
             g->setFont();
-            //centerString(g, (String(pcCommplete, 1) + String("%")).c_str(), Host->appWidth() / 2, Host->appTop() + (Host->appHeight() + 16) / 2 - 14);
+            centerString(g, (String(pcCommplete, 1) + String("%")).c_str(), Host->appWidth() / 2, Host->appTop() + (Host->appHeight() + 16) / 2 - 14);
             g->setFont();
             centerString(g, fileName.c_str(), Host->appWidth() / 2, Host->appTop() + (Host->appHeight() + 16) / 2 + pbh + 5);
         }

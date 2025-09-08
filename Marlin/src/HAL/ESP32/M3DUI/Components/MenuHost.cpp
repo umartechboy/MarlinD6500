@@ -86,7 +86,7 @@ void MenuHost::GotoPreviousStep(){
         else { // Dummy step
             // double check before casting
             if (CurrentStep->GetPreviousStep()->IsDummyStep()){                
-                SERIAL_IMPL.println("Going to previos DummyStep");
+                SERIAL_IMPL.println("Going to previous DummyStep");
                 ((DummyMenuStep*)(CurrentStep->GetPreviousStep()))->NotifySelected();
             }
         }

@@ -1,7 +1,17 @@
 #include "RetroMainMenu.h"
 #include "..\MenuApp.h"
 #include "..\Images.h"
+#include "..\..\..\..\..\sd\cardreader.h"
 
+DummyMenuStep* unmountSDStep;
+
+static void OnUnmountSDSelected(void* caller){
+    RetroMainMenuStep* This = (RetroMainMenuStep*)caller;
+    if (card.isMounted()){
+        card.release();
+    }
+    This->Host->PushNotification("You may remove the SD Card", 3000);
+}
 static void selectionUpdated(void* caller, ListItem* selectedItem, int selectedIndex){
     RetroMainMenuStep* This = (RetroMainMenuStep*)caller;
 
@@ -10,6 +20,7 @@ static void selectionUpdated(void* caller, ListItem* selectedItem, int selectedI
     if (selectedItem == This->filamentSetupOption) This->RetroNextStep = &materialsMenuStep;
     if (selectedItem == This->bedLevelingOption) This->RetroNextStep = &bedLevelStep;
     if (selectedItem == This->settingsOption) This->RetroNextStep = &settingsStep;
+    if (selectedItem == This->infoOption) This->RetroNextStep = unmountSDStep;
     if (selectedItem == This->infoOption) This->RetroNextStep = &printerInfoStep;
 
     if (This->RetroNextStep)
@@ -33,14 +44,19 @@ RetroMainMenuStep::RetroMainMenuStep(MenuHost* host):MenuStep(host) {
     bedLevelingOption = new StringListItem(Host, &img_RetroBedLevel, "Bed Leveling", 0, 18);
     settingsOption = new StringListItem(Host, &img_RetroOptions, "Settings", 0, 18);
     infoOption = new StringListItem(Host, &img_RetroRedM3D, "Info", 0, 18);
+    unmountSDOption = new StringListItem(Host, &img_RetroSD, "Unmount Card", 0, 18);
     list->Add(printFromSDOption);
     list->Add(filamentSetupOption);
     list->Add(bedLevelingOption);
     list->Add(settingsOption);
+    list->Add(unmountSDOption);
     list->Add(infoOption);
+    unmountSDStep = new DummyMenuStep(this->Host);
+    unmountSDStep->SetLoadCallBack(OnUnmountSDSelected, this);
 }
 RetroMainMenuStep::~RetroMainMenuStep(){
     delete list;
+    delete unmountSDStep;
 }
 void RetroMainMenuStep::Tick() {
     NeedsRedraw = true;

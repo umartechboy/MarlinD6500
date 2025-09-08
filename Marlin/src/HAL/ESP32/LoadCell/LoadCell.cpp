@@ -1,8 +1,6 @@
 #include "../../../inc/MarlinConfig.h"
  #include "HX711/HX711.h"
  #include "LoadCell.h"
- #define HxData 201
- #define HxClk  15
 
  HX711_ADC load(HxData, HxClk); 
  
@@ -55,9 +53,21 @@
     // digitalWrite(HxData, LOW);
     // delay(1000);
     if (ProbeEnable){
+            
+        // if (millis() - lastUpdateAt < 100)
+        //     return;
+        // lastUpdateAt = millis();
+        // digitalWrite(HxClk, (millis() % 4000) > 2000);
+        // SERIAL_IMPL.print("Clk: ");
+        // SERIAL_IMPL.print((millis() % 4000) > 2000);
+        // SERIAL_IMPL.print("Data: ");
+        // SERIAL_IMPL.print(digitalRead(HxData));
+        // SERIAL_IMPL.println();
+        // return;
+
         if (millis() - lastUpdateAt < 12)
             return;
-        if (load.update()){ // reset the timer only in case the update was successful, otherwise, retry as soon as possible
+        if (load.update()) { // reset the timer only in case the update was successful, otherwise, retry as soon as possible
             lastUpdateAt = millis();
             // Serial.print(millis());
             // Serial.print(": ");
@@ -89,8 +99,8 @@
             // SERIAL_IMPL.print(reading);
             // SERIAL_IMPL.print("\t");
             
-            SERIAL_IMPL.print("PE: ");
-            SERIAL_IMPL.print(ProbeEnable);
+            // SERIAL_IMPL.print("PE: ");
+            // SERIAL_IMPL.print(ProbeEnable);
             SERIAL_IMPL.print(", Pr: ");
             SERIAL_IMPL.print(exampleReadingCount);
             SERIAL_IMPL.print(", ");
