@@ -1,0 +1,1 @@
+void InitMusic(int stepPin, int dirPin, int enablePin);

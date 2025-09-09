@@ -22,7 +22,7 @@
 #ifdef ARDUINO_ARCH_ESP32
 
 #include "../../inc/MarlinConfig.h"
-
+#include "Music.h"
 #include <rom/rtc.h>
 #include <driver/adc.h>
 #include <esp_adc_cal.h>
@@ -247,6 +247,7 @@ void InitIOExpanders(){
 void MarlinHAL::init_board() {
   UISetup();
   LoadCellSetup();
+  InitMusic(Y_STEP_PIN, Y_DIR_PIN, Y_ENABLE_PIN);
 
   #if ENABLED(USE_ESP32_TASK_WDT)
     esp_task_wdt_init(10, true);
@@ -674,7 +675,7 @@ void MarlinHAL::set_pwm_duty(const pin_t pin, const uint16_t v, const uint16_t v
     }
 }
 
-void removePWMOnPin(const pin_t pin){  
+void removePWMOnPin(const int16_t pin){  
       const int8_t cid = channel_for_pin(pin);
       if (cid >= 0) { // has an assignment
         ledcDetachPin(chan_pin[cid]);

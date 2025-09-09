@@ -20,7 +20,8 @@
  *
  */
 #pragma once
-
+#ifndef __PINS_D8500_H__
+#define __PINS_D8500_H__
 /**
  * FYSETC E4 pin assignments
  *
@@ -114,4 +115,6 @@
 #endif
 #ifndef HARDWARE_SERIAL1_TX
   #define HARDWARE_SERIAL1_TX                 -1
+#endif
+
 #endif

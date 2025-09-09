@@ -555,6 +555,10 @@ void GcodeSuite::process_parsed_command(const bool no_ok/*=false*/) {
 
       case 31: M31(); break;                                      // M31: Report time since the start of SD print or last M109
 
+      case 35: M35(); break;                                      // Begin Monophonic
+      case 36: M36(); break;                                      // Append Monophonic
+      case 37: M37(); break;                                      // Play Monophonic
+
       #if ENABLED(DIRECT_PIN_CONTROL)
         case 42: M42(); break;                                    // M42: Change pin state
       #endif

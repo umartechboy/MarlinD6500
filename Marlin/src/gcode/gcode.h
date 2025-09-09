@@ -666,6 +666,9 @@ private:
     #endif
   #endif
 
+  static void M35(); // Begin Monophonic
+  static void M36(); // Append Monophonic
+  static void M37(); // Play Monophonic
   #if ENABLED(DIRECT_PIN_CONTROL)
     static void M42();
   #endif
