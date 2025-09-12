@@ -151,4 +151,5 @@ void abortPrint(){
     SERIAL_IMPL.println("abortPrint()");
     pausePrint();
     card.abortFilePrintNow();
+    enqueueComs({"G1 Y200 X100 F2000"});    
 }

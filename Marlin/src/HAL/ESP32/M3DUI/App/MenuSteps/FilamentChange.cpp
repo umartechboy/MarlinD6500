@@ -42,6 +42,9 @@ void FilamentChangeStep::Tick()
         else
             RetroPreviousStep = 0;
     }
+    else if (stage == FilamentChangeStage::ProcessSelection){
+        RetroPreviousStep = &retroMainMenuStep;
+    }
     else
         RetroPreviousStep = 0;
 }
@@ -112,7 +115,7 @@ void FilamentChangeStep::Paint(BufferedDisplay* g){
     }
     else if (stage == FilamentChangeStage::ProcessSelection){
         int trSz = 12;
-        int yo = -25;
+        int yo = -30;
         g->setFont(&FreeSans12pt7b);
         g->SetOpacity(100);
         centerLeftString(g, "Unload", 5, retroTitleSectionHeight + Host->appHeight() / 2 + yo);

@@ -19,12 +19,13 @@ static void filamentSetupSelected(void* caller){
     This->sentForMaterialChange = true;
 }
 static void abortPrintSelected(void* caller){
-    abortPrint();    
     InPrintMenuStep* This = (InPrintMenuStep*)caller;
+    abortPrint();    
     This->RetroNextStep = &mainScreenStep;
     mainScreenStep.fileName = "";
     mainScreenStep.DOSFileName = "";
     mainScreenStep.printStatus = PrintStatus::Idle;
+    mainScreenStep.RetroNextStep = &retroMainMenuStep;
     This->Host->GotoNextStep();
     This->RetroPreviousStep = 0; // we are now in the main menu
 }
@@ -105,6 +106,7 @@ void InPrintMenuStep::LoadBegin(){
 }
 void InPrintMenuStep::LoadComplete(){        
     sentForMaterialChange = false;
+    RetroPreviousStep = &mainScreenStep;
 }
 
 void InPrintMenuStep::UnloadComplete(){    

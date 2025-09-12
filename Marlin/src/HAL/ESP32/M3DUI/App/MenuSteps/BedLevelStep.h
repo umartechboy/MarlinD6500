@@ -16,7 +16,7 @@ private:
     int wipeAreaWidth = 15;
     int wipeAreaHeight = 25;
     int wipeRungHeight = 5;
-    int pxStart = 18 + PROBING_MARGIN + ((X_BED_SIZE - 2 * PROBING_MARGIN) * 3) / 4 - wipeAreaWidth / 2 ;
+    int pxStart = 30 + PROBING_MARGIN + ((X_BED_SIZE - 2 * PROBING_MARGIN) * 3) / 4 - wipeAreaWidth / 2;
     int pyStart = PROBING_MARGIN + ((Y_BED_SIZE - 2 * PROBING_MARGIN) * 3) / 4 - wipeAreaHeight;
 public:
     BedLevelStep(MenuHost* host);

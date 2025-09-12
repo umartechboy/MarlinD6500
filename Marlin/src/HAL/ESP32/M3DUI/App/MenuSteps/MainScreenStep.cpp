@@ -1,6 +1,8 @@
 #include "MainScreenStep.h"
 #include "..\Images.h"
 #include "../../../../../module/printcounter.h"
+#include "../../../../../module/motion.h"
+#include "../../../../../module/temperature.h"
 #include "../../../../../sd/cardreader.h"
 #include <Fonts/FreeSans12pt7b.h>
 #include <Fonts/FreeSans9pt7b.h>
@@ -133,15 +135,23 @@ void MainScreenStep::Paint(BufferedDisplay* g) {
             if (Host->Retro)
                 titleHeight = retroTitleSectionHeight + 14;
             
-            if (card.isPrinting())
-                centerLeftString(g, "Printing", 2, titleHeight);
+            if (card.isPrinting()) {
+                if (thermalManager.degHotendNear(active_extruder, thermalManager.degTargetHotend(active_extruder)))
+                    centerLeftString(g, "Printing", 2, titleHeight);
+                else
+                    centerLeftString(g, "Preheating", 2, titleHeight);
+            }
             else if (card.isPaused())
                 centerLeftString(g, "Paused", 2, titleHeight);
             else {// Must have ended
                 centerLeftString(g, "All Done!", 2, titleHeight);
             }
 
-            centerRightString(g, (String((print_job_timer.getStats().filamentUsed - materialAtStart) / 1000, 3) + String("m")).c_str(), Host->appWidth() - 2, titleHeight);
+            if (thermalManager.degHotendNear(active_extruder, thermalManager.degTargetHotend(active_extruder)))
+                centerRightString(g, (String((print_job_timer.getStats().filamentUsed - materialAtStart) / 1000, 3) + String("m")).c_str(), Host->appWidth() - 2, titleHeight);
+            else
+                centerRightString(g, (String((thermalManager.degTargetHotend(active_extruder) / thermalManager.degTargetHotend(active_extruder)) / 1000, 3) + String("%")).c_str(), Host->appWidth() - 2, titleHeight);
+            
             
             int pbh = 8;
             g->SetOpacity(50);

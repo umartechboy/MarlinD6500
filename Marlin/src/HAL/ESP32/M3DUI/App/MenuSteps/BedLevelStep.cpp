@@ -9,7 +9,6 @@ BedLevelStep::BedLevelStep(MenuHost* host):MenuStep(host)
 {
     TextColor = ST7735_WHITE;
     Icon = &img_Tools;
-    TickPeriod = 50;
     NextStep = &toolsMenuStep;
     Title = "Auto bed leveling";
 }
@@ -20,8 +19,7 @@ BedLevelStep::~BedLevelStep()
 
 void BedLevelStep::Tick()
 {
-    NeedsRedraw = true;
-    
+    NeedsRedraw = true;    
     if ((readTemp(0) >= preHeatTemp && readTemp(1) >= preHeatTemp)){
         if (!donePreHeating){
             // just done
@@ -36,7 +34,7 @@ void BedLevelStep::Tick()
         if(cleaningWipeDueIndex < wipeAreaHeight / wipeRungHeight){
             if (cleaningWipeSentIndex != cleaningWipeDueIndex) {
                 // Send now                
-                String wipeCom1 = String("G1 X") + String(wipeAreaWidth) + String(" E-15 F300");
+                String wipeCom1 = String("G1 X") + String(wipeAreaWidth) + String(" E-9 F300");
                 String wipeCom2 = String("G1 E6 Z2 F2000"); // force ooze out too
                 String wipeCom3 = String("G1 X") + String(-wipeAreaWidth) + String(" Y") + String(wipeRungHeight);// Force ooze out
                 String wipeCom4 = String("G30"); // Find new Z
@@ -59,21 +57,17 @@ void BedLevelStep::Tick()
                 writeTemp(0, 0);
                 writeTemp(1, 0);
             }
-            else {
-                // Just wait now!
-                if (checkABLComplete()){
-                    if (levelingDoneSince == 0){ // first call
-                        PreviousStep = &bedLevelStep;
-                        notifyLevelingDone();
-                    }
-                }
-            }
-        }
-        
+            // else{
+            // This keeps on triggering as long as levelingDoneSince is not set
+            // }
+
+        }        
     }
-    else if (millis() - levelingDoneSince > 5000 && levelingDoneSince != 0 && checkABLComplete()){ // auto procede in case of success
+    else if (millis() - levelingDoneSince > 5000 && levelingDoneSince != 0 && !checkABLFailed()){ // auto procede in case of success
+        SERIAL_IMPL.println("Wait on completion is up. Go back to main menu");
         TickPeriod = 0; // remove the tick
         this->RetroPreviousStep = &retroMainMenuStep;
+        this->PreviousStep = &bedLevelStep;
         Host->GotoPreviousStep();
     }
 }
@@ -108,10 +102,12 @@ void BedLevelStep::UnloadBegin(){
 
 void BedLevelStep::notifyLevelingDone(){
     if (levelingDoneSince == 0){
+        SERIAL_IMPL.println("Leveling done");
         TickPeriod = 100;
         levelingDoneSince = millis();
         writeTemp(0, 0);
         writeTemp(1, 0);
+        enqueueComs({"M106 S0", "G1 Y160 X100 Z5 F2000"}); // Move out of the way
     }
 }
 void BedLevelStep::Paint(BufferedDisplay* g){            
@@ -139,6 +135,7 @@ void BedLevelStep::Paint(BufferedDisplay* g){
             g->setFont(&FreeSans9pt7b);
             centerString(g, "Leveling", Host->appWidth() / 2,  retroTitleSectionHeight + Host->appHeight() / 2 - 10);
             centerString(g, "Successful", Host->appWidth() / 2, retroTitleSectionHeight + Host->appHeight() / 2 + 10);
+            notifyLevelingDone();
         }
         else { // Going on or done with failure
             // Draw the bed
