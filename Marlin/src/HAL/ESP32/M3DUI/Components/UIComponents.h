@@ -51,10 +51,11 @@ public:
 
 class ColorSelectorListItem: public ListItem{
 public:
-    ColorSelectorListItem(MenuHost* host, String str, int colorIndex, int height);
+    ColorSelectorListItem(MenuHost* host, String str, int color0Index, int color1Index, int height);
     String ItemText;
     String Label;
-    int selectedColorIndex = 0;
+    int selectedColor0Index = 0;
+    int selectedColor1Index = 0;
     void incrementColor();
     void decrementColor();
     void Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, int x, int y, int width, int height, bool selected) override;

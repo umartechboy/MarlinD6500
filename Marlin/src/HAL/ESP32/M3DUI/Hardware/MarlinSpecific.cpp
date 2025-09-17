@@ -3,6 +3,7 @@
 #include "..\..\..\..\gcode\queue.h"
 #include "..\..\..\..\gcode\gcode.h"
 #include "..\..\..\..\sd\cardreader.h"
+#include "..\..\..\..\feature\powerloss.h"
 
 static int target [2] = {30, 30};
 
@@ -110,25 +111,28 @@ void ABLMeshUpdate(int _pointsDone){
     pointsDone = _pointsDone;
 }
 
-bool nozzleCleaningSent = false;
-bool filamentPositioningSent = false;
-bool printComsSent = false;
-
 void printJobTick(){
 
 }
 
 extern float lastRecoverySavedAt;
-void prepareForPrint(String dosFileName, bool hasExtruder1, bool hasExtruder2, void (*printStartedCallback)(void*), void* sender){
-    nozzleCleaningSent = false;
-    filamentPositioningSent = false;
-    printComsSent = false;
+void prepareMarlinForPrint(String dosFileName, bool hasExtruder1, bool hasExtruder2, void (*printStartedCallback)(void*), void* sender){
     lastRecoverySavedAt = 0.1;
     
     // FOr now, return right away.
     enqueueComs({"M413 S1"});
     String m23 = String("M23 ") + dosFileName;
     enqueueComs({"M21", m23, "M24"}); // Init SD, Select File, Put to print
+    
+    (*printStartedCallback)(sender);
+}
+void prepareMarlinForRecover(void (*printStartedCallback)(void*), void* sender){
+    lastRecoverySavedAt = 0.1;
+    
+    // FOr now, return right away.
+    enqueueComs({"M1000", "M413 S1"}); // Init SD, Select File, Put to print, enable recovery    
+    recovery.enable(true); // in case its not enabled after recovery
+    recovery.save(true);
     (*printStartedCallback)(sender);
 }
 void pausePrint(){

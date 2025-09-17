@@ -9,8 +9,6 @@ private:
     uint16_t e0Color = 0;
     uint16_t e1Color = 0;
     float materialAtStart = 0;
-    DummyMenuStep* cancelResumeDummyStep;
-    DummyMenuStep* beginResumeDummyStep;
 public:
     // Clean, trimmed, name without extensions
     String fileName;
@@ -18,10 +16,12 @@ public:
     String DOSFileName;
     PrintStatus printStatus = PrintStatus::Idle;
     int minX = -1, maxX = -1, minY = -1, maxY = -1, maxZ = -1;
+    bool preparingRecovery = false;
     int xOffset = 0;
     int yOffset = 0;
     MainScreenStep(MenuHost* host);
     ~MainScreenStep();
+    void prepareThisForPrint();
     void Tick() override;
     void Paint(BufferedDisplay* g) override;
     void HandleKeyPress(Keys key) override;

@@ -23,7 +23,8 @@ enum PrintStatus{
     FileToPrint,
     Printing,
     PrintToResume,
-    ChangingFilament
+    ChangingFilament,
+    PrintToRecover
 };
 
 #endif

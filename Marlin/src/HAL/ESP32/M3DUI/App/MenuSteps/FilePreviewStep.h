@@ -18,6 +18,7 @@ class FilePreviewStep: public MenuStep {
     private:
     uint16_t e0Color = 0;
     uint16_t e1Color = 0;
+    int def_e = 0;
     public:
     pngDecodeParams pngParams;
     float filamentUsed_mm = 0;

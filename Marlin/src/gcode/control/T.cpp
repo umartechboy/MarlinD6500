@@ -34,6 +34,8 @@
 #define DEBUG_OUT ENABLED(DEBUG_LEVELING_FEATURE)
 #include "../../core/debug_out.h"
 
+// swap tool colors in M3D UI
+volatile bool swapTools = false;
 /**
  * T0-T<n>: Switch tool, usually switching extruders
  *
@@ -46,8 +48,15 @@
  *   Tx   Same as T?, but nozzle doesn't have to be preheated. Tc requires a preheated nozzle to finish filament load.
  *   Tc   Load to nozzle after filament was prepared by Tc and nozzle is already heated.
  */
-void GcodeSuite::T(const int8_t tool_index) {
-
+void GcodeSuite::T(const int8_t tool_index_) {
+  int8_t tool_index = tool_index_;
+  if (swapTools){
+    if(tool_index == 0)
+      tool_index = 1;
+    else if (tool_index == 1){
+      tool_index = 0;
+    }
+  }
   DEBUG_SECTION(log_T, "T", DEBUGGING(LEVELING));
   if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPGM("...(", tool_index, ")");
 

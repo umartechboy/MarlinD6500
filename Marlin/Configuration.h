@@ -1365,6 +1365,7 @@
  * nozzle system or a piezo-electric smart effector.
  */
 #define NOZZLE_AS_PROBE
+#define NOZZLE_AS_PROBE_PRESSURE_COMPENSATION 0.2
 
 /**
  * Z Servo Probe, such as an endstop switch on a rotating arm.

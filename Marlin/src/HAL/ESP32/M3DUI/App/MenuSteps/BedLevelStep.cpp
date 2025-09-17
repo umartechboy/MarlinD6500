@@ -26,7 +26,7 @@ void BedLevelStep::Tick()
             // Send the cleaning codes
             // find an empty slot
             String probeCom = String("G30 X") + String(pxStart - 20) + String(" Y") + String(pyStart);
-            enqueueComs({"G91", "M106" "G1 Z3 X20", probeCom}); // We are gonna need the fan too
+            enqueueComs({"G91", "M106", "T0", "G1 Z3 X20", probeCom}); // We are gonna need the fan too
         }
         donePreHeating = true;
     }

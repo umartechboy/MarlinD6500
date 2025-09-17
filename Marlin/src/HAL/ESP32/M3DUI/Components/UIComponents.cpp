@@ -54,19 +54,24 @@ void ListSeparatorItem::Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor
     g->SetOpacity(opBkp);
 }
 
-ColorSelectorListItem::ColorSelectorListItem(MenuHost* host, String str, int colorIndex, int height):ListItem(host, height){
+ColorSelectorListItem::ColorSelectorListItem(MenuHost* host, String str, int color0Index, int color1Index, int height):ListItem(host, height){
     ItemText = str;
-    selectedColorIndex = colorIndex;
+    selectedColor0Index = color0Index;
+    selectedColor1Index = color1Index;
 }
 void ColorSelectorListItem::incrementColor(){
-    selectedColorIndex ++;
-    if (selectedColorIndex >= sizeof(AvailableColors) / sizeof(AvailableColors[0]))
-        selectedColorIndex = 0;
+    selectedColor0Index ++;
+    if (selectedColor0Index >= sizeof(AvailableColors) / sizeof(AvailableColors[0]))
+        selectedColor0Index = 0;
+        
+    selectedColor1Index = selectedColor0Index;
 }
 void ColorSelectorListItem::decrementColor(){
-    selectedColorIndex --;
-    if (selectedColorIndex < 0)
-        selectedColorIndex = sizeof(AvailableColors) / sizeof(AvailableColors[0]) - 1;
+    selectedColor0Index --;
+    if (selectedColor0Index < 0){
+        selectedColor0Index = sizeof(AvailableColors) / sizeof(AvailableColors[0]) - 1;
+    }
+    selectedColor1Index = selectedColor0Index;
 }
 void ColorSelectorListItem::Paint(BufferedDisplay* g, uint8_t op, uint16_t TextColor, int x, int y, int width, int height, bool selected) {
     
@@ -91,7 +96,12 @@ void ColorSelectorListItem::Paint(BufferedDisplay* g, uint8_t op, uint16_t TextC
     }
     centerLeftString(g, ItemText.c_str(), px, y, &w);
     g->SetOpacity(100); // force full bright rect.
-    g->fillRoundRect(Host->appWidth() - pxe - arrowSpace - rSz, y - rSz/2, rSz, rSz, 3, AvailableColors[selectedColorIndex]);
+    if (selectedColor0Index == selectedColor1Index)
+        g->fillRoundRect(Host->appWidth() - pxe - arrowSpace - rSz, y - rSz/2, rSz, rSz, 3, AvailableColors[selectedColor0Index]);
+    else { // Draw Split Rect
+        g->fillRoundRect(Host->appWidth() - pxe - arrowSpace - rSz, y - rSz/2, rSz / 2, rSz, 3, AvailableColors[selectedColor0Index]);
+        g->fillRoundRect(Host->appWidth() - pxe - arrowSpace - rSz / 2, y - rSz/2, rSz / 2, rSz, 3, AvailableColors[selectedColor1Index]);
+    }
     g->SetOpacity(op); // revert to list opacity
     g->drawRoundRect(Host->appWidth() - pxe - arrowSpace - rSz, y - rSz/2, rSz, rSz, 3, TextColor);
     // Draw the label

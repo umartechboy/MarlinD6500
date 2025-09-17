@@ -4,6 +4,7 @@
 #include "../../../../../module/motion.h"
 #include "../../../../../module/temperature.h"
 #include "../../../../../sd/cardreader.h"
+#include "../../../../../feature/powerloss.h"
 #include <Fonts/FreeSans12pt7b.h>
 #include <Fonts/FreeSans9pt7b.h>
 #include "../../Hardware/MarlinSpecific.h"
@@ -19,21 +20,12 @@ void printComSent(void* sender){
     This->printStatus = PrintStatus::Printing;
     This->TickPeriod = 3000;
 }
-void cancelResumeCalled(void* sender){
+void recoverComSent(void* sender){
     MainScreenStep* This = (MainScreenStep*)sender;
-    card.removeJobRecoveryFile();
-    This->printStatus = PrintStatus::Idle;
-    This->RetroNextStep = &retroMainMenuStep;
-    This->RetroPreviousStep = 0;
-}
-void beginResumeCalled(void* sender){
-    MainScreenStep* This = (MainScreenStep*)sender;
-    SERIAL_IMPL.println("Resume print");
-    This->printStatus = PrintStatus::FileToPrint;
-    // Trigger the resume too
-    card.startOrResumeFilePrinting();
-    This->RetroNextStep = &inPrintMenuStep;
-    This->RetroPreviousStep = 0;
+    This->RetroNextStep = 0;
+    This->printStarted = true;
+    This->printStatus = PrintStatus::Printing;
+    This->TickPeriod = 3000;
 }
 MainScreenStep::MainScreenStep(MenuHost* host):MenuStep(host) {
     ButtonColor = DarkRed;
@@ -49,17 +41,19 @@ MainScreenStep::MainScreenStep(MenuHost* host):MenuStep(host) {
     inPrintMenuStep.RetroIcon = &img_RetroHome;
     inPrintMenuStep.Title = "Paused";
 
-    cancelResumeDummyStep = new DummyMenuStep(Host);
-    beginResumeDummyStep = new DummyMenuStep(Host);
-
-    cancelResumeDummyStep->SetLoadCallBack(cancelResumeCalled, this);
-    beginResumeDummyStep->SetLoadCallBack(beginResumeCalled, this);
     Icon = &img_Home;
     TickPeriod = 50;
 }
 MainScreenStep::~MainScreenStep(){
-    delete cancelResumeDummyStep;
-    delete beginResumeDummyStep;
+}
+void MainScreenStep::prepareThisForPrint(){    
+    materialAtStart = print_job_timer.getStats().filamentUsed;
+    RetroPreviousStep = 0;
+    RetroNextStep = 0;
+    NextActionString = "";
+    printStarted = false;            
+    preparingRecovery = false;
+    TickPeriod = 5000;
 }
 MenuStep* MainScreenStep::GetPreviousStep(bool returnEvenIfDummy){
     if (Host->Retro)
@@ -72,6 +66,13 @@ MenuStep* MainScreenStep::GetPreviousStep(bool returnEvenIfDummy){
 // extern void removeLoadCellOffset();
 void MainScreenStep::Tick() {
     NeedsRedraw = true;
+    if (card.isPrinting() && preparingRecovery) {
+        // just started print after recovery prep.
+        printStatus = PrintStatus::Printing;        
+        RetroNextStep = &inPrintMenuStep;
+        NextActionString = "Pause";
+        preparingRecovery = false;
+    }
     if (printStatus == PrintStatus::Idle && card.isPrinting()) { // Print sent via g code
         printComSent(this);
     }
@@ -81,7 +82,7 @@ void MainScreenStep::Tick() {
     }
     if (printStatus == PrintStatus::Printing){
         TickPeriod = 5000;
-        if (!card.isPrinting()) { // The print must have ended
+        if (!card.isPrinting() && !preparingRecovery) { // The print must have ended
             TickPeriod = 50;
             printStatus = PrintStatus::Idle;
             RetroNextStep = &retroMainMenuStep;
@@ -100,23 +101,24 @@ void MainScreenStep::Paint(BufferedDisplay* g) {
     // Draw the idle screen
     g->fillScreen(BackColor);
     g->setTextColor(TextColor);
-    if (printStatus == PrintStatus::PrintToResume){
+    if (printStatus == PrintStatus::PrintToRecover){
         g->setFont(&FreeSans9pt7b);
         int _w, _h;
-        drawMultilineCenteredText(g, "Do you want to resume the print?", Host->appWidth() / 2, retroTitleSectionHeight + Host->appHeight() / 2, Host->appWidth(), 16, &_w, &_h);
-        g->setFont(&FreeSans12pt7b);
-        centerString(g, "Yes", (Host->appWidth() * 1) / 4, retroTitleSectionHeight + Host->appHeight() / 2 + _h / 2 + 10);
-        centerString(g, "No",  (Host->appWidth() * 3) / 4, retroTitleSectionHeight + Host->appHeight() / 2 + _h / 2 + 10);
-        int tSz = 12;
+        int txtP = 10, txtW = 30;
+        drawMultilineCenteredText(g, "Do you want to recover the print?", Host->appWidth() / 2, retroTitleSectionHeight + Host->appHeight() / 2, Host->appWidth(), 16, &_w, &_h);
+        int16_t yesWid = 0, noWid = 0;
+        centerString(g, "Yes", (Host->appWidth() / 2) - txtP - txtW / 2, retroTitleSectionHeight + Host->appHeight() / 2 + _h / 2 + 10, &yesWid);
+        centerString(g, "No",  (Host->appWidth() / 2) + txtP + txtW / 2, retroTitleSectionHeight + Host->appHeight() / 2 + _h / 2 + 10, &noWid);
+        int tSz = 12, p = 10;
         g->fillTriangle(
-            Host->appWidth() / 4 - tSz / 2, Host->appHeight() / 2 + 49, 
-            Host->appWidth() / 4 + tSz / 2, Host->appHeight() / 2 + 49 - tSz / 2, 
-            Host->appWidth() / 4 + tSz / 2, Host->appHeight() / 2 + 49 + tSz / 2, 
+            (Host->appWidth() / 2) - txtW / 2 - txtP - yesWid / 2 - p + tSz / 2, Host->appHeight() / 2 + 49 + tSz / 2, 
+            (Host->appWidth() / 2) - txtW / 2 - txtP - yesWid / 2 - p + tSz / 2, Host->appHeight() / 2 + 49 - tSz / 2, 
+            (Host->appWidth() / 2) - txtW / 2 - txtP - yesWid / 2 - p - tSz / 2, Host->appHeight() / 2 + 49, 
             TextColor);
         g->fillTriangle(
-            (Host->appWidth() * 3) / 4 + tSz / 2, Host->appHeight() / 2 + 49, 
-            (Host->appWidth() * 3) / 4 - tSz / 2, Host->appHeight() / 2 + 49 - tSz / 2, 
-            (Host->appWidth() * 3) / 4 - tSz / 2, Host->appHeight() / 2 + 49 + tSz / 2, 
+            (Host->appWidth() / 2) + txtW / 2 + txtP + noWid / 2 + p - tSz / 2, Host->appHeight() / 2 + 49 + tSz / 2, 
+            (Host->appWidth() / 2) + txtW / 2 + txtP + noWid / 2 + p - tSz / 2, Host->appHeight() / 2 + 49 - tSz / 2, 
+            (Host->appWidth() / 2) + txtW / 2 + txtP + noWid / 2 + p + tSz / 2, Host->appHeight() / 2 + 49, 
             TextColor);
     }
     else {
@@ -136,13 +138,19 @@ void MainScreenStep::Paint(BufferedDisplay* g) {
                 titleHeight = retroTitleSectionHeight + 14;
             
             if (card.isPrinting()) {
-                if (thermalManager.degHotendNear(active_extruder, thermalManager.degTargetHotend(active_extruder)))
+                if (thermalManager.degHotendNear(active_extruder, thermalManager.degTargetHotend(active_extruder))) {
                     centerLeftString(g, "Printing", 2, titleHeight);
+                }
                 else
                     centerLeftString(g, "Preheating", 2, titleHeight);
             }
-            else if (card.isPaused())
-                centerLeftString(g, "Paused", 2, titleHeight);
+            else if (card.isPaused() || preparingRecovery) {
+                if (preparingRecovery){
+                    centerLeftString(g, "Preheating", 2, titleHeight);
+                }
+                else
+                    centerLeftString(g, "Paused", 2, titleHeight);
+            }
             else {// Must have ended
                 centerLeftString(g, "All Done!", 2, titleHeight);
             }
@@ -150,7 +158,7 @@ void MainScreenStep::Paint(BufferedDisplay* g) {
             if (thermalManager.degHotendNear(active_extruder, thermalManager.degTargetHotend(active_extruder)))
                 centerRightString(g, (String((print_job_timer.getStats().filamentUsed - materialAtStart) / 1000, 3) + String("m")).c_str(), Host->appWidth() - 2, titleHeight);
             else
-                centerRightString(g, (String((thermalManager.degTargetHotend(active_extruder) / thermalManager.degTargetHotend(active_extruder)) / 1000, 3) + String("%")).c_str(), Host->appWidth() - 2, titleHeight);
+                centerRightString(g, (String((thermalManager.degHotend(active_extruder) / (float)thermalManager.degTargetHotend(active_extruder)) * 100.0F, 0) + String("%")).c_str(), Host->appWidth() - 2, titleHeight);
             
             
             int pbh = 8;
@@ -192,7 +200,23 @@ void MainScreenStep::Paint(BufferedDisplay* g) {
 }
 
 void MainScreenStep::HandleKeyPress(Keys key){
-    if (!Host->Retro) {
+    if (Host->Retro) {        
+        if (printStatus == PrintStatus::PrintToRecover) { 
+            if (key == KEYPAD_LEFT) {
+                SERIAL_IMPL.println("Resume print");
+                prepareThisForPrint();
+                preparingRecovery = true;
+                prepareMarlinForRecover(recoverComSent, this);            
+            }
+            else if (key == KEYPAD_RIGHT){                
+                SERIAL_IMPL.println("Don't resume print");
+                recovery.purge();
+                printStatus = PrintStatus::Idle;
+                fileName = "";
+            }
+        } 
+    }
+    else {
         if (printStatus == PrintStatus::Idle){
             if (key == KEYPAD_LEFT && !Host->Retro){
                 SERIAL_IMPL.println("Go to previous from Idle");
@@ -203,7 +227,7 @@ void MainScreenStep::HandleKeyPress(Keys key){
                 Host->GotoNextStep();
             }
         }
-        else if (printStatus == PrintStatus::PrintToResume) { 
+        else if (printStatus == PrintStatus::PrintToRecover) { 
             if (key == KEYPAD_LEFT) {
                 SERIAL_IMPL.println("Resume print");
                 printStatus = PrintStatus::FileToPrint;
@@ -241,19 +265,18 @@ void MainScreenStep::LoadComplete(){
     if (Host->Retro){
         if (printStatus == PrintStatus::FileToPrint) { // This must be set by the file selection menus.
             SERIAL_IMPL.printf("Home screen with print file: %s, %s\n", fileName.c_str(), DOSFileName.c_str());
-            materialAtStart = print_job_timer.getStats().filamentUsed;
-            RetroPreviousStep = 0;
-            RetroNextStep = 0;
-            NextActionString = "";
-            printStarted = false;            
-            TickPeriod = 5000;
-            prepareForPrint(DOSFileName, true, true, printComSent, this);            
+            
+            prepareThisForPrint();
+            prepareMarlinForPrint(DOSFileName, true, true, printComSent, this);            
         }
         else if (printStatus == PrintStatus::Printing) {
             if (card.isPaused()) { // came back from the menu with back button
                 card.startOrResumeFilePrinting();                
                 TickPeriod = 5000;
             }
+        }
+        else if (printStatus == PrintStatus::PrintToRecover){
+            // Pretty much the same as other states.
         }
     }
     else {
@@ -264,25 +287,22 @@ void MainScreenStep::LoadComplete(){
             // Remove the steps to restrict access to the print alone
             NextStep = 0;
             PreviousStep = 0;
-            prepareForPrint(DOSFileName, true, true, printComSent, this);
+            prepareMarlinForPrint(DOSFileName, true, true, printComSent, this);
         } else if (printStatus == PrintStatus::ChangingFilament) { // Back from changing the filament
             materialsMenuStep.NextStep = &toolsMenuStep; // reset the route
             SERIAL_IMPL.println("Back to print (1)");
             card.startOrResumeFilePrinting();            
             TickPeriod = 5000;
-        }
-        else {
+        } else {
             SERIAL_IMPL.println("Idle home screen.");
             if(card.jobRecoverFileExists())
             {
                 SERIAL_IMPL.println("Recovery file exists");
-                printStatus = PrintStatus::PrintToResume;
+                printStatus = PrintStatus::PrintToRecover;
                 TickPeriod = 50;
                 // Remove the steps to restrict access to the print alone
                 NextStep = 0;
                 PreviousStep = 0;
-                RetroPreviousStep = cancelResumeDummyStep;
-                RetroNextStep = beginResumeDummyStep;
             }
             else {
                 NextStep = &sdMenuStep;

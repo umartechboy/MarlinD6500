@@ -376,6 +376,20 @@ void PrintJobRecovery::resume() {
     }
   #endif
 
+  // Set Hotend temperatures
+  #if HAS_HOTEND
+    HOTEND_LOOP() {
+      const celsius_t et = _MAX(info.target_temperature[e], 180);
+      if (et) {
+        #if HAS_MULTI_HOTEND
+          sprintf_P(cmd, PSTR("T%iS"), e);
+          gcode.process_subcommands_now(cmd);
+        #endif
+        sprintf_P(cmd, PSTR("M104S%i"), et);
+        gcode.process_subcommands_now(cmd);
+      }
+    }
+  #endif
   // Heat hotend enough to soften material
   #if HAS_HOTEND
     HOTEND_LOOP() {

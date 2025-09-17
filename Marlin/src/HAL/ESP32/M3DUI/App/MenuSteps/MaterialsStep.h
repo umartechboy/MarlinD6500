@@ -11,7 +11,7 @@ public:
     ~MaterialsStep();
     void Paint(BufferedDisplay* g) override;
     void SaveColors();   
-    void ToggleSelected();
+    void ToggleSelected(int dir);
     void HandleKeyPress(Keys key) override;         
     void IncrementValue();
     void DecrementValue();
@@ -21,7 +21,7 @@ public:
     ColorSelectorListItem* extruder0Color;
     ColorSelectorListItem* extruder1Color;
 private:
-    int defaultExtruder = 0;
+    int defaultExtruder = -1;
     ColorSelectorListItem* defaultExtruderColor;
     ColorSelectorListItem* extruderColors[2];
     int selectedExtruderItemIndex();

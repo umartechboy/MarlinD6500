@@ -19,9 +19,9 @@
  bool ProbeEnable = true; // on by default for tarring
  float lastReading = 0;
  int exampleReadingCount = 0;
- float threshold = 3;
+ float threshold = 2.5;
  float rawValueFilterFactor = 0.1F;
- float FloatingFactor = 0.008F;
+ float FloatingFactor = 0.005F;
  #define FilterOutSeriesOfErraticValue 5
  int lastReturn  = 0;
  float lastAnalogReturn = 0;
