@@ -256,11 +256,13 @@ void MainScreenStep::HandleKeyPress(Keys key){
 }
 
 void MainScreenStep::LoadComplete(){
-    // Get colors
-    prefs.begin("material");
-    e0Color = AvailableColors[prefs.getInt("e1_c", 0)];
-    e1Color = AvailableColors[prefs.getInt("e2_c", 1)];
-    prefs.end();
+    if (!Host->Retro){
+        // Get colors
+        prefs.begin("material");
+        e0Color = AvailableColors[prefs.getInt("e1_c", 0)];
+        e1Color = AvailableColors[prefs.getInt("e2_c", 1)];
+        prefs.end();
+    }
 
     if (Host->Retro){
         if (printStatus == PrintStatus::FileToPrint) { // This must be set by the file selection menus.

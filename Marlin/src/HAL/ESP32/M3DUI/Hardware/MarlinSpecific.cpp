@@ -155,5 +155,7 @@ void abortPrint(){
     SERIAL_IMPL.println("abortPrint()");
     pausePrint();
     card.abortFilePrintNow();
-    enqueueComs({"G1 Y200 X100 F2000"});    
+    recovery.purge();
+    enqueueComs({"G1 Y200 X100 F2000", "M104 S0 T0", "M104 S0 T1"});
+    enqueueComs({"G91", "G1 Z10 F1000", "G90"});
 }
