@@ -337,12 +337,22 @@ volatile bool needsConversion[4] = {0, 0, 0, 0};
  
 
 long lastLoadCellLoop = 0;
+long lastPCFSync = 0;
 void MarlinHAL::idletask() {
   //SERIAL_IMPL.println("update_buttons Idle()");
   //ui.update_buttons();
   if (millis() - lastLoadCellLoop > 13) {// < 80hz
     lastLoadCellLoop = millis();
     LoadCellLoop();
+  }
+  if (millis() - lastPCFSync >= 1) {// at most 1khz
+    lastPCFSync = millis();
+    if (xSemaphoreTake(xPCFIOMutex, 0)) {
+      pcf1_write_pending = true;
+      pcf2_write_pending = true; // this is to refresh PCF in case it has reset due to a brown out.
+      PCFSync();
+      xSemaphoreGive(xPCFIOMutex);
+    }
   }
   UILoop();
   #if BOTH(WIFISUPPORT, OTASUPPORT)
