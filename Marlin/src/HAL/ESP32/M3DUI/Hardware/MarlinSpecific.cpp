@@ -23,8 +23,9 @@ void writeTemp(int index, float temp){
     queue.enqueue_one(com.c_str());
     //target[index] = temp;
 }
+extern volatile bool swapTools;
 float readTemp1(){
-    return thermalManager.degHotend(0);
+    return thermalManager.degHotend(swapTools?1:0);
     // float t = 24.0 + (float)millis() / 1000.0F * 2.5F; // 2.5 degree per second
     // if (t > target[0]){
     //     t = target[0] + (float)(millis() % 30) / 100.0F;
@@ -32,7 +33,7 @@ float readTemp1(){
     // return t;
 }
 float readTemp2(){
-    return thermalManager.degHotend(1);
+    return thermalManager.degHotend(swapTools?0:1);
     // float t = 20.0 + (float)millis() / 1000.0F * 2.5F; // 2.4 degree per second
     // if (t > target[1]){
     //     t = target[1] + (float)(millis() % 30) / 100.0F;
