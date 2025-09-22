@@ -148,10 +148,10 @@ void BedLevelStep::Paint(BufferedDisplay* g){
             // Draw the probes
             int thisProbeInd = 0;
             int sideMargin = 20;
-            int xStep = (PrintPositionStep::bedWidth - sideMargin * 2) / 2;
-            int yStep = (PrintPositionStep::bedHeight - sideMargin * 2) / 2;
-            for (int yi = 0; yi < 3; yi++){
-                for (int xi = yi % 2 == 0 ? 0 : 2; yi % 2 == 0 ? (xi < 3) : (xi >= 0); xi += yi % 2 == 0 ? 1 : -1) {
+            int xStep = (PrintPositionStep::bedWidth - sideMargin * 2) / (GRID_MAX_POINTS_X - 1);
+            int yStep = (PrintPositionStep::bedHeight - sideMargin * 2) / (GRID_MAX_POINTS_Y - 1);
+            for (int yi = 0; yi < GRID_MAX_POINTS_Y; yi++){
+                for (int xi = yi % 2 /* Even/Odd */ == 0 ? 0 : (GRID_MAX_POINTS_X - 1); yi % 2 == 0 ? (xi < GRID_MAX_POINTS_X) : (xi >= 0); xi += yi % 2 == 0 ? 1 : -1) {
                     int x = PrintPositionStep::transformX(sideMargin + xi * xStep);
                     int y = PrintPositionStep::transformY(sideMargin + yi * yStep);
                     if (thisProbeInd < getABLIndex()) {// This probe must have succeeded
