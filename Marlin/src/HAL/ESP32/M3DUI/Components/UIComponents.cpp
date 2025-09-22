@@ -170,6 +170,20 @@ void VerticalList::Add(ListItem* item){
     if (selected < 0)
         selected = 0;
 }
+void VerticalList::AddAt(ListItem* item, int index){
+    if (index < 0){
+        index = 0;
+    }
+    else if (index > items.size()){
+        index = items.size();
+    }
+    items.insert(items.begin() + index, item);
+    if (selected < 0)
+        selected = 0;
+}
+void VerticalList::AddAtBeginning(ListItem* item){
+    AddAt(item, 0);
+}
 int VerticalList::Count(){
     return items.size();
 }

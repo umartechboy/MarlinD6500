@@ -77,7 +77,7 @@ void OnFileFound(void* caller, const char* dosName) {
     const char *ext = strrchr(dosName, '.');  // find last dot
     if (ext && strcasecmp(ext, ".GCO") == 0) {
         SERIAL_IMPL.printf("Adding File: %s\n", dosName);
-        This->list->Add(new FileNameListItem(This->Host, "", dosName, 0, 14));
+        This->list->AddAtBeginning(new FileNameListItem(This->Host, "", dosName, 0, 14));
     }
     else {
         SERIAL_IMPL.printf("Skipping non-GCO file: %s\n", dosName);
