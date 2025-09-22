@@ -53,6 +53,7 @@ void BedLevelStep::Tick()
                 // Send the G29
                 PreviousStep = 0;
                 G29Sent = true;
+                enqueueComs({"M107", "M206 Z0"});
                 StartABL();
                 writeTemp(0, 0);
                 writeTemp(1, 0);
@@ -204,7 +205,7 @@ MenuStep* BedLevelStep::GetPreviousStep(bool returnEvenIfDummy){
 }
 
 void BedLevelStep::HandleKeyPress(Keys key) {
-    Host->PushNotification("Bed leveling in process. Please wait...");
+    //Host->PushNotification("Bed leveling in process. Please wait...");
 }
 void BedLevelStep::FocusChanged(StepAnimationStage stage){
     if (stage == StepAnimationStage::InOverlay){

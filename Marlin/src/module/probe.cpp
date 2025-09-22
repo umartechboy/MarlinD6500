@@ -730,12 +730,16 @@ float Probe::run_z_probe(const bool sanity_check/*=true*/) {
                early_fail = (scheck && current_position.z > -offset.z + clearance); // Probe triggered too high?
         
     #if ENABLED(DEBUG_LEVELING_FEATURE)
-      if (DEBUGGING(LEVELING) && (probe_fail || early_fail)) {
-        DEBUG_ECHOPGM_P(plbl);
-        DEBUG_ECHOPGM(" Probe fail! -");
-        if (probe_fail) DEBUG_ECHOPGM(" No trigger.");
-        if (early_fail) DEBUG_ECHOPGM(" Triggered early.");
-        DEBUG_EOL();
+      if ((probe_fail || early_fail)) {
+        if (DEBUGGING(LEVELING)) {
+          DEBUG_ECHOPGM_P(plbl);
+          DEBUG_ECHOPGM(" Probe fail! -");
+        }
+        SERIAL_IMPL.print(plbl);
+        SERIAL_IMPL.print(" Probe fail! -");
+        if (probe_fail) { if (DEBUGGING(LEVELING)) DEBUG_ECHOPGM(" No trigger."); SERIAL_IMPL.print(" No trigger."); }
+        if (early_fail) { if (DEBUGGING(LEVELING)) DEBUG_ECHOPGM(" Triggered early."); SERIAL_IMPL.print(" Triggered early."); }
+        if (DEBUGGING(LEVELING)) DEBUG_EOL();
         if (early_fail){
           SERIAL_IMPL.printf("scheck: %d, current_position.z: %f, offset.z: %f, clearance: %f\r\n", scheck, current_position.z, offset.z, clearance);
         }
@@ -827,7 +831,7 @@ float Probe::run_z_probe(const bool sanity_check/*=true*/) {
           #if EXTRA_PROBING > 0
             < TOTAL_PROBING - 1
           #endif
-        ) do_blocking_move_to_z(z + Z_CLEARANCE_MULTI_PROBE, z_probe_fast_mm_s);
+        ) do_blocking_move_to_z(z + Z_CLEARANCE_MULTI_PROBE, z_probe_fast_mm_s * 5);
       #endif
     }
 
@@ -860,7 +864,7 @@ float Probe::run_z_probe(const bool sanity_check/*=true*/) {
     if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPGM("2nd Probe Z:", z2, " Discrepancy:", first_probe_z - z2);
 
     // Return a weighted average of the fast and slow probes
-    const float measured_z = (z2 * 4.5 + first_probe_z * 0.5) * 0.2 + NOZZLE_AS_PROBE_PRESSURE_COMPENSATION/* Compensate for pressure down */;
+    const float measured_z = (z2 * 4.5 + first_probe_z * 0.5) * 0.2;
 
   #else
 
@@ -869,7 +873,7 @@ float Probe::run_z_probe(const bool sanity_check/*=true*/) {
 
   #endif
 
-  return measured_z;
+  return measured_z + NOZZLE_AS_PROBE_PRESSURE_COMPENSATION/* Compensate for pressure down */;
 }
 // float Probe::run_z_probe(const bool sanity_check/*=true*/) {
 //   DEBUG_SECTION(log_probe, "Probe::run_z_probe", DEBUGGING(LEVELING));
@@ -1076,6 +1080,7 @@ float Probe::probe_at_point(const_float_t rx, const_float_t ry, const ProbePtRai
   int retriesLeft = 5;
   do {
     if (!deploy()) {
+      SERIAL_IMPL.println("!deploy()");
       measured_z = run_z_probe(sanity_check) + offset.z;
       TERN_(HAS_PTC, ptc.apply_compensation(measured_z));
       TERN_(X_AXIS_TWIST_COMPENSATION, measured_z += xatc.compensation(npos + offset_xy));

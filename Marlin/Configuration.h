@@ -1203,13 +1203,13 @@
 #define DEFAULT_AXIS_STEPS_PER_UNIT   { 208.1164, 208.1164, 52.0291, 47.33 }
 #else
 // GT2 with 16 teeth pulley and TMC on 3200 or 4988 on 1600 steps/rev gives 100/50 steps per mm
-// BMG Extruder on A4988 give almost 196.7
+// BMG Extruder on A4988 give almost 196.7, later calibration showed a 5% Underflow, adjusting for that give us 207
 // Z pinion-gear has 43:17. Three stages give a reduction of 43*43*43/17/17/17 = 16.182983
 // Rack has 42.73mm per 17 steps/per rev of pinion.
 // So the ratio is 42.73/17 / 43*17 /43*17/43*17  per revolution of the motor, 
 // So the ratio is 42.73 / 43 /43*17/43*17  per revolution of the motor, 0.155 mm per rev, i.e. 6.438 rev/mm, 
 #define DEFAULT_AXIS_STEPS_PER_UNIT_Z 605.96
-#define DEFAULT_AXIS_STEPS_PER_UNIT   { 50, 50, DEFAULT_AXIS_STEPS_PER_UNIT_Z, 196.7 }
+#define DEFAULT_AXIS_STEPS_PER_UNIT   { 50, 50, DEFAULT_AXIS_STEPS_PER_UNIT_Z, 207 }
 #endif
 
 //#define DEFAULT_AXIS_STEPS_PER_UNIT   { 32.0512, 32.0512, 15.409, 54.35 }
@@ -1365,7 +1365,7 @@
  * nozzle system or a piezo-electric smart effector.
  */
 #define NOZZLE_AS_PROBE
-#define NOZZLE_AS_PROBE_PRESSURE_COMPENSATION 0.2
+#define NOZZLE_AS_PROBE_PRESSURE_COMPENSATION 0.3
 
 /**
  * Z Servo Probe, such as an endstop switch on a rotating arm.
@@ -1588,7 +1588,7 @@
  * A total of 2 does fast/slow probes with a weighted average.
  * A total of 3 or more adds more slow probes, taking the average.
  */
-#define MULTIPLE_PROBING 2
+#define MULTIPLE_PROBING 4
 //#define EXTRA_PROBING    1
 
 /**

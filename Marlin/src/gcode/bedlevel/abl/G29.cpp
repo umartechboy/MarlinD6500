@@ -703,12 +703,12 @@ G29_TYPE GcodeSuite::G29() {
         // Inner loop is X with PROBE_Y_FIRST disabled
         for (PR_INNER_VAR = inStart; PR_INNER_VAR != inStop; pt_index++, PR_INNER_VAR += inInc) {
 
-        while (checkABLPaused())
-        {
-          SERIAL_IMPL.println("ABL is paused");
-          safe_delay(30);
-          UILoop();
-        }
+          while (checkABLPaused())
+          {
+            SERIAL_IMPL.println("ABL is paused");
+            safe_delay(30);
+            UILoop();
+          }
           abl.probePos = abl.probe_position_lf + abl.gridSpacing * abl.meshCount.asFloat();
 
           TERN_(AUTO_BED_LEVELING_LINEAR, abl.indexIntoAB[abl.meshCount.x][abl.meshCount.y] = ++abl.abl_probe_index); // 0...
@@ -742,10 +742,10 @@ G29_TYPE GcodeSuite::G29() {
             const float z = abl.measured_z + abl.Z_offset;
             abl.z_values[abl.meshCount.x][abl.meshCount.y] = z;
             TERN_(EXTENSIBLE_UI, ExtUI::onMeshUpdate(abl.meshCount, z));
-            pointsDone++;
-            ABLMeshUpdate(pointsDone);
           #endif
-
+          
+          pointsDone++;
+          ABLMeshUpdate(pointsDone);
           abl.reenable = false; // Don't re-enable after modifying the mesh
           idle_no_sleep();
 
@@ -808,6 +808,7 @@ G29_TYPE GcodeSuite::G29() {
     TERN_(LCD_BED_LEVELING, ui.wait_for_move = false);
   #endif
 
+  ABLDone();
   // Calculate leveling, print reports, correct the position
   if (!isnan(abl.measured_z)) {
     #if ENABLED(AUTO_BED_LEVELING_BILINEAR)
@@ -947,8 +948,6 @@ G29_TYPE GcodeSuite::G29() {
       if (!abl.dryrun || abl.reenable) set_bed_leveling_enabled(true);
 
     #endif
-
-    ABLDone();
   } // !isnan(abl.measured_z)
 
   // Restore state after probing

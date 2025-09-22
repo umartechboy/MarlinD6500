@@ -19,9 +19,10 @@
  bool ProbeEnable = true; // on by default for tarring
  float lastReading = 0;
  int exampleReadingCount = 0;
- float threshold = 2.5;
+ float threshold = 3.0;
+ float fluctuationTolerance = 0.2F; // how much fluctuation in the reading to ignore
  float rawValueFilterFactor = 0.1F;
- float FloatingFactor = 0.005F;
+ float FloatingFactor = 0.002F;
  #define FilterOutSeriesOfErraticValue 5
  int lastReturn  = 0;
  float lastAnalogReturn = 0;
@@ -118,10 +119,33 @@
             SERIAL_IMPL.print("(reading) = ");
             SERIAL_IMPL.print(lastAnalogReturn);
             SERIAL_IMPL.print("(used) ");
-            SERIAL_IMPL.print(lastAnalogReturn > threshold ? ">":(lastAnalogReturn < -threshold ? "<":"~="));
-            SERIAL_IMPL.print(threshold);
-            SERIAL_IMPL.print(" => ");
-            SERIAL_IMPL.print(lastAnalogReturn > threshold ? 1:0);
+            if (lastAnalogReturn > threshold + fluctuationTolerance){
+                SERIAL_IMPL.print(" > ");
+                SERIAL_IMPL.print(threshold);
+                SERIAL_IMPL.print(" + ");
+                SERIAL_IMPL.print(fluctuationTolerance);                
+                SERIAL_IMPL.print("(");
+                SERIAL_IMPL.print(threshold + fluctuationTolerance);
+                SERIAL_IMPL.print(")");
+            }
+            else if (lastAnalogReturn < threshold - fluctuationTolerance) {
+                SERIAL_IMPL.print(" < ");                
+                SERIAL_IMPL.print(threshold);
+                SERIAL_IMPL.print(" - ");
+                SERIAL_IMPL.print(fluctuationTolerance);                
+                SERIAL_IMPL.print("(");
+                SERIAL_IMPL.print(threshold - fluctuationTolerance);
+                SERIAL_IMPL.print(")");
+            }
+            else{                
+                SERIAL_IMPL.print(" <> ");
+                SERIAL_IMPL.print(threshold);
+            }
+            //SERIAL_IMPL.print(lastAnalogReturn > threshold ? ">":(lastAnalogReturn < -threshold ? "<":"~="));
+
+            // SERIAL_IMPL.print(threshold);
+            // SERIAL_IMPL.print(" => ");
+            // SERIAL_IMPL.print(lastAnalogReturn > threshold ? 1:0);
             
             // SERIAL_IMPL.print("\t");
             // SERIAL_IMPL.print(10);
@@ -131,8 +155,16 @@
             // Serial.print(offsetCorrected);
             // SERIAL_IMPL.println();
             SERIAL_IMPL.print("\r\n");
-
-            lastReturn = lastAnalogReturn > threshold ? 1:0;
+            if (lastReturn == 0) {
+                if (lastAnalogReturn > threshold + fluctuationTolerance){ // Be convinced only if we are way above the fluctionation zone
+                    lastReturn = 1;
+                }
+            }
+            else { // Be convinced only if we are way below the fluctionation zone
+                if (lastAnalogReturn < threshold - fluctuationTolerance){
+                    lastReturn = 0;
+                }
+            }
         }
     }
     // else if (!ProbeEnable){
