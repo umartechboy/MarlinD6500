@@ -32,6 +32,7 @@ class FilePreviewStep: public MenuStep {
     void LoadBegin() override;
     void HandleKeyPress(Keys key) override;
     void LoadComplete() override;
+    void setSwapTool(bool doSwap);
 };
 
 

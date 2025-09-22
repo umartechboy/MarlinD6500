@@ -321,10 +321,13 @@ void FilePreviewStep::LoadBegin() {
 }
 void FilePreviewStep::HandleKeyPress(Keys key){    
     if (!Host->Retro){
-        if (key == Keys::KEYPAD_RIGHT)
-            Host->GotoNextStep();
-        else if (key == Keys::KEYPAD_LEFT)
-            Host->GotoPreviousStep();
+        if (key == Keys::KEYPAD_RIGHT || key == Keys::KEYPAD_LEFT){
+            swapTools = !swapTools;
+            // prepare display
+            uint16_t temp = e0Color;
+            e0Color = e1Color;
+            e1Color = temp;
+        }
     }
 }
 void FilePreviewStep::LoadComplete(){

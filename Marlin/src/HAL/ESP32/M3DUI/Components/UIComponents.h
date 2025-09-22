@@ -86,6 +86,8 @@ class VerticalList{
         void Clear();
         ListItem* At(int index);
         void Add(ListItem* item);
+        void AddAt(ListItem* item, int index);
+        void AddAtBeginning(ListItem* item);
         int Count();
         void scrollDown();
         void scrollUp();
