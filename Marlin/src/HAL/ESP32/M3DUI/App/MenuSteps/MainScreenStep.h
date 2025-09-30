@@ -31,6 +31,7 @@ public:
     void FocusChanged(StepAnimationStage stage) override;
     MenuStep* GetPreviousStep(bool returnEvenIfDummy = false) override;
     bool CanJumpToMainMenu() override;
+    void HandleKeyHold(Keys key) override;
     bool printStarted = false;
 };
 #endif

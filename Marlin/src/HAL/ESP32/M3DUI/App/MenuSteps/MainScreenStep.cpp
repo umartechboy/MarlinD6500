@@ -5,6 +5,7 @@
 #include "../../../../../module/temperature.h"
 #include "../../../../../sd/cardreader.h"
 #include "../../../../../feature/powerloss.h"
+#include "../../../../../feature/babystep.h"
 #include <Fonts/FreeSans12pt7b.h>
 #include <Fonts/FreeSans9pt7b.h>
 #include "../../Hardware/MarlinSpecific.h"
@@ -95,6 +96,8 @@ void MainScreenStep::Tick() {
     //     lastReset = millis();
     // }
 }
+extern float readProbeAnalog();
+extern bool ProbeEnable;
 void MainScreenStep::Paint(BufferedDisplay* g) {
     
     //Serial.printf("Idle Screen Step Paint called @ %d, %d\n", g->xOffset, g->yOffset);
@@ -172,6 +175,20 @@ void MainScreenStep::Paint(BufferedDisplay* g) {
             centerString(g, (String(pcCommplete, 1) + String("%")).c_str(), Host->appWidth() / 2, Host->appTop() + (Host->appHeight() + 16) / 2 - 14);
             g->setFont();
             centerString(g, fileName.c_str(), Host->appWidth() / 2, Host->appTop() + (Host->appHeight() + 16) / 2 + pbh + 5);
+
+            if (babystep.get_total_mm(Z_AXIS) != 0){
+                String zStr = String("Z: ");
+                if (babystep.get_total_mm(Z_AXIS) > 0.0)
+                    zStr += "+"; // Force a sign
+                zStr += String(babystep.get_total_mm(Z_AXIS), 2);
+                centerLeftString(g, zStr.c_str(), 2, Host->appTop() + Host->appHeight() - 18);
+            }
+            if (feedrate_percentage != 100){
+                String fStr = String("F: ");
+                fStr += String(feedrate_percentage);
+                fStr += "%";
+                centerRightString(g, fStr.c_str(), Host->appWidth() - 2, Host->appTop() + Host->appHeight() - 18);
+            }
         }
         if (Host->Retro){
         }
@@ -196,6 +213,10 @@ void MainScreenStep::Paint(BufferedDisplay* g) {
             g->fillRect(0, Host->appHeight() - 2, Host->appWidth() / 2, 2, e0Color);
             g->fillRect(Host->appWidth() / 2 + 1, Host->appHeight() - 2, Host->appWidth() / 2, 2, e1Color);
         }
+    } 
+    if (ProbeEnable) {
+        int pHeight = readProbeAnalog();
+        g->fillRect(g->width() - 3, g->height() - pHeight, 3, pHeight, ST7735_WHITE);
     }
 }
 
@@ -255,6 +276,26 @@ void MainScreenStep::HandleKeyPress(Keys key){
     }
 }
 
+extern int16_t feedrate_percentage;
+void MainScreenStep::HandleKeyHold(Keys key){
+    if (key == Keys::KEYPAD_UP){
+        SERIAL_IMPL.printf("Baby Step Up from: %f\n", babystep.get_total_mm(Z_AXIS));
+        if (babystep.get_total_mm(Z_AXIS) < 1.0) // Limit to +1mm
+            enqueueComs({"M290 Z0.05"});
+    }
+    else if (key == Keys::KEYPAD_DOWN){
+        SERIAL_IMPL.printf("Baby Step Down from: %f\n", babystep.get_total_mm(Z_AXIS));
+        if (babystep.get_total_mm(Z_AXIS) > -1.0) // Limit to -1mm
+            enqueueComs({"M290 Z-0.05"});
+    }
+    else if (key == Keys::KEYPAD_LEFT || key == Keys::KEYPAD_RIGHT){
+        int newSpeed = feedrate_percentage + (key == Keys::KEYPAD_LEFT ? -10:10);
+        if (newSpeed < 20) newSpeed = 20; else if (newSpeed > 300) newSpeed = 300;
+        String speedCom = String("M220 S") + String(newSpeed);
+        enqueueComs({speedCom.c_str()});        
+        SERIAL_IMPL.printf("Speed change: %d\n", newSpeed);
+    }
+}
 void MainScreenStep::LoadComplete(){
     if (!Host->Retro){
         // Get colors

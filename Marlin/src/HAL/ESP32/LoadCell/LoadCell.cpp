@@ -28,8 +28,9 @@
  float lastAnalogReturn = 0;
  float lastRawReturn = 0;
  long lastProbe = 1000; // will force a tare
+ // reads probe on a scale [0,100] (can go beyond 100 in case of overload)
  float readProbeAnalog(){
-    return lastAnalogReturn;
+    return lastAnalogReturn / threshold * 100;
  }
  int LoadCellProbe(){
     lastProbe = millis();

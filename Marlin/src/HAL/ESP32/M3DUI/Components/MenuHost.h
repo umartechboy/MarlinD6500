@@ -35,6 +35,7 @@ public:
     int appTop();
     int appLeft();
     void HandleKeyPress(Keys key);
+    void HandleKeyHold(Keys key);
     void HandleDialIncrement();
     void HandleDialDecrement();
     // Top left

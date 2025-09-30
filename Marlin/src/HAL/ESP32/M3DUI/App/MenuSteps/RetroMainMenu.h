@@ -22,6 +22,7 @@ class RetroMainMenuStep: public MenuStep {
     StringListItem* settingsOption;
     StringListItem* unmountSDOption;
     StringListItem* infoOption;
+    StringListItem* helpOption;
 };
 
 #endif

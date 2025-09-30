@@ -17,6 +17,7 @@
 #include "MenuSteps\WifiListStep.h"
 #include "MenuSteps\SettingsStep.h"
 #include "MenuSteps\UpdateStep.h"
+#include "MenuSteps\HelpStep.h"
 
 extern MenuHost menuHost;
 extern FilePreviewStep filePreviewStep;
@@ -35,6 +36,7 @@ extern TextEntryStep textEntryStep;
 extern WifiListStep wifiListStep;
 extern SettingsStep settingsStep;
 extern UpdateStep updateStep;
+extern HelpStep helpStep;
 
 void BeginApp();
 #ifdef __MARLIN_FIRMWARE__

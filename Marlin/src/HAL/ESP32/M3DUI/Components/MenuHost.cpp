@@ -468,6 +468,12 @@ void MenuHost::HandleKeyPress(Keys key){
         }
     }
 }
+
+void MenuHost::HandleKeyHold(Keys key){    
+    SERIAL_IMPL.printf("HandleKeyHold: %d\n", key);
+    if (CurrentStep)
+        CurrentStep->HandleKeyHold(key);
+}
 void MenuHost::HandleDialIncrement(){
     SERIAL_IMPL.println("HandleDialIncrement");
     if (CurrentStep)

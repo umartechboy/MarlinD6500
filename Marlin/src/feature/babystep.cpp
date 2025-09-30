@@ -53,6 +53,9 @@ void Babystep::step_axis(const AxisEnum axis) {
 void Babystep::add_mm(const AxisEnum axis, const_float_t mm) {
   add_steps(axis, mm * planner.settings.axis_steps_per_mm[axis]);
 }
+float Babystep::get_total_mm(const AxisEnum axis) {
+  return (float)accum / planner.settings.axis_steps_per_mm[axis];
+}
 
 #if ENABLED(BD_SENSOR)
   void Babystep::set_mm(const AxisEnum axis, const_float_t mm) {

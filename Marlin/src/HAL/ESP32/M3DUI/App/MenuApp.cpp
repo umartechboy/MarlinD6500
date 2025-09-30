@@ -17,6 +17,7 @@ TextEntryStep textEntryStep(&menuHost);
 WifiListStep wifiListStep(&menuHost);
 SettingsStep settingsStep(&menuHost);
 UpdateStep updateStep(&menuHost);
+HelpStep helpStep(&menuHost);
 
 void BeginApp(){    
   SERIAL_IMPL.println("Goto menu pushed");

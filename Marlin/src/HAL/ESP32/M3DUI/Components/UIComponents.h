@@ -131,6 +131,7 @@ class MenuStep {
         virtual void PaintRetroTitle(BufferedDisplay* g);
         virtual void PaintRetroOptionsBar(BufferedDisplay* g);
         virtual void HandleKeyPress(Keys key) {}
+        virtual void HandleKeyHold(Keys key) {}
         virtual void IncrementValue() {}
         virtual void DecrementValue() {}
         virtual void LoadBegin() {}

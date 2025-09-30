@@ -111,6 +111,7 @@ void BedLevelStep::notifyLevelingDone(){
         enqueueComs({"M106 S0", "G1 Y160 X100 Z5 F2000"}); // Move out of the way
     }
 }
+extern float readProbeAnalog();
 void BedLevelStep::Paint(BufferedDisplay* g){            
     //Serial.printf("Idle Screen Step Paint called @ %d, %d\n", g->xOffset, g->yOffset);
     // Draw the idle screen
@@ -191,6 +192,8 @@ void BedLevelStep::Paint(BufferedDisplay* g){
             }
         }
     }
+    int pHeight = readProbeAnalog();
+    g->fillRect(g->width() - 3, g->height() - pHeight, 3, pHeight, ST7735_WHITE);
     g->setFont();
 }
 

@@ -59,7 +59,7 @@ public:
         axis_total[BS_TOTAL_IND(axis)] = 0;
     }
   #endif
-
+  static float get_total_mm(const AxisEnum axis);
   static void add_steps(const AxisEnum axis, const int16_t distance);
   static void add_mm(const AxisEnum axis, const_float_t mm);
 
