@@ -29,7 +29,35 @@ void noiseSenseLoop(){
 }
 
 Keys touchOnADCKeyPad_getKey(){
+noiseSenseLoop();
+// Lets make a simpler loop;
+int noOfKeysDown = 0;
+for (int i = 0; i < 4; i++){
+  if (totalTouchNoise[i] > 1)
+    noOfKeysDown++;
+}
+if (noOfKeysDown >= 3)
+  return Keys::KEYPAD_MIDDLE;
 
+if (totalTouchNoise[2] > 3 && totalTouchNoise[3] > 3)
+  return Keys::KEYPAD_DOWN_LEFT;
+if (totalTouchNoise[0] > 3 && totalTouchNoise[3] > 3)
+  return Keys::KEYPAD_DOWN_RIGHT;
+
+if (totalTouchNoise[0] > 6)
+  return Keys::KEYPAD_RIGHT;
+else if (totalTouchNoise[1] > 6)
+  return Keys::KEYPAD_UP;
+else if (totalTouchNoise[2] > 6)
+  return Keys::KEYPAD_LEFT;
+else if (totalTouchNoise[3] > 6)
+  return Keys::KEYPAD_DOWN;
+
+return Keys::KEYPAD_NONE;
+
+
+SERIAL_IMPL.printf("Pins: %f, %f, %f, %f\n", totalTouchNoise[0], totalTouchNoise[1], totalTouchNoise[2], totalTouchNoise[3]);
+return Keys::KEYPAD_NONE;
 #if DebugKeys
     SERIAL_IMPL.printf("Cache values: %d %d %d %d", touchReadCache[0], touchReadCache[1], touchReadCache[2], touchReadCache[3]);
 #endif
@@ -100,9 +128,10 @@ bool pressInProcess = false;
 long keyDownSince = 0;
 int pressesInARow = 0;
 int pressPeriod = 500;
+bool holdSent = false;
 void KeyPad::Loop(MenuHost* host){
   noiseSenseLoop();
-  if (millis() - lastKeyCheck > ((lastKeyDown == Keys::KEYPAD_NONE)?10:50)){
+  if (millis() - lastKeyCheck > ((lastKeyDown == Keys::KEYPAD_NONE)?5:20)){
     lastKeyCheck = millis();
     Keys key = touchOnADCKeyPad_getKey();
     // if (key || lastKeyDown)
@@ -135,14 +164,15 @@ void KeyPad::Loop(MenuHost* host){
       pressInProcess = false;
       pressPeriod = 500;
       pressesInARow = 0;
+      holdSent = false;
 
       // We need to give the finger some to settle
-      int settelingTime = 200;
+      int settelingTime = 100;
       if (key == Keys::KEYPAD_MIDDLE) // already too down. Its conclusive
         settelingTime = 0;
       // We can't send key down because it might turn into a swipe
       else if (key == Keys::KEYPAD_UP || key == Keys::KEYPAD_DOWN || key == Keys::KEYPAD_LEFT || key == Keys::KEYPAD_RIGHT) // Single key
-        settelingTime = 100;
+        settelingTime = 50;
       if (settelingTime){
         long settleStartAt = millis();
         while(millis() - settleStartAt < settelingTime){
@@ -179,6 +209,10 @@ void KeyPad::Loop(MenuHost* host){
         }
         else { // We process press here
           if (millis() - keyDownSince > pressPeriod){
+            if (!holdSent) {
+              holdSent = true;
+              host->HandleKeyHold(key);
+            }
             if (key == Keys::KEYPAD_UP || key == Keys::KEYPAD_DOWN || key == Keys::KEYPAD_LEFT || key == Keys::KEYPAD_RIGHT){
               pressesInARow++;
               if (pressesInARow * pressPeriod > 300){ // x seconds elapsed since the last acceleration
