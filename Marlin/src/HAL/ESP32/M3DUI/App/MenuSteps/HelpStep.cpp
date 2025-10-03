@@ -19,7 +19,7 @@ void HelpStep::Paint(BufferedDisplay* g){
     // Draw the idle screen
     g->fillScreen(BackColor);
     if (displayingQR)
-        img_CommunityQR.Draw(g, (Host->appWidth() - img_CommunityQR.width()) / 2, Host->appTop() + (Host->appHeight() - img_CommunityQR.height()) / 2);
+        img_CommunityQR.Draw(g, (Host->appWidth() - img_CommunityQR.width()) / 2, Host->appTop() + (Host->appHeight() - img_CommunityQR.height()) / 2, false, true);
     else {
         g->setTextColor(TextColor);
         g->setFont(&FreeMono9pt7b);

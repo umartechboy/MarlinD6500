@@ -6,32 +6,67 @@
 static int touchPinMap [] = {14, 13, 0, 12};
 static float totalTouchNoise[] = {0, 0, 0, 0};
 static bool touchReadCache[] = {0, 0, 0, 0};
+int touchReadBaseUpdateCount = 0;
+static float touchReadBase[] = {0, 0, 0, 0};
 static int lastTouchRead[] = {0, 0, 0, 0};
 static long lastNoiseSenseLoop = 0;
 
 void noiseSenseLoop(){
-    if (millis() - lastNoiseSenseLoop < 10)
-        return;
-    lastNoiseSenseLoop = millis();
-    int noiseThreshold = 10;
-    int stabilityTolerance = 7;
-    for (int i = 0; i < 4; i++) {
-      //all[i] = readPad(i);
-      int thisRead = touchRead(touchPinMap[i]);
-      int delta =  thisRead - lastTouchRead[i];
-      totalTouchNoise[i] += abs(delta) - 2;
-      if (totalTouchNoise[i] < 0) totalTouchNoise[i] = 0;
-      else if (totalTouchNoise[i] > noiseThreshold) totalTouchNoise[i] = noiseThreshold;
-      touchReadCache[i] = totalTouchNoise[i] >= noiseThreshold - stabilityTolerance; 
-
-      lastTouchRead[i] = thisRead;
+  if (millis() - lastNoiseSenseLoop < 2)
+      return;
+  lastNoiseSenseLoop = millis();
+  int noiseThreshold = 10;
+  int stabilityTolerance = 7;
+  float N = 10;
+  float mix = 0.05;
+  // SERIAL_IMPL.print("Pins: ");
+  for (int i = 0; i < 4; i++) {
+    //all[i] = readPad(i);
+    int thisRead = touchRead(touchPinMap[i]);
+    // Lets first calculate based on noise
+    int delta =  thisRead - lastTouchRead[i];
+    totalTouchNoise[i] += abs(delta) - 2;
+    
+    float percDev = 0;
+    if (touchReadBaseUpdateCount < N)
+      touchReadBase[i] += (float)thisRead  / N;
+    else {
+      touchReadBase[i] = touchReadBase[i] * (1 - mix) + (float)touchRead(touchPinMap[i]) * mix;
+    
+      // SERIAL_IMPL.printf("{%f", totalTouchNoise[i]);
+      // We have the base. Now calculate % abs deviation
+      float absDev = abs(thisRead - touchReadBase[i]);
+      percDev = (absDev / touchReadBase[i]) * 100.0;
+      totalTouchNoise[i] += percDev / 30;
     }
+    // SERIAL_IMPL.printf("+ %f = %f},\t", percDev, totalTouchNoise[i]);
+
+    // Clamp and pull down    
+    if (totalTouchNoise[i] < 0) totalTouchNoise[i] = 0;
+    else if (totalTouchNoise[i] > noiseThreshold) totalTouchNoise[i] = noiseThreshold;
+    
+    touchReadCache[i] = totalTouchNoise[i] >= noiseThreshold - stabilityTolerance; 
+    lastTouchRead[i] = thisRead;
+  }
+  // SERIAL_IMPL.println();
+  touchReadBaseUpdateCount++;
 }
 
+long lastTempKeyDebug = 0;
 Keys touchOnADCKeyPad_getKey(){
 noiseSenseLoop();
 // Lets make a simpler loop;
+// if (millis() - lastTempKeyDebug > 10){
+//   // SERIAL_IMPL.printf("Keys: ");
+//   // for (int i = 0; i < 4; i++) {
+//   //   SERIAL_IMPL.printf("%f: %d,\t", totalTouchNoise[i], touchRead(touchPinMap[i]));
+//   // }
+//   // SERIAL_IMPL.println();
+//   lastTempKeyDebug = millis();
+// }
+// return Keys::KEYPAD_NONE; // TEMP
 int noOfKeysDown = 0;
+
 for (int i = 0; i < 4; i++){
   if (totalTouchNoise[i] > 1)
     noOfKeysDown++;
@@ -56,7 +91,7 @@ else if (totalTouchNoise[3] > 6)
 return Keys::KEYPAD_NONE;
 
 
-SERIAL_IMPL.printf("Pins: %f, %f, %f, %f\n", totalTouchNoise[0], totalTouchNoise[1], totalTouchNoise[2], totalTouchNoise[3]);
+//SERIAL_IMPL.printf("Pins: %f, %f, %f, %f\n", totalTouchNoise[0], totalTouchNoise[1], totalTouchNoise[2], totalTouchNoise[3]);
 return Keys::KEYPAD_NONE;
 #if DebugKeys
     SERIAL_IMPL.printf("Cache values: %d %d %d %d", touchReadCache[0], touchReadCache[1], touchReadCache[2], touchReadCache[3]);
@@ -167,16 +202,16 @@ void KeyPad::Loop(MenuHost* host){
       holdSent = false;
 
       // We need to give the finger some to settle
-      int settelingTime = 100;
+      int settelingTime = 50;
       if (key == Keys::KEYPAD_MIDDLE) // already too down. Its conclusive
         settelingTime = 0;
       // We can't send key down because it might turn into a swipe
       else if (key == Keys::KEYPAD_UP || key == Keys::KEYPAD_DOWN || key == Keys::KEYPAD_LEFT || key == Keys::KEYPAD_RIGHT) // Single key
-        settelingTime = 50;
+        settelingTime = 30;
       if (settelingTime){
         long settleStartAt = millis();
         while(millis() - settleStartAt < settelingTime){
-          if (touchOnADCKeyPad_getKey() == Keys::KEYPAD_NONE || touchOnADCKeyPad_getKey() == Keys::KEYPAD_MIDDLE){ // conclusive. Button has gone up or gone down
+          if (touchOnADCKeyPad_getKey() == Keys::KEYPAD_NONE || touchOnADCKeyPad_getKey() == Keys::KEYPAD_MIDDLE || touchOnADCKeyPad_getKey() == Keys::KEYPAD_DOWN_RIGHT || touchOnADCKeyPad_getKey() == Keys::KEYPAD_DOWN_LEFT){ // conclusive. Button has gone up or gone down
             break;
           }
           noiseSenseLoop();
@@ -192,7 +227,7 @@ void KeyPad::Loop(MenuHost* host){
       }
       
       SERIAL_IMPL.printf("Key Down: %d\n", key);
-      if (key == Keys::KEYPAD_MIDDLE){        
+      if (key == Keys::KEYPAD_MIDDLE){
         pressInProcess = true;
         SERIAL_IMPL.printf("Middle Key Down 1: %d\n", key);
         pressPeriod = 2000;
@@ -236,7 +271,9 @@ void KeyPad::Loop(MenuHost* host){
         // Detect the gesture
 
         // test for swipe to middle
-        if (key == Keys::KEYPAD_MIDDLE){
+        //if (key == Keys::KEYPAD_MIDDLE || key == KEYPAD_DOWN_LEFT || key == KEYPAD_DOWN_RIGHT)
+        // Send a press because we are pretty sure about the key
+        if (!pressInProcess) {
           // Its not a swipe, its a key down.
           swipeProgress = 0;
           pressInProcess = true;
@@ -246,27 +283,27 @@ void KeyPad::Loop(MenuHost* host){
           keyDownSince = millis() + pressPeriod;
           lastKeyDown = key;
         }
-        // Test for Dial rotate
-        else if (key == AddKey(lastKeyDown, 1) && !unknwonSwipe){
-          SERIAL_IMPL.printf("Dial Inc: %d > %d\n", lastKeyDown, key);
-          swipeProgress++;
-          if (swipeProgress > 1){
-            host->HandleDialIncrement();
-            if (millis() - lastDialRotateSentAt < 30) 
-                host->HandleDialIncrement(); // accelerate
-            lastDialRotateSentAt = millis(); 
-          }
-        }
-        else if (key == AddKey(lastKeyDown, -1) && !unknwonSwipe){
-          SERIAL_IMPL.printf("Dial Dec: %d > %d\n", lastKeyDown, key);
-          swipeProgress++;
-          if (swipeProgress > 1){
-            host->HandleDialDecrement();
-            if (millis() - lastDialRotateSentAt < 30) 
-                host->HandleDialDecrement(); // accelerate
-            lastDialRotateSentAt = millis(); 
-          }
-        }
+        // // Test for Dial rotate
+        // else if (key == AddKey(lastKeyDown, 1) && !unknwonSwipe){
+        //   SERIAL_IMPL.printf("Dial Inc: %d > %d\n", lastKeyDown, key);
+        //   swipeProgress++;
+        //   if (swipeProgress > 1){
+        //     host->HandleDialIncrement();
+        //     if (millis() - lastDialRotateSentAt < 30) 
+        //         host->HandleDialIncrement(); // accelerate
+        //     lastDialRotateSentAt = millis(); 
+        //   }
+        // }
+        // else if (key == AddKey(lastKeyDown, -1) && !unknwonSwipe){
+        //   SERIAL_IMPL.printf("Dial Dec: %d > %d\n", lastKeyDown, key);
+        //   swipeProgress++;
+        //   if (swipeProgress > 1){
+        //     host->HandleDialDecrement();
+        //     if (millis() - lastDialRotateSentAt < 30) 
+        //         host->HandleDialDecrement(); // accelerate
+        //     lastDialRotateSentAt = millis(); 
+        //   }
+        // }
         // else if (key == KEYPAD_MIDDLE && lastKeyDown == KEYPAD_DOWN || key == KEYPAD_UP && lastKeyDown == KEYPAD_MIDDLE){
         //   SERIAL_IMPL.printf("Swipe Up: %d > %d\n", lastKeyDown, key);
         //   host->HandleDialIncrement();

@@ -25,7 +25,7 @@ void BedLevelStep::Tick()
             // just done
             // Send the cleaning codes
             // find an empty slot
-            String probeCom = String("G30 X") + String(pxStart - 20) + String(" Y") + String(pyStart);
+            String probeCom = String("G30 X") + String(pxStart) + String(" Y") + String(pyStart);
             enqueueComs({"G91", "M106", "T0", "G1 Z3 X20", probeCom}); // We are gonna need the fan too
         }
         donePreHeating = true;
@@ -34,11 +34,14 @@ void BedLevelStep::Tick()
         if(cleaningWipeDueIndex < wipeAreaHeight / wipeRungHeight){
             if (cleaningWipeSentIndex != cleaningWipeDueIndex) {
                 // Send now                
+                String wipeCom0 = String("G1 Z0.2");
                 String wipeCom1 = String("G1 X") + String(wipeAreaWidth) + String(" E-9 F300");
                 String wipeCom2 = String("G1 E6 Z2 F2000"); // force ooze out too
                 String wipeCom3 = String("G1 X") + String(-wipeAreaWidth) + String(" Y") + String(wipeRungHeight);// Force ooze out
                 String wipeCom4 = String("G30"); // Find new Z
-                enqueueComs({wipeCom1, wipeCom2, wipeCom3, wipeCom4});
+                if (cleaningWipeDueIndex + 1 >= wipeAreaHeight / wipeRungHeight) // next iteration won't run
+                    wipeCom4 = "";
+                enqueueComs({wipeCom0, wipeCom1, wipeCom2, wipeCom3, wipeCom4});
                 cleaningWipeSentIndex = cleaningWipeDueIndex;
             }
             else {

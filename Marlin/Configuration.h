@@ -1365,7 +1365,7 @@
  * nozzle system or a piezo-electric smart effector.
  */
 #define NOZZLE_AS_PROBE
-#define NOZZLE_AS_PROBE_PRESSURE_COMPENSATION 0.3
+#define NOZZLE_AS_PROBE_PRESSURE_COMPENSATION 0.15
 
 /**
  * Z Servo Probe, such as an endstop switch on a rotating arm.
@@ -1532,16 +1532,16 @@
 
 // Most probes should stay away from the edges of the bed, but
 // with NOZZLE_AS_PROBE this can be negative for a wider probing area.
-#define PROBING_MARGIN 10
+#define PROBING_MARGIN 15
 
 // X and Y axis travel speed (mm/min) between probes
 #define XY_PROBE_FEEDRATE (100*60)
 
 // Feedrate (mm/min) for the first approach when double-probing (MULTIPLE_PROBING == 2)
-#define Z_PROBE_FEEDRATE_FAST 100
+#define Z_PROBE_FEEDRATE_FAST 120
 
 // Feedrate (mm/min) for the "accurate" probe of each point
-#define Z_PROBE_FEEDRATE_SLOW Z_PROBE_FEEDRATE_FAST / 2
+#define Z_PROBE_FEEDRATE_SLOW Z_PROBE_FEEDRATE_FAST / 3
 
 /**
  * Probe Activation Switch

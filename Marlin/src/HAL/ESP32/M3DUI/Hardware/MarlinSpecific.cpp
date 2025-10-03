@@ -15,7 +15,8 @@ void enqueueComs(String commands) {
 }
 void enqueueComs(std::initializer_list<String> commands) {
     for (const auto& com : commands) {
-        queue.enqueue_one(com.c_str());
+        if(com.length() > 0)
+            queue.enqueue_one(com.c_str());
     }
 }
 void writeTemp(int index, float temp){
@@ -52,7 +53,6 @@ static bool ABLFailedFlag = false;
 void ABLDone(){
     SERIAL_IMPL.println("ABLDone()");
     ABLCompleteFlag = true;
-    ABLFailedFlag = false;
     ABLStartedFlag = false;
     enqueueComs("M500");
 }
