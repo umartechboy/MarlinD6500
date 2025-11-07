@@ -18,6 +18,8 @@
 #include "MenuSteps\SettingsStep.h"
 #include "MenuSteps\UpdateStep.h"
 #include "MenuSteps\HelpStep.h"
+#include "MenuSteps\SensorInfoStep.h"
+#include "MenuSteps\MotorMovementStep.h"
 
 extern MenuHost menuHost;
 extern FilePreviewStep filePreviewStep;
@@ -37,6 +39,8 @@ extern WifiListStep wifiListStep;
 extern SettingsStep settingsStep;
 extern UpdateStep updateStep;
 extern HelpStep helpStep;
+extern SensorInfoStep sensorInfoStep;
+extern MotorMovementStep motorMovementStep;
 
 void BeginApp();
 #ifdef __MARLIN_FIRMWARE__

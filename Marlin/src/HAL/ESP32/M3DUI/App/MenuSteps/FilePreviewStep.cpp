@@ -180,11 +180,11 @@ void FilePreviewStep::LoadBegin() {
                 weAreNearTheEnd = true;
                 // Lets seek near the end
                 SERIAL_IMPL.println("Seeking near the end");
-                if (card.getFileSize() < 20000){
+                if (card.getFileSize() < 30000){
                     SERIAL_IMPL.printf("File not big enough: %d\n", card.getFileSize());
                     break;
                 }
-                card.setIndex(card.getFileSize() - 20000);
+                card.setIndex(card.getFileSize() - 30000);
                 continue;
             }
         }
@@ -254,7 +254,7 @@ void FilePreviewStep::LoadBegin() {
                     getTrimmedAfter(line, ":");
                     layerCount = line.toInt();
                 }
-                else if (line.startsWith("time")){ // Cura
+                else if (line.startsWith("time") && !line.startsWith("time_") && !line.startsWith("timel")){ // Cura. exclude time_ because orca has time_cost, time_lapse and timelapse
                     getTrimmedAfter(line, ":");
                     long printTime = line.toInt();
                     
@@ -271,6 +271,12 @@ void FilePreviewStep::LoadBegin() {
                     if (printTime >= 3600)
                         timeStr = h + "h, " + timeStr;
                     estimatedPrintingTime = timeStr;
+                }
+                else if (line.startsWith("estimated printing time")){   // Orca
+                    //SERIAL_IMPL.printf("estimated printing time: %s\n", line.c_str());
+                    getTrimmedAfter(line, "=");
+                    line.trim();
+                    estimatedPrintingTime = line;
                 }
                 else if (line.startsWith("filament used [mm]")){ // Orca
                     getTrimmedAfter(line, "=");
@@ -293,12 +299,6 @@ void FilePreviewStep::LoadBegin() {
                     getTrimmedAfter(line, " ");
                     getTrimmedBefore(line, "m");
                     filamentUsed_mm = line.toFloat() * 1000.0F;
-                }
-                else if (line.startsWith("estimated printing time")){   // Orca
-                    //SERIAL_IMPL.printf("estimated printing time: %s\n", line.c_str());
-                    getTrimmedAfter(line, "=");
-                    line.trim();
-                    estimatedPrintingTime = line;
                 }
                 else if (line.startsWith("config_block_start")){        
                     Serial.println("Orca header end");
@@ -323,6 +323,11 @@ void FilePreviewStep::HandleKeyPress(Keys key){
     if (!Host->Retro){
         if (key == Keys::KEYPAD_RIGHT || key == Keys::KEYPAD_LEFT){
             swapTools = !swapTools;
+            Preferences prefs;
+            prefs.begin("material");
+            prefs.putBool("swap", swapTools);
+            prefs.end();
+
             // prepare display
             uint16_t temp = e0Color;
             e0Color = e1Color;

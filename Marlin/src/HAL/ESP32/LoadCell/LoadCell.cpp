@@ -19,7 +19,7 @@
  bool ProbeEnable = true; // on by default for tarring
  float lastReading = 0;
  int exampleReadingCount = 0;
- float threshold = 3.0;
+ float loadCellValueThreshold = 3.0;
  float fluctuationTolerance = 0.2F; // how much fluctuation in the reading to ignore
  float rawValueFilterFactor = 0.1F;
  float FloatingFactor = 0.002F;
@@ -30,7 +30,7 @@
  long lastProbe = 1000; // will force a tare
  // reads probe on a scale [0,100] (can go beyond 100 in case of overload)
  float readProbeAnalog(){
-    return lastAnalogReturn / threshold * 100;
+    return lastAnalogReturn / loadCellValueThreshold * 100;
  }
  int LoadCellProbe(){
     lastProbe = millis();
@@ -120,33 +120,33 @@
             SERIAL_IMPL.print("(reading) = ");
             SERIAL_IMPL.print(lastAnalogReturn);
             SERIAL_IMPL.print("(used) ");
-            if (lastAnalogReturn > threshold + fluctuationTolerance){
+            if (lastAnalogReturn > loadCellValueThreshold + fluctuationTolerance){
                 SERIAL_IMPL.print(" > ");
-                SERIAL_IMPL.print(threshold);
+                SERIAL_IMPL.print(loadCellValueThreshold);
                 SERIAL_IMPL.print(" + ");
                 SERIAL_IMPL.print(fluctuationTolerance);                
                 SERIAL_IMPL.print("(");
-                SERIAL_IMPL.print(threshold + fluctuationTolerance);
+                SERIAL_IMPL.print(loadCellValueThreshold + fluctuationTolerance);
                 SERIAL_IMPL.print(")");
             }
-            else if (lastAnalogReturn < threshold - fluctuationTolerance) {
+            else if (lastAnalogReturn < loadCellValueThreshold - fluctuationTolerance) {
                 SERIAL_IMPL.print(" < ");                
-                SERIAL_IMPL.print(threshold);
+                SERIAL_IMPL.print(loadCellValueThreshold);
                 SERIAL_IMPL.print(" - ");
                 SERIAL_IMPL.print(fluctuationTolerance);                
                 SERIAL_IMPL.print("(");
-                SERIAL_IMPL.print(threshold - fluctuationTolerance);
+                SERIAL_IMPL.print(loadCellValueThreshold - fluctuationTolerance);
                 SERIAL_IMPL.print(")");
             }
             else{                
                 SERIAL_IMPL.print(" <> ");
-                SERIAL_IMPL.print(threshold);
+                SERIAL_IMPL.print(loadCellValueThreshold);
             }
-            //SERIAL_IMPL.print(lastAnalogReturn > threshold ? ">":(lastAnalogReturn < -threshold ? "<":"~="));
+            //SERIAL_IMPL.print(lastAnalogReturn > loadCellValueThreshold ? ">":(lastAnalogReturn < -loadCellValueThreshold ? "<":"~="));
 
-            // SERIAL_IMPL.print(threshold);
+            // SERIAL_IMPL.print(loadCellValueThreshold);
             // SERIAL_IMPL.print(" => ");
-            // SERIAL_IMPL.print(lastAnalogReturn > threshold ? 1:0);
+            // SERIAL_IMPL.print(lastAnalogReturn > loadCellValueThreshold ? 1:0);
             
             // SERIAL_IMPL.print("\t");
             // SERIAL_IMPL.print(10);
@@ -157,12 +157,12 @@
             // SERIAL_IMPL.println();
             SERIAL_IMPL.print("\r\n");
             if (lastReturn == 0) {
-                if (lastAnalogReturn > threshold + fluctuationTolerance){ // Be convinced only if we are way above the fluctionation zone
+                if (lastAnalogReturn > loadCellValueThreshold + fluctuationTolerance){ // Be convinced only if we are way above the fluctionation zone
                     lastReturn = 1;
                 }
             }
             else { // Be convinced only if we are way below the fluctionation zone
-                if (lastAnalogReturn < threshold - fluctuationTolerance){
+                if (lastAnalogReturn < loadCellValueThreshold - fluctuationTolerance){
                     lastReturn = 0;
                 }
             }
@@ -226,7 +226,7 @@ float do_blocking_move_to_dz_D8500(float dz, float fr_mm_s){
         move_mm(stepSize, 1);
         distanceGone += stepSize;
         LoadCellLoop();
-        if (lastAnalogReturn > threshold){
+        if (lastAnalogReturn > loadCellValueThreshold){
             SERIAL_IMPL.println("Bed Touch");
             break;
         }

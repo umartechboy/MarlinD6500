@@ -5,6 +5,7 @@
 #include "..\..\..\..\sd\cardreader.h"
 #include "..\..\..\..\feature\powerloss.h"
 
+extern volatile bool swapTools;
 static int target [2] = {30, 30};
 
 bool hasComsQueued() {
@@ -20,11 +21,10 @@ void enqueueComs(std::initializer_list<String> commands) {
     }
 }
 void writeTemp(int index, float temp){
-    String com = String("M104 S") + String(temp, 0) + String(" T") + String(index);
+    String com = String("M104 S") + String(temp, 0) + String(" T") + String(swapTools?(1-index):index);
     queue.enqueue_one(com.c_str());
     //target[index] = temp;
 }
-extern volatile bool swapTools;
 float readTemp1(){
     return thermalManager.degHotend(swapTools?1:0);
     // float t = 24.0 + (float)millis() / 1000.0F * 2.5F; // 2.5 degree per second

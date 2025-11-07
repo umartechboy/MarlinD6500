@@ -18,6 +18,8 @@ WifiListStep wifiListStep(&menuHost);
 SettingsStep settingsStep(&menuHost);
 UpdateStep updateStep(&menuHost);
 HelpStep helpStep(&menuHost);
+SensorInfoStep sensorInfoStep(&menuHost);
+MotorMovementStep motorMovementStep(&menuHost);
 
 void BeginApp(){    
   SERIAL_IMPL.println("Goto menu pushed");

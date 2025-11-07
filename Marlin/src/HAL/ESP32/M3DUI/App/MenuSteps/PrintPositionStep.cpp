@@ -64,11 +64,14 @@ void PrintPositionStep::HandleKeyPress(Keys key) {
     if (mainScreenStep.maxY + mainScreenStep.yOffset > (bedHeight - inc)) mainScreenStep.yOffset = (bedHeight - inc) - mainScreenStep.maxY;
     NeedsRedraw = true;
 }
+void PrintPositionStep::LoadBegin(){
+    enqueueComs({"M206 X0 Y0"}); // Reset any previous offset
+}
 void PrintPositionStep::UnloadBegin(){
     // Apply the offset
     // This happen even if the step is to the previous step
     // We need to take care of this limitation in File preview
     String offsetCom = String("M206 X") + String(-mainScreenStep.xOffset) + String(" Y") + String(-mainScreenStep.yOffset);
     mainScreenStep.printStatus = PrintStatus::FileToPrint;
-    enqueueComs({offsetCom});
+    enqueueComs({offsetCom, "M500"});
 }

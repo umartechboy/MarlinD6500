@@ -53,6 +53,27 @@ void noiseSenseLoop(){
 }
 
 long lastTempKeyDebug = 0;
+float touchOnADCKeyPad_getKeyIntensity(Keys key){
+  if (key == Keys::KEYPAD_RIGHT || key == Keys::KEYPAD_UP || key == Keys::KEYPAD_LEFT || key == Keys::KEYPAD_DOWN) {
+    return totalTouchNoise[(key - 1) / 2];
+  }
+  else if (key == Keys::KEYPAD_DOWN_LEFT) {
+    return totalTouchNoise[2] / 2 + totalTouchNoise[3] / 2;
+  }
+  else if (key == Keys::KEYPAD_DOWN_RIGHT) {
+    return totalTouchNoise[0] / 2 + totalTouchNoise[3] / 2;
+  }
+  else if (key == Keys::KEYPAD_UP_LEFT) {
+    return totalTouchNoise[1] / 2 + totalTouchNoise[2] / 2;
+  }
+  else if (key == Keys::KEYPAD_UP_RIGHT) {
+    return totalTouchNoise[1] / 2 + totalTouchNoise[0] / 2;
+  }
+  else if (key == Keys::KEYPAD_MIDDLE) {
+    return totalTouchNoise[0] / 4 + totalTouchNoise[1] / 4 +  totalTouchNoise[2] / 4 +  totalTouchNoise[3] / 4;
+  }
+  else return 0;
+}
 Keys touchOnADCKeyPad_getKey(){
 noiseSenseLoop();
 // Lets make a simpler loop;

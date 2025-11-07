@@ -19,15 +19,27 @@ FilamentChangeStep::FilamentChangeStep(MenuHost* host, int index):MenuStep(host)
 FilamentChangeStep::~FilamentChangeStep()
 {
 }
+
 bool FilamentChangeStep::CanJumpToMainMenu(){
     return false;
 }
-
+// In case the tool is swapped, we need to read/write the correct tool
+extern int swapTools;
+float ThisReadTemp(int index){
+    // We don't do any swapping here anymore
+    return readTemp(index);
+    //return readTemp(swapTools?1-index:index);
+}
+void ThisWriteTemp(int index, float temp){
+    // We don't do any swapping here anymore
+    writeTemp(index, temp);
+    //writeTemp(swapTools?1-index:index, temp);
+}
 void FilamentChangeStep::Tick()
 {
     NeedsRedraw = true;
     if (stage == FilamentChangeStage::Preheat){
-        if (readTemp(filamentIndex) > preHeatTemp) {// Done preheating
+        if (ThisReadTemp(filamentIndex) > preHeatTemp) {// Done preheating
             stage = FilamentChangeStage::ProcessSelection;
             RetroPreviousStep = &retroMainMenuStep;
         }
@@ -50,9 +62,10 @@ void FilamentChangeStep::Tick()
 }
 
 void FilamentChangeStep::LoadComplete(){
+    swapTools = false; // reset any swapping
     SERIAL_IMPL.printf("Begin Change Filament %d\n", filamentIndex);
     enqueueComs({"G91", "G1 Z5 F1000", "G90"});
-    writeTemp(filamentIndex, preHeatTemp);
+    ThisWriteTemp(filamentIndex, preHeatTemp);
     stage = FilamentChangeStage::Preheat;
     
     Preferences prefs;
@@ -65,7 +78,7 @@ void FilamentChangeStep::LoadComplete(){
 void FilamentChangeStep::UnloadBegin(){
     SERIAL_IMPL.println("Drop 5mm");
     enqueueComs({"G91", "G1 Z-5 F1000", "G90"});
-    writeTemp(filamentIndex, 0);
+    ThisWriteTemp(filamentIndex, 0);
 }
 
 static void drawVThickLine(BufferedDisplay*g, int x0, int y0, int x1, int y1, int thickness, uint16_t color){
@@ -96,7 +109,7 @@ void FilamentChangeStep::Paint(BufferedDisplay* g){
     //SERIAL_IMPL.printf("Idle Screen Step Paint called @ %d, %d\n", g->xOffset, g->yOffset);
     // Draw the idle screen
     Color red = Color(DarkRed);
-    int a = (readTemp(0) / preHeatTemp) * 255.0F;
+    int a = (ThisReadTemp(0) / preHeatTemp) * 255.0F;
     if (a > 255) a = 255;
     else if (a < 0) a = 0;
     red.a(a);
@@ -110,7 +123,7 @@ void FilamentChangeStep::Paint(BufferedDisplay* g){
         g->setFont(&FreeSans9pt7b);
         centerString(g, "Heating up...", Host->appWidth() / 2, Host->appHeight() / 2 - 10);
         g->setFont();
-        String tempStatus = String("(") + String(readTemp(filamentIndex), 0) + "/" + String(preHeatTemp, 0) + String(")");
+        String tempStatus = String("(") + String(ThisReadTemp(filamentIndex), 0) + "/" + String(preHeatTemp, 0) + String(")");
         centerString(g, tempStatus.c_str(), Host->appWidth() / 2, retroTitleSectionHeight + Host->appHeight() / 2 + 10);
     }
     else if (stage == FilamentChangeStage::ProcessSelection){
@@ -267,8 +280,8 @@ void FilamentChangeStep::HandleKeyPress(Keys key) {
                     enqueueComs("T0");
                 else
                     enqueueComs ("T1");
-                String exCom = ("G1 E") + (filamentIndex == 0?String(100):String(50)); // Ext B has a smaller tube
-                enqueueComs({"M83", "G1 E100 F4000", "G1 E100", "G1 E100", exCom, "G1 E50", "G1 E30 F100", "M82"});
+                String exCom = ("G1 E") + (filamentIndex == 0?String(100):String(50)); // Ext B s a smaller tube
+                enqueueComs({"M83", "G1 E100 F4000", "G1 E100", "G1 E100", "G1 E20", exCom, "G1 E50", "G1 E30 F100", "M82"});
                 stage = FilamentChangeStage::Wait;
             }
         }

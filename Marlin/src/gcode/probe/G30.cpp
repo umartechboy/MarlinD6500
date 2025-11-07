@@ -51,6 +51,7 @@
  *   E   Engage the probe for each probe (default 1)
  *   C   Enable probe temperature compensation (0 or 1, default 1)
  */
+extern float loadCellValueThreshold;
 void GcodeSuite::G30() {
 
   #if HAS_MULTI_HOTEND
@@ -60,6 +61,8 @@ void GcodeSuite::G30() {
 
   const xy_pos_t pos = { parser.linearval('X', current_position.x + probe.offset_xy.x),
                          parser.linearval('Y', current_position.y + probe.offset_xy.y) };
+                         
+
 
   if (!probe.can_reach(pos)) {
     #if ENABLED(DWIN_LCD_PROUI)
@@ -80,7 +83,12 @@ void GcodeSuite::G30() {
     const ProbePtRaise raise_after = parser.boolval('E', true) ? PROBE_PT_STOW : PROBE_PT_NONE;
 
     TERN_(HAS_PTC, ptc.set_enabled(!parser.seen('C') || parser.value_bool()));
+    float deploySpeed = parser.linearval('S', z_probe_slow_mm_s);
+    loadCellValueThreshold = parser.linearval('T', loadCellValueThreshold);
+    feedRate_t bkp = z_probe_slow_mm_s;
+    z_probe_slow_mm_s = deploySpeed;
     const float measured_z = probe.probe_at_point(pos, raise_after, 1);
+    z_probe_slow_mm_s = bkp;
     TERN_(HAS_PTC, ptc.set_enabled(true));
     if (!isnan(measured_z)) {
       SERIAL_ECHOLNPGM("Bed X: ", pos.x, " Y: ", pos.y, " Z: ", measured_z);

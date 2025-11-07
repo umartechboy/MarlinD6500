@@ -7,7 +7,7 @@
 #include <WiFi.h>
 #include "..\MenuApp.h"
 
-void OnSelectionUpdatedCallback(void* caller, ListItem* selectedItem, int selectedIndex){
+void OnMovementSelectionUpdatedCallback(void* caller, ListItem* selectedItem, int selectedIndex){
     SettingsStep* This = (SettingsStep*)caller;
     if (selectedItem == This->setNetworkOption){
         This->RetroNextStep = &wifiListStep;
@@ -16,6 +16,17 @@ void OnSelectionUpdatedCallback(void* caller, ListItem* selectedItem, int select
     else if (selectedItem == This->updatesOption){
         This->RetroNextStep = &updateStep;
         updateStep.PreviousStep = This;
+        SERIAL_IMPL.printf("Setting next step: %s\n", ((StringListItem*)selectedItem)->ItemText.c_str());
+    }
+    else if (selectedItem == This->sensorsOption){
+        This->RetroNextStep = &sensorInfoStep;
+        //updateStep.PreviousStep = This;
+        SERIAL_IMPL.printf("Setting next step: %s\n", ((StringListItem*)selectedItem)->ItemText.c_str());
+    }
+    else if (selectedItem == This->motorMovementOption){
+        This->RetroNextStep = &motorMovementStep;
+        motorMovementStep.RetroPreviousStep = This;
+        motorMovementStep.RetroNextStep = 0;
         SERIAL_IMPL.printf("Setting next step: %s\n", ((StringListItem*)selectedItem)->ItemText.c_str());
     }
     else {
@@ -34,10 +45,14 @@ SettingsStep::SettingsStep(MenuHost* host):MenuStep(host)
     setNetworkOption = new StringListItem(host, 0, "Change Network", 0, 16);
     updatesOption = new StringListItem(host, 0, "Check for updates", 0, 16);
     sensorsOption = new StringListItem(host, 0, "Test Sensors", 0, 16);
+    motorMovementOption = new StringListItem(host, 0, "Power Test", 0, 16);
+
     options->Add(setNetworkOption);
     options->Add(updatesOption);
     options->Add(sensorsOption);
-    options->SetOnSelectionUpdated(this, OnSelectionUpdatedCallback);
+    options->Add(motorMovementOption);
+    
+    options->SetOnSelectionUpdated(this, OnMovementSelectionUpdatedCallback);
     //options->InvokeSelectionChanged();
 }
 SettingsStep::~SettingsStep(){

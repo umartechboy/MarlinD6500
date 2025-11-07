@@ -174,6 +174,7 @@ xyz_pos_t cartes;
 
 #if HAS_ABL_NOT_UBL
   feedRate_t xy_probe_feedrate_mm_s = MMM_TO_MMS(XY_PROBE_FEEDRATE);
+  feedRate_t z_probe_slow_mm_s = MMM_TO_MMS(Z_PROBE_FEEDRATE_SLOW);
 #endif
 
 /**

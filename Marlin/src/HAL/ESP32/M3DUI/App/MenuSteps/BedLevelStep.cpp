@@ -56,7 +56,7 @@ void BedLevelStep::Tick()
                 // Send the G29
                 PreviousStep = 0;
                 G29Sent = true;
-                enqueueComs({"M107", "M206 Z0"});
+                enqueueComs({"M107", "M206 Z0", "M420 S0"});
                 StartABL();
                 writeTemp(0, 0);
                 writeTemp(1, 0);
@@ -111,7 +111,7 @@ void BedLevelStep::notifyLevelingDone(){
         levelingDoneSince = millis();
         writeTemp(0, 0);
         writeTemp(1, 0);
-        enqueueComs({"M106 S0", "G1 Y160 X100 Z5 F2000"}); // Move out of the way
+        enqueueComs({"M106 S0", "G1 Y160 X100 Z5 F2000", "M420 S1"}); // Move out of the way
     }
 }
 extern float readProbeAnalog();

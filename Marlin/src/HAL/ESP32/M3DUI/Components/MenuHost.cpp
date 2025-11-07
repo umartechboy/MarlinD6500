@@ -413,12 +413,12 @@ void MenuHost::HandleKeyPress(Keys key){
         }
         else if (key == KEYPAD_OPTIONS){
             if (CurrentStep){
-            if (CurrentStep->CanJumpToMainMenu()){
-                GotoStepFromAny(&retroMainMenuStep);
-            }
-            else              
-                if (CurrentStep != &retroMainMenuStep)
-                PushNotification("Can't jump to the menu right now");
+                if (CurrentStep->CanJumpToMainMenu()){
+                    GotoStepFromAny(&retroMainMenuStep);
+                }
+                // else              
+                //     if (CurrentStep != &retroMainMenuStep)
+                //     PushNotification("Can't jump to the menu right now");
             }
         }
         else if (key == KEYPAD_BACK){

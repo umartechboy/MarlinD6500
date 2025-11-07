@@ -11,7 +11,9 @@
 #include "../../Hardware/MarlinSpecific.h"
 // #include "../../../LoadCell/LoadCell.h"
 #include "..\MenuApp.h"
+#include <Preferences.h>
 
+extern int swapTools;
 
 void printComSent(void* sender){
     MainScreenStep* This = (MainScreenStep*)sender;
@@ -88,6 +90,7 @@ void MainScreenStep::Tick() {
             printStatus = PrintStatus::Idle;
             RetroNextStep = &retroMainMenuStep;
             RetroPreviousStep = 0;
+            swapTools = false;
         }
     }
     // ProbeEnable = true;
@@ -219,7 +222,6 @@ void MainScreenStep::Paint(BufferedDisplay* g) {
         g->fillRect(g->width() - 3, g->height() - pHeight, 3, pHeight, ST7735_WHITE);
     }
 }
-
 void MainScreenStep::HandleKeyPress(Keys key){
     if (Host->Retro) {        
         if (printStatus == PrintStatus::PrintToRecover) { 
@@ -227,6 +229,14 @@ void MainScreenStep::HandleKeyPress(Keys key){
                 SERIAL_IMPL.println("Resume print");
                 prepareThisForPrint();
                 preparingRecovery = true;
+                
+                bool _swapTools = false;
+                Preferences prefs;
+                prefs.begin("material");
+                _swapTools = prefs.getBool("swap", false);
+                swapTools = _swapTools;
+                prefs.end();
+
                 prepareMarlinForRecover(recoverComSent, this);            
             }
             else if (key == KEYPAD_RIGHT){                

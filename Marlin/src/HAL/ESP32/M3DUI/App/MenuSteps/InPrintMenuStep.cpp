@@ -8,6 +8,7 @@ static void backToPrintSelected(void* caller){
     resumePrint();
     InPrintMenuStep* This = (InPrintMenuStep*)caller;
     This->RetroNextStep = &mainScreenStep;
+    This->skipUnloadBegin = true; // we have sent the commands, don't resume again
     This->Host->GotoNextStep();
 
 }
@@ -15,6 +16,7 @@ static void filamentSetupSelected(void* caller){
     InPrintMenuStep* This = (InPrintMenuStep*)caller;
     This->RetroNextStep = &materialsMenuStep;
     materialsMenuStep.RetroPreviousStep = This;
+    This->skipUnloadBegin = true; // we have sent the commands, don't resume again
     This->Host->GotoNextStep();
     This->sentForMaterialChange = true;
 }
@@ -26,6 +28,7 @@ static void abortPrintSelected(void* caller){
     mainScreenStep.DOSFileName = "";
     mainScreenStep.printStatus = PrintStatus::Idle;
     mainScreenStep.RetroNextStep = &retroMainMenuStep;
+    This->skipUnloadBegin = true; // we have sent the commands, don't resume again
     This->Host->GotoNextStep();
     This->RetroPreviousStep = 0; // we are now in the main menu
 }
@@ -101,6 +104,7 @@ void InPrintMenuStep::HandleKeyPress(Keys key) {
 
 void InPrintMenuStep::LoadBegin(){
     SERIAL_IMPL.println("InPrint menu Loaded");
+    skipUnloadBegin = false;
     if (!sentForMaterialChange)
         pausePrint();
 }
@@ -109,7 +113,11 @@ void InPrintMenuStep::LoadComplete(){
     RetroPreviousStep = &mainScreenStep;
 }
 
+void InPrintMenuStep::UnloadBegin(){    
+}
 void InPrintMenuStep::UnloadComplete(){    
+    if (!skipUnloadBegin) // this is the back key or the menu key
+        resumePrint();
 }
 bool InPrintMenuStep::CanJumpToMainMenu(){
     return false;

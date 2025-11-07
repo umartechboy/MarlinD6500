@@ -11,6 +11,7 @@ public:
     void LoadBegin() override;
     void LoadComplete() override;
     void UnloadComplete() override;
+    void UnloadBegin() override;
     void Tick() override;
     void Paint(BufferedDisplay* g) override;
     void IncrementValue() override;
@@ -18,6 +19,7 @@ public:
     void HandleKeyPress(Keys key) override;
     bool CanJumpToMainMenu() override;
     bool sentForMaterialChange = false;
+    bool skipUnloadBegin = false;
     StringListItem* backToPrintOption;
     StringListItem* filamentSetupOption;
     StringListItem* abortPrintOption;
