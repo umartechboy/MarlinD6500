@@ -186,6 +186,7 @@ int pressesInARow = 0;
 int pressPeriod = 500;
 bool holdSent = false;
 void KeyPad::Loop(MenuHost* host){
+  return;
   noiseSenseLoop();
   if (millis() - lastKeyCheck > ((lastKeyDown == Keys::KEYPAD_NONE)?5:20)){
     lastKeyCheck = millis();

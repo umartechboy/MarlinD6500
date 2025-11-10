@@ -82,6 +82,7 @@
 
 #define I_MIN_PIN TEMP_1_PIN   // your reused thermistor pin
 #define J_MIN_PIN TEMP_0_PIN   // second reused thermistor pin
+#define SERVO0_PIN 13
 
 //
 // Heaters / Fans
@@ -92,7 +93,7 @@
 #if ENABLED(M3DPrintVueSupport)
 #define HEATER_BED_PIN                         -1 // Disable Bed for PrintVue connections
 #else
-#define HEATER_BED_PIN                         13
+#define HEATER_BED_PIN                         -1
 #endif
 
 //

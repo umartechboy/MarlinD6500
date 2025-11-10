@@ -50,10 +50,15 @@ void Servo::write(int inDegrees) {
   degrees = constrain(inDegrees, MIN_ANGLE, MAX_ANGLE);
   int us = map(degrees, MIN_ANGLE, MAX_ANGLE, MIN_PULSE_WIDTH, MAX_PULSE_WIDTH);
   int duty = map(us, 0, TAU_USEC, 0, MAX_COMPARE);
-  if (channel >= 0) ledcWrite(channel, duty); // don't save duty for servos!
+  if (channel >= 0){
+    
+    SERIAL_IMPL.printf("ledcWrite: %d, %d\n", channel, duty);
+    ledcWrite(channel, duty); // don't save duty for servos!
+  }
 }
 
 void Servo::move(const int value) {
+  SERIAL_IMPL.printf("Servo move: %d, %d\n", channel, value);
   constexpr uint16_t servo_delay[] = SERVO_DELAY;
   static_assert(COUNT(servo_delay) == NUM_SERVOS, "SERVO_DELAY must be an array NUM_SERVOS long.");
   if (attach(0) >= 0) {

@@ -249,7 +249,8 @@ void MarlinHAL::init_board() {
   UISetup();
   LoadCellSetup();
   InitMusic(Y_STEP_PIN, Y_DIR_PIN, Y_ENABLE_PIN);
-
+  pinMode(I_MIN_PIN, INPUT_PULLDOWN);
+  pinMode(J_MIN_PIN, INPUT_PULLDOWN);
   SERIAL_IMPL.println("Starting SD to look for PLR");
   if(!card.isMounted()){
     card.mount();
