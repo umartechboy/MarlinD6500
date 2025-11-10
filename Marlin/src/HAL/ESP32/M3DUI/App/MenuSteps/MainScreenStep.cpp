@@ -50,7 +50,7 @@ MainScreenStep::MainScreenStep(MenuHost* host):MenuStep(host) {
 MainScreenStep::~MainScreenStep(){
 }
 void MainScreenStep::prepareThisForPrint(){    
-    materialAtStart = print_job_timer.getStats().filamentUsed;
+    //materialAtStart = print_job_timer.getStats().filamentUsed;
     RetroPreviousStep = 0;
     RetroNextStep = 0;
     NextActionString = "";
@@ -144,11 +144,11 @@ void MainScreenStep::Paint(BufferedDisplay* g) {
                 titleHeight = retroTitleSectionHeight + 14;
             
             if (card.isPrinting()) {
-                if (thermalManager.degHotendNear(active_extruder, thermalManager.degTargetHotend(active_extruder))) {
+                // if (thermalManager.degHotendNear(active_extruder, thermalManager.degTargetHotend(active_extruder))) {
                     centerLeftString(g, "Printing", 2, titleHeight);
-                }
-                else
-                    centerLeftString(g, "Preheating", 2, titleHeight);
+                // }
+                // else
+                //     centerLeftString(g, "Preheating", 2, titleHeight);
             }
             else if (card.isPaused() || preparingRecovery) {
                 if (preparingRecovery){
@@ -161,9 +161,9 @@ void MainScreenStep::Paint(BufferedDisplay* g) {
                 centerLeftString(g, "All Done!", 2, titleHeight);
             }
 
-            if (thermalManager.degHotendNear(active_extruder, thermalManager.degTargetHotend(active_extruder)))
-                centerRightString(g, (String((print_job_timer.getStats().filamentUsed - materialAtStart) / 1000, 3) + String("m")).c_str(), Host->appWidth() - 2, titleHeight);
-            else
+            // if (thermalManager.degHotendNear(active_extruder, thermalManager.degTargetHotend(active_extruder)))
+            //     centerRightString(g, (String((print_job_timer.getStats().filamentUsed - materialAtStart) / 1000, 3) + String("m")).c_str(), Host->appWidth() - 2, titleHeight);
+            // else
                 centerRightString(g, (String((thermalManager.degHotend(active_extruder) / (float)thermalManager.degTargetHotend(active_extruder)) * 100.0F, 0) + String("%")).c_str(), Host->appWidth() - 2, titleHeight);
             
             
@@ -217,10 +217,10 @@ void MainScreenStep::Paint(BufferedDisplay* g) {
             g->fillRect(Host->appWidth() / 2 + 1, Host->appHeight() - 2, Host->appWidth() / 2, 2, e1Color);
         }
     } 
-    if (ProbeEnable) {
-        int pHeight = readProbeAnalog();
-        g->fillRect(g->width() - 3, g->height() - pHeight, 3, pHeight, ST7735_WHITE);
-    }
+    // if (ProbeEnable) {
+    //     int pHeight = readProbeAnalog();
+    //     g->fillRect(g->width() - 3, g->height() - pHeight, 3, pHeight, ST7735_WHITE);
+    // }
 }
 void MainScreenStep::HandleKeyPress(Keys key){
     if (Host->Retro) {        
@@ -241,7 +241,7 @@ void MainScreenStep::HandleKeyPress(Keys key){
             }
             else if (key == KEYPAD_RIGHT){                
                 SERIAL_IMPL.println("Don't resume print");
-                recovery.purge();
+                // recovery.purge();
                 printStatus = PrintStatus::Idle;
                 fileName = "";
             }
@@ -267,7 +267,7 @@ void MainScreenStep::HandleKeyPress(Keys key){
             }
             else if (key == KEYPAD_RIGHT){                
                 SERIAL_IMPL.println("Don't resume print");
-                card.removeJobRecoveryFile();
+                // card.removeJobRecoveryFile();
                 PreviousStep = &toolsMenuStep;
                 NextStep = &sdMenuStep;
                 printStatus = PrintStatus::Idle;
@@ -336,7 +336,7 @@ void MainScreenStep::LoadComplete(){
         // Get the status and set the mode
         if (printStatus == PrintStatus::FileToPrint) { // This must be set by the file selection menus.
             SERIAL_IMPL.printf("Home screen with print file: %s, %s\n", fileName.c_str(), DOSFileName.c_str());
-            materialAtStart = print_job_timer.getStats().filamentUsed;
+            // materialAtStart = print_job_timer.getStats().filamentUsed;
             // Remove the steps to restrict access to the print alone
             NextStep = 0;
             PreviousStep = 0;
@@ -348,16 +348,17 @@ void MainScreenStep::LoadComplete(){
             TickPeriod = 5000;
         } else {
             SERIAL_IMPL.println("Idle home screen.");
-            if(card.jobRecoverFileExists())
+            // if(card.jobRecoverFileExists())
+            // {
+            //     SERIAL_IMPL.println("Recovery file exists");
+            //     printStatus = PrintStatus::PrintToRecover;
+            //     TickPeriod = 50;
+            //     // Remove the steps to restrict access to the print alone
+            //     NextStep = 0;
+            //     PreviousStep = 0;
+            // }
+            // else 
             {
-                SERIAL_IMPL.println("Recovery file exists");
-                printStatus = PrintStatus::PrintToRecover;
-                TickPeriod = 50;
-                // Remove the steps to restrict access to the print alone
-                NextStep = 0;
-                PreviousStep = 0;
-            }
-            else {
                 NextStep = &sdMenuStep;
                 PreviousStep = &toolsMenuStep;
                 printStatus = PrintStatus::Idle;

@@ -255,30 +255,30 @@ void MarlinHAL::init_board() {
     card.mount();
   }
 
-  if (recovery.exists()){
-    SERIAL_IMPL.println("Loading recovery");
-    recovery.load();
-    if (recovery.valid()){
-      SERIAL_IMPL.println("Valid Recovery loaded");
-      mainScreenStep.printStatus = PrintStatus::PrintToRecover;      
-      SERIAL_IMPL.printf("File Name: %s\n", recovery.info.sd_filename);
-      SERIAL_IMPL.printf("SD Pos: %d\n", recovery.info.sdpos);
-      SERIAL_IMPL.printf("X offset: %f\n", recovery.info.home_offset.x);
-      SERIAL_IMPL.printf("Y offset: %f\n", recovery.info.home_offset.y);
-      SERIAL_IMPL.printf("Z offset: %f\n", recovery.info.home_offset.z);
-      SERIAL_IMPL.printf("X shift: %f\n", recovery.info.position_shift.x);
-      SERIAL_IMPL.printf("Y shift: %f\n", recovery.info.position_shift.y);
-      SERIAL_IMPL.printf("Z shift: %f\n", recovery.info.position_shift.z);
-      SERIAL_IMPL.printf("Active Extrder: %d\n", recovery.info.active_extruder);
-      SERIAL_IMPL.printf("Elapsed: %d\n", recovery.info.print_job_elapsed);
-    }
-    else {
-      SERIAL_IMPL.println("Recovery not valid");
-    }
-  }
-  else {
-    SERIAL_IMPL.println("No Recovery Data");
-  }
+  // if (recovery.exists()){
+  //   SERIAL_IMPL.println("Loading recovery");
+  //   recovery.load();
+  //   if (recovery.valid()){
+  //     SERIAL_IMPL.println("Valid Recovery loaded");
+  //     mainScreenStep.printStatus = PrintStatus::PrintToRecover;      
+  //     SERIAL_IMPL.printf("File Name: %s\n", recovery.info.sd_filename);
+  //     SERIAL_IMPL.printf("SD Pos: %d\n", recovery.info.sdpos);
+  //     SERIAL_IMPL.printf("X offset: %f\n", recovery.info.home_offset.x);
+  //     SERIAL_IMPL.printf("Y offset: %f\n", recovery.info.home_offset.y);
+  //     SERIAL_IMPL.printf("Z offset: %f\n", recovery.info.home_offset.z);
+  //     SERIAL_IMPL.printf("X shift: %f\n", recovery.info.position_shift.x);
+  //     SERIAL_IMPL.printf("Y shift: %f\n", recovery.info.position_shift.y);
+  //     SERIAL_IMPL.printf("Z shift: %f\n", recovery.info.position_shift.z);
+  //     SERIAL_IMPL.printf("Active Extrder: %d\n", recovery.info.active_extruder);
+  //     SERIAL_IMPL.printf("Elapsed: %d\n", recovery.info.print_job_elapsed);
+  //   }
+  //   else {
+  //     SERIAL_IMPL.println("Recovery not valid");
+  //   }
+  // }
+  // else {
+  //   SERIAL_IMPL.println("No Recovery Data");
+  // }
   
   #if ENABLED(USE_ESP32_TASK_WDT)
     esp_task_wdt_init(10, true);

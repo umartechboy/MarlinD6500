@@ -61,7 +61,9 @@ void FilamentChangeStep::Tick()
         RetroPreviousStep = 0;
 }
 
+bool swapToolsBkp = false;
 void FilamentChangeStep::LoadComplete(){
+    swapToolsBkp = swapTools;
     swapTools = false; // reset any swapping
     SERIAL_IMPL.printf("Begin Change Filament %d\n", filamentIndex);
     enqueueComs({"G91", "G1 Z5 F1000", "G90"});
@@ -76,6 +78,7 @@ void FilamentChangeStep::LoadComplete(){
 }
 
 void FilamentChangeStep::UnloadBegin(){
+    swapTools = swapToolsBkp;
     SERIAL_IMPL.println("Drop 5mm");
     enqueueComs({"G91", "G1 Z-5 F1000", "G90"});
     ThisWriteTemp(filamentIndex, 0);

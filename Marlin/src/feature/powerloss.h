@@ -172,8 +172,6 @@ class PrintJobRecovery {
     static void enable(const bool onoff);
     static void changed();
 
-    static bool exists() { return card.jobRecoverFileExists(); }
-    static void open(const bool read) { card.openJobRecoveryFile(read); }
     static void close() { file.close(); }
 
     static bool check();
@@ -186,6 +184,8 @@ class PrintJobRecovery {
     static void save(const bool force=ENABLED(SAVE_EACH_CMD_MODE), const float zraise=POWER_LOSS_ZRAISE, const bool raised=false);
 
     #if PIN_EXISTS(POWER_LOSS)
+      static bool exists() { return card.jobRecoverFileExists(); }
+      static void open(const bool read) { card.openJobRecoveryFile(read); }
       static void outage() {
         static constexpr uint8_t OUTAGE_THRESHOLD = 3;
         static uint8_t outage_counter = 0;

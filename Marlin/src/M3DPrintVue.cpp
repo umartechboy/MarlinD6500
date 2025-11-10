@@ -6,6 +6,7 @@
 #include "module/motion.h"
 #include "module/temperature.h"
 
+#ifdef M3DPrintVueSupport
 //#include <ArduinoBLE.h>
 
 //HardwareSerial Serial2(2);
@@ -226,3 +227,5 @@ void M3DPrintVueLoop()
 //     }
 // }
 // #endif
+
+#endif

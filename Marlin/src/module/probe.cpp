@@ -34,6 +34,7 @@
 #include "motion.h"
 #include "temperature.h"
 #include "endstops.h"
+#include "stepper.h"
 
 #include "../gcode/gcode.h"
 #include "../lcd/marlinui.h"

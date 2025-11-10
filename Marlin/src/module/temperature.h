@@ -1060,7 +1060,7 @@ class Temperature {
 
       static void reset_hotend_idle_timer(const uint8_t E_NAME) {
         heater_idle[HOTEND_INDEX].reset();
-        start_watching_hotend(HOTEND_INDEX);
+        // start_watching_hotend(HOTEND_INDEX);
       }
 
       #if HAS_HEATED_BED

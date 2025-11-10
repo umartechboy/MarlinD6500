@@ -116,9 +116,9 @@ void printJobTick(){
 
 }
 
-extern float lastRecoverySavedAt;
+// extern float lastRecoverySavedAt;
 void prepareMarlinForPrint(String dosFileName, bool hasExtruder1, bool hasExtruder2, void (*printStartedCallback)(void*), void* sender){
-    lastRecoverySavedAt = 0.1;
+    // lastRecoverySavedAt = 0.1;
     
     // FOr now, return right away.
     enqueueComs({"M413 S1"});
@@ -128,12 +128,12 @@ void prepareMarlinForPrint(String dosFileName, bool hasExtruder1, bool hasExtrud
     (*printStartedCallback)(sender);
 }
 void prepareMarlinForRecover(void (*printStartedCallback)(void*), void* sender){
-    lastRecoverySavedAt = 0.1;
+    // lastRecoverySavedAt = 0.1;
     
     // FOr now, return right away.
     enqueueComs({"M1000", "M413 S1"}); // Init SD, Select File, Put to print, enable recovery    
-    recovery.enable(true); // in case its not enabled after recovery
-    recovery.save(true);
+    // recovery.enable(true); // in case its not enabled after recovery
+    // recovery.save(true);
     (*printStartedCallback)(sender);
 }
 void pausePrint(){
@@ -156,7 +156,7 @@ void abortPrint(){
     SERIAL_IMPL.println("abortPrint()");
     pausePrint();
     card.abortFilePrintNow();
-    recovery.purge();
+    // recovery.purge();
     enqueueComs({"G1 Y200 X100 F2000", "M104 S0 T0", "M104 S0 T1"});
     enqueueComs({"G91", "G1 Z10 F1000", "G90"});
 }

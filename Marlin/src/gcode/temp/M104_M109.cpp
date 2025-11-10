@@ -84,12 +84,12 @@ void GcodeSuite::M104_M109(const bool isM109) {
     int8_t target_extruder = get_target_extruder_from_command();
     if (target_extruder < 0) return;
   #endif
-  if (swapTools){
-    if (target_extruder == 0)
-      target_extruder = 1;
-    else if (target_extruder == 1)
-      target_extruder = 0;
-  }
+  // if (swapTools){
+  //   if (target_extruder == 0)
+  //     target_extruder = 1;
+  //   else if (target_extruder == 1)
+  //     target_extruder = 0;
+  // }
 
   bool got_temp = false;
   celsius_t temp = 0;

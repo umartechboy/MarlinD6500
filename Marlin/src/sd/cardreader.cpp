@@ -366,7 +366,7 @@ void CardReader::ls(const uint8_t lsflags) {
 void CardReader::ls(void* context, Dos83ListCB cb) {
   if (flag.mounted) {
     root.rewind();
-    printListing(root, nullptr,  TERN0(LONG_FILENAME_HOST_SUPPORT, parser.boolval('L') << LS_LONG_FILENAME), context, cb);
+    // printListing(root, nullptr,  TERN0(LONG_FILENAME_HOST_SUPPORT, parser.boolval('L') << LS_LONG_FILENAME), context, cb);
   }
 }
 // ----------------------------------------------------------------------------
