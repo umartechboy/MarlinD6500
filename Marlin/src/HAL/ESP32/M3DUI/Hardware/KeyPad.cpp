@@ -185,8 +185,13 @@ long keyDownSince = 0;
 int pressesInARow = 0;
 int pressPeriod = 500;
 bool holdSent = false;
+uint32_t readADCMV(const pin_t pin);
 void KeyPad::Loop(MenuHost* host){
-  noiseSenseLoop();
+  safe_delay(10);
+  
+  SERIAL_IMPL.printf("KP0: %d\n", readADCMV(39));
+  return;
+  //noiseSenseLoop();
   if (millis() - lastKeyCheck > ((lastKeyDown == Keys::KEYPAD_NONE)?5:20)){
     lastKeyCheck = millis();
     Keys key = touchOnADCKeyPad_getKey();

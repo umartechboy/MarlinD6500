@@ -74,6 +74,9 @@
 //
 #define TEMP_0_PIN                            34    // Back to ESP // Done PCB
 #define TEMP_1_PIN                            36    // Back to ESP // Done PCB
+#define TEMP_BED_PIN                            39    // Back to ESP // Done PCB
+//#define TEMP_CHAMBER_PIN                          35    // Back to ESP // Done PCB
+
 #if ENABLED(M3DPrintVueSupport)
 #define TEMP_BED_PIN                          -1  // Disable Bed for PrintVue connections
 #else

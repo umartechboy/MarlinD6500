@@ -598,7 +598,17 @@ void MarlinHAL::adc_init() {
   #define ADC_REFERENCE_VOLTAGE 3.3
 #endif
 
-
+uint32_t kp0Read = 0;
+uint32_t kp1Read = 0;
+uint32_t readADCMV(const pin_t pin){
+  // if (pin == TEMP_CHAMBER_PIN)
+  //   return kp0Read;
+  // else 
+  if (pin == TEMP_BED_PIN)
+    return kp1Read;
+  else
+    return 0;
+}
 void MarlinHAL::adc_start(const pin_t pin) {
   // if (pin >= 216 && pin < 220){
   //   adc_result = analogRead(pin);
@@ -621,20 +631,29 @@ void MarlinHAL::adc_start(const pin_t pin) {
   }
 
   uint16_t this_adc_result = mvToReturn * isr_float_t(1023) / isr_float_t(ADC_REFERENCE_VOLTAGE) / isr_float_t(1000);
-  
-  // Check if pin already has an entry
-  auto it = adcMap.find(pin);
+  if (pin == TEMP_0_PIN || pin == TEMP_1_PIN){
+    // Check if pin already has an entry
+    auto it = adcMap.find(pin);
 
-  if (it == adcMap.end()) {
-      // First time seeing this pin — insert as-is
-      adcMap[pin] = this_adc_result;
-  } else {
-      // Average with previous value
-      uint16_t oldValue = it->second;
-      uint16_t averaged = (oldValue * 96 + this_adc_result * 4) / 100;
-      adcMap[pin] = averaged;
+    if (it == adcMap.end()) {
+        // First time seeing this pin — insert as-is
+        adcMap[pin] = this_adc_result;
+    } else {
+        // Average with previous value
+        uint16_t oldValue = it->second;
+        uint16_t averaged = (oldValue * 96 + this_adc_result * 4) / 100;
+        adcMap[pin] = averaged;
+    }
+    adc_result = adcMap[pin];
   }
-  adc_result = adcMap[pin];
+  else{
+    adc_result = this_adc_result;
+    // if (pin == TEMP_CHAMBER_PIN)
+    //   kp0Read = this_adc_result;
+    // else 
+    if (pin == TEMP_BED_PIN)
+      kp1Read = this_adc_result;
+  }
   // Change the attenuation level based on the new reading
   adc_atten_t atten;
   if (mv < thresholds[ADC_ATTEN_DB_0] - 100)
