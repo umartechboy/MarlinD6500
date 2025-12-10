@@ -1,6 +1,8 @@
 #include "Keypad.h"
 #include "..\Components\M3DUI.h"
 #include "..\App\MenuApp.h"
+#include "..\../../..\inc/MarlinConfig.h"
+#include "..\../../..\gcode/gcode.h"
 
 #define DebugKeys 0
 static int touchPinMap [] = {14, 13, 0, 12};
@@ -185,7 +187,22 @@ long keyDownSince = 0;
 int pressesInARow = 0;
 int pressPeriod = 500;
 bool holdSent = false;
-uint32_t readADCMV(const pin_t pin);
+bool hasJoyStick = false;
+void setJoystick(bool joy){
+  hasJoyStick = joy;
+}
+void GcodeSuite::M38() {
+  if (parser.seen('P')){
+    setJoyStick(parser.value_bool());
+  }
+  else {
+    SERIAL_IMPL.print("Using: ");
+    SERIAL_IMPL.print(hasJoyStick ? "JoyStick":"Touchpad");
+    SERIAL_IMPL.println();
+
+  }
+}
+
 void KeyPad::Loop(MenuHost* host){
   safe_delay(10);
   
