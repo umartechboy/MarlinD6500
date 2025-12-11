@@ -16,8 +16,10 @@ void enqueueComs(String commands) {
 }
 void enqueueComs(std::initializer_list<String> commands) {
     for (const auto& com : commands) {
-        if(com.length() > 0)
+        if(com.length() > 0){
+            SERIAL_IMPL.printf("Enqueing: %s\n", com.c_str());
             queue.enqueue_one(com.c_str());
+        }
     }
 }
 void writeTemp(int index, float temp){

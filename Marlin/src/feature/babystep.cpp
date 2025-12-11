@@ -54,7 +54,7 @@ void Babystep::add_mm(const AxisEnum axis, const_float_t mm) {
   add_steps(axis, mm * planner.settings.axis_steps_per_mm[axis]);
 }
 float Babystep::get_total_mm(const AxisEnum axis) {
-  return (float)steps[BS_AXIS_IND(axis)] / planner.settings.axis_steps_per_mm[axis];
+  return ((float)accum) / planner.settings.axis_steps_per_mm[axis];
 }
 
 #if ENABLED(BD_SENSOR)
@@ -70,9 +70,10 @@ float Babystep::get_total_mm(const AxisEnum axis) {
 #endif
 
 void Babystep::add_steps(const AxisEnum axis, const int16_t distance) {
-  if (DISABLED(BABYSTEP_WITHOUT_HOMING) && axes_should_home(_BV(axis))) return;
+  //if (DISABLED(BABYSTEP_WITHOUT_HOMING) && axes_should_home(_BV(axis))) return;
 
   accum += distance; // Count up babysteps for the UI
+  SERIAL_IMPL.printf("Accum: %d\n", accum);
   steps[BS_AXIS_IND(axis)] += distance;
   TERN_(BABYSTEP_DISPLAY_TOTAL, axis_total[BS_TOTAL_IND(axis)] += distance);
   TERN_(BABYSTEP_ALWAYS_AVAILABLE, gcode.reset_stepper_timeout());

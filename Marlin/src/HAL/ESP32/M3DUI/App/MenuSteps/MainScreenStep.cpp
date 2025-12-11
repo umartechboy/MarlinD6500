@@ -295,18 +295,17 @@ void MainScreenStep::HandleKeyHold(Keys key){
     if (key == Keys::KEYPAD_UP){
         SERIAL_IMPL.printf("Baby Step Up from: %f\n", babystep.get_total_mm(Z_AXIS));
         if (babystep.get_total_mm(Z_AXIS) < 1.0) // Limit to +1mm
-            enqueueComs({"M290 Z0.05"});
+            babystep.add_mm(Z_AXIS, 0.05);
     }
     else if (key == Keys::KEYPAD_DOWN){
         SERIAL_IMPL.printf("Baby Step Down from: %f\n", babystep.get_total_mm(Z_AXIS));
-        if (babystep.get_total_mm(Z_AXIS) > -1.0) // Limit to -1mm
-            enqueueComs({"M290 Z-0.05"});
+        if (babystep.get_total_mm(Z_AXIS) > -1.0) // Limit to -1mm            
+            babystep.add_mm(Z_AXIS, -0.05);
     }
     else if (key == Keys::KEYPAD_LEFT || key == Keys::KEYPAD_RIGHT){
         int newSpeed = feedrate_percentage + ((key == Keys::KEYPAD_LEFT) ? -10:10);
         if (newSpeed < 20) newSpeed = 20; else if (newSpeed > 300) newSpeed = 300;
-        String speedCom = String("M220 S") + String(newSpeed);
-        enqueueComs({speedCom});
+        feedrate_percentage = newSpeed; // directly control it. as done in marlinui.cpp
         SERIAL_IMPL.printf("Speed change: %d\n", newSpeed);
     }
 }
