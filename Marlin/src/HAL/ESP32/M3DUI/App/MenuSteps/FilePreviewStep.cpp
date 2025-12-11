@@ -345,16 +345,17 @@ void FilePreviewStep::LoadComplete(){
     def_e = prefs.getInt("def_e");
     prefs.end();
     
-    // Load begin has been called and we have the colors.
-    swapTools = false;
-    if ((!filament0Used || !filament1Used) && def_e != -1) { // One of them is unused, and material selection is not auto, apply the selected filament logic
-        if ((filament0Used && def_e == 1) || (filament1Used && def_e == 0)){ // need to swap the material
-            // Flag the Tool changer to swap the colors
-            swapTools = true;
-            // prepare display
-            uint16_t temp = e0Color;
-            e0Color = e1Color;
-            e1Color = temp;
-        }
-    }
+    //Disbale changing the filament for now.
+    // // Load begin has been called and we have the colors.
+    // swapTools = false;
+    // if ((!filament0Used || !filament1Used) && def_e != -1) { // One of them is unused, and material selection is not auto, apply the selected filament logic
+    //     if ((filament0Used && def_e == 1) || (filament1Used && def_e == 0)){ // need to swap the material
+    //         // Flag the Tool changer to swap the colors
+    //         swapTools = true;
+    //         // prepare display
+    //         uint16_t temp = e0Color;
+    //         e0Color = e1Color;
+    //         e1Color = temp;
+    //     }
+    // }
 }

@@ -74,8 +74,8 @@ MaterialsStep::MaterialsStep(MenuHost* host):MenuStep(host) {
     options->Add(new ListSeparatorItem(Host));
     options->Add(extruder1Color);
     options->Add(change1);
-    options->Add(new ListSeparatorItem(Host));
-    options->Add(defaultExtruderColor);
+    //options->Add(new ListSeparatorItem(Host));
+    // options->Add(defaultExtruderColor); // Disable changing filament for now
     TickPeriod = 50;
 }
 MaterialsStep::~MaterialsStep(){
