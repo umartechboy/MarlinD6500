@@ -223,6 +223,7 @@ void MainScreenStep::Paint(BufferedDisplay* g) {
     }
 }
 void MainScreenStep::HandleKeyPress(Keys key){
+    NeedsRedraw = true;
     if (Host->Retro) {        
         if (printStatus == PrintStatus::PrintToRecover) { 
             if (key == KEYPAD_LEFT) {
@@ -246,6 +247,9 @@ void MainScreenStep::HandleKeyPress(Keys key){
                 fileName = "";
             }
         } 
+        else if (printStatus == PrintStatus::Printing){
+            HandleKeyHold(key);
+        }
     }
     else {
         if (printStatus == PrintStatus::Idle){
@@ -299,10 +303,10 @@ void MainScreenStep::HandleKeyHold(Keys key){
             enqueueComs({"M290 Z-0.05"});
     }
     else if (key == Keys::KEYPAD_LEFT || key == Keys::KEYPAD_RIGHT){
-        int newSpeed = feedrate_percentage + (key == Keys::KEYPAD_LEFT ? -10:10);
+        int newSpeed = feedrate_percentage + ((key == Keys::KEYPAD_LEFT) ? -10:10);
         if (newSpeed < 20) newSpeed = 20; else if (newSpeed > 300) newSpeed = 300;
         String speedCom = String("M220 S") + String(newSpeed);
-        enqueueComs({speedCom.c_str()});        
+        enqueueComs({speedCom});
         SERIAL_IMPL.printf("Speed change: %d\n", newSpeed);
     }
 }

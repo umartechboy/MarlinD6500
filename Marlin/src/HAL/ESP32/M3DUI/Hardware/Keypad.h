@@ -22,6 +22,7 @@ enum Keys : byte {
 class KeyPad{
 public:
     void Loop(MenuHost* host);
+    void handleJoystick(MenuHost* host);
 private:
     Keys lastKeyDown = Keys::KEYPAD_NONE;
     int dialValue = 0;

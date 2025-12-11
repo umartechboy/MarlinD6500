@@ -3,6 +3,7 @@
 #include "..\App\MenuApp.h"
 #include "..\../../..\inc/MarlinConfig.h"
 #include "..\../../..\gcode/gcode.h"
+#include <Preferences.h>
 
 #define DebugKeys 0
 static int touchPinMap [] = {14, 13, 0, 12};
@@ -12,6 +13,10 @@ int touchReadBaseUpdateCount = 0;
 static float touchReadBase[] = {0, 0, 0, 0};
 static int lastTouchRead[] = {0, 0, 0, 0};
 static long lastNoiseSenseLoop = 0;
+
+bool hasJoyStick = false;
+uint32_t readADCMV(const pin_t pin);
+Keys touchOnADCKeyPad_getKey();
 
 void noiseSenseLoop(){
   if (millis() - lastNoiseSenseLoop < 2)
@@ -54,8 +59,22 @@ void noiseSenseLoop(){
   touchReadBaseUpdateCount++;
 }
 
+Keys adcKeyMap [] = {
+Keys::KEYPAD_RIGHT,
+Keys::KEYPAD_MIDDLE,
+Keys::KEYPAD_UP,
+Keys::KEYPAD_BACK,
+Keys::KEYPAD_DOWN,
+Keys::KEYPAD_LEFT,
+};
+int minADC [] = { 806, 775, 715, 630, 465, 5,};
+int maxADC [] = { 835, 805, 740, 660, 495, 40,};
+
 long lastTempKeyDebug = 0;
 float touchOnADCKeyPad_getKeyIntensity(Keys key){
+  if (hasJoyStick){
+    return (key == touchOnADCKeyPad_getKey())? 10:0;
+  }
   if (key == Keys::KEYPAD_RIGHT || key == Keys::KEYPAD_UP || key == Keys::KEYPAD_LEFT || key == Keys::KEYPAD_DOWN) {
     return totalTouchNoise[(key - 1) / 2];
   }
@@ -77,6 +96,18 @@ float touchOnADCKeyPad_getKeyIntensity(Keys key){
   else return 0;
 }
 Keys touchOnADCKeyPad_getKey(){
+  
+    if (hasJoyStick){
+      int adc = readADCMV(39);
+      for (int i = 0; i < 6; i++){
+        if ( adc >= minADC[i] && adc <= maxADC[i])
+          return adcKeyMap[i];
+      }
+      // safe_delay(500);    
+      // SERIAL_IMPL.printf("KP0: %d\n", );
+      // return Keys::KEYPAD_NONE;
+      return Keys::KEYPAD_NONE;
+    }
 noiseSenseLoop();
 // Lets make a simpler loop;
 // if (millis() - lastTempKeyDebug > 10){
@@ -187,13 +218,17 @@ long keyDownSince = 0;
 int pressesInARow = 0;
 int pressPeriod = 500;
 bool holdSent = false;
-bool hasJoyStick = false;
 void setJoystick(bool joy){
   hasJoyStick = joy;
+  
+  Preferences prefs;
+  prefs.begin("machine");
+  prefs.putBool("joystick", joy);
+  prefs.end();
 }
 void GcodeSuite::M38() {
   if (parser.seen('P')){
-    setJoyStick(parser.value_bool());
+    setJoystick(parser.value_bool());
   }
   else {
     SERIAL_IMPL.print("Using: ");
@@ -202,12 +237,93 @@ void GcodeSuite::M38() {
 
   }
 }
+void KeyPad::handleJoystick(MenuHost* host) {
+    static Keys activeKey = KEYPAD_NONE;
+    static unsigned long keyDownTime = 0;
+    static unsigned long lastPressTime = 0;
+    static long repeatDelay = 500;
+    static int keyUpCount = 0;
+    static long lastLoop = 0;
+    int tooFastKeyDownDelay = 100; // Can't send presses faster than this.
+    if (millis() - lastLoop < 10)
+      return;
+    lastLoop = millis();
+    Keys currentKey = touchOnADCKeyPad_getKey();
+    unsigned long now = millis();
+    
+    // 1. NEW KEY PRESS
+    if (activeKey == KEYPAD_NONE) {
+      if (currentKey != KEYPAD_NONE) { // new key press
+          activeKey = currentKey;
+          keyDownTime = now;
+          repeatDelay = 500;
+          keyUpCount = 0;
+          
+          if (millis() - lastPressTime < tooFastKeyDownDelay){ // skip press    
+            SERIAL_IMPL.printf("[JOY] >> PRESS Skip 1: %d\n", currentKey);
+          }
+          else {        
+            SERIAL_IMPL.printf("[JOY] >> PRESS 1: %d\n", currentKey);
+            host->HandleKeyPress(activeKey);
+          }
+          lastPressTime = now;
+          return;
+      }
+      else // no activity
+      {
+        return;
+      }
+    }
+    else {
+      if (currentKey == Keys::KEYPAD_NONE){
+        // Key Up
+        if (keyUpCount++ < 2)
+          SERIAL_IMPL.printf("[JOY] >> Key up skip\n"); // Give it some time
+        else {
+          activeKey = Keys::KEYPAD_NONE;
+          SERIAL_IMPL.printf("[JOY] >> Key up\n"); // Give it some time
+        }
+        return;
+      }
+      else if (currentKey == activeKey) {
+        // hold
+        if (millis() - lastPressTime > repeatDelay){
+          lastPressTime = millis();
+          repeatDelay -= 100; 
+          if (repeatDelay < 50)
+            repeatDelay = 50;
+          SERIAL_IMPL.printf("[JOY] >> PRESS Repeat: %d\n", currentKey);
+          host->HandleKeyPress(activeKey);
+        }
+        if (millis() - keyDownTime > 2000 && !holdSent){
+          holdSent = true;
+          host->HandleKeyHold(currentKey);
+        }
+      }
+      else { // bounce to other key. reset cycle.        
+          activeKey = currentKey;
+          keyDownTime = now;
+          repeatDelay = 500;
+          keyUpCount = 0;
+
+          if (millis() - lastPressTime < tooFastKeyDownDelay){ // skip press    
+            SERIAL_IMPL.printf("[JOY] >> PRESS Skip 2: %d\n", currentKey);
+          }
+          else {        
+            SERIAL_IMPL.printf("[JOY] >> PRESS 2: %d\n", currentKey);
+            host->HandleKeyPress(activeKey);
+          }
+          lastPressTime = now;
+          return;
+      }
+    }
+}
 
 void KeyPad::Loop(MenuHost* host){
-  safe_delay(10);
-  
-  SERIAL_IMPL.printf("KP0: %d\n", readADCMV(39));
-  return;
+  if (hasJoyStick){
+    handleJoystick(host);
+    return;
+  }
   //noiseSenseLoop();
   if (millis() - lastKeyCheck > ((lastKeyDown == Keys::KEYPAD_NONE)?5:20)){
     lastKeyCheck = millis();

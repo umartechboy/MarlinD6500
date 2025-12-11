@@ -36,6 +36,8 @@
 //#include "SoftWireLibs/ADS1x15/Adafruit_ADS1X15.h"
 #include <map>
 #include "LoadCell/LoadCell.h"
+#include <Preferences.h>
+extern bool hasJoyStick;
 std::map<int, uint16_t> adcMap;
 SoftWire sWire;
 PCF8574 pcf1(0x20, &sWire);
@@ -250,6 +252,12 @@ void MarlinHAL::init_board() {
   LoadCellSetup();
   InitMusic(Y_STEP_PIN, Y_DIR_PIN, Y_ENABLE_PIN);
 
+  Preferences prefs;
+  prefs.begin("machine");
+  hasJoyStick = prefs.getBool("joystick", false);
+  prefs.end();
+  SERIAL_IMPL.print("Control set to: ");
+  SERIAL_IMPL.println(hasJoyStick?"Joystick":"Touchpad");
   SERIAL_IMPL.println("Starting SD to look for PLR");
   if(!card.isMounted()){
     card.mount();
