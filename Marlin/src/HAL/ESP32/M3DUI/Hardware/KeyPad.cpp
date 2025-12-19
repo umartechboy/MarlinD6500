@@ -67,8 +67,11 @@ Keys::KEYPAD_BACK,
 Keys::KEYPAD_DOWN,
 Keys::KEYPAD_LEFT,
 };
-int minADC [] = { 806, 775, 715, 630, 465, 5,};
-int maxADC [] = { 835, 805, 740, 660, 495, 40,};
+int minADC [] =     { 843, 803, 736, 665, 495, 5,};
+int maxADC [] =     { 880, 842, 802, 715, 535, 45,};
+// int typicalADC [] = { 860, 827, 779, 696, 521, 23,};
+// int typicalADC [] = { 860, 823, 776, 684, 516, 23,};
+// int typicalADC [] = { 850, 818, 771, 682, 503, 23,};
 
 long lastTempKeyDebug = 0;
 float touchOnADCKeyPad_getKeyIntensity(Keys key){
@@ -254,6 +257,10 @@ void KeyPad::handleJoystick(MenuHost* host) {
     // 1. NEW KEY PRESS
     if (activeKey == KEYPAD_NONE) {
       if (currentKey != KEYPAD_NONE) { // new key press
+        safe_delay(10); // settle time
+        currentKey = touchOnADCKeyPad_getKey();
+        if (currentKey == KEYPAD_NONE)
+          return; // noise
           activeKey = currentKey;
           keyDownTime = now;
           repeatDelay = 500;
@@ -320,6 +327,10 @@ void KeyPad::handleJoystick(MenuHost* host) {
 }
 
 void KeyPad::Loop(MenuHost* host){
+  
+  // SERIAL_IMPL.printf("readADCmv: %d\n", readADCMV(39));
+  // safe_delay(150);
+  // return;
   if (hasJoyStick){
     handleJoystick(host);
     return;

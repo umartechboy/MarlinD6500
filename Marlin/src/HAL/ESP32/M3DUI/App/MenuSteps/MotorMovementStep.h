@@ -14,7 +14,8 @@ enum m_movements: byte{
     moveE1,
     powerH1,
     powerH2,
-    powerFan
+    powerFan,
+    audio,
 };
 
 class MotorMovementStep:public MenuStep

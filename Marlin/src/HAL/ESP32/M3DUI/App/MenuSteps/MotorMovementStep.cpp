@@ -124,9 +124,9 @@ void MotorMovementStep::HandleKeyPress(Keys key) {
     else if (key == Keys::KEYPAD_LEFT){
         switch (nextCommand)
         {
-            case m_movements::moveX: enqueueComs({"G91", "G1 X-10 F3000", "G90"}); SERIAL_IMPL.println("Move X -10"); break;
-            case m_movements::moveY: enqueueComs({"G91", "G1 Y-10 F3000", "G90"}); SERIAL_IMPL.println("Move Y -10"); break;
-            case m_movements::moveZ: enqueueComs({"G91", "G1 Z-10 F3000", "G90"}); SERIAL_IMPL.println("Move Z -5"); break;
+            case m_movements::moveX: enqueueComs({"G91", "G1 X-1 F3000", "G90"}); SERIAL_IMPL.println("Move X -1"); break;
+            case m_movements::moveY: enqueueComs({"G91", "G1 Y-1 F3000", "G90"}); SERIAL_IMPL.println("Move Y -1"); break;
+            case m_movements::moveZ: enqueueComs({"G91", "G1 Z-0.1 F3000", "G90"}); SERIAL_IMPL.println("Move Z -0.1"); break;
             case m_movements::moveE0: enqueueComs({"M83", "T0", "G1 E-10 F300", "M82"}); SERIAL_IMPL.println("Move E0 -10"); break;
             case m_movements::moveE1: enqueueComs({"M83", "T1", "G1 E-10 F300", "M82"}); SERIAL_IMPL.println("Move E1 -10"); break;
             case m_movements::powerH1: enqueueComs({"M104 T0 S0"}); SERIAL_IMPL.println("H1 Off"); break;
@@ -140,9 +140,9 @@ void MotorMovementStep::HandleKeyPress(Keys key) {
     else if (key == Keys::KEYPAD_RIGHT){
         switch (nextCommand)
         {
-            case m_movements::moveX: enqueueComs({"G91", "G1 X10 F3000", "G90"}); SERIAL_IMPL.println("Move X +10"); break;
-            case m_movements::moveY: enqueueComs({"G91", "G1 Y10 F3000", "G90"}); SERIAL_IMPL.println("Move Y +10"); break;
-            case m_movements::moveZ: enqueueComs({"G91", "G1 Z10 F3000", "G90"}); SERIAL_IMPL.println("Move Z +5"); break;
+            case m_movements::moveX: enqueueComs({"G91", "G1 X1 F3000", "G90"}); SERIAL_IMPL.println("Move X +1"); break;
+            case m_movements::moveY: enqueueComs({"G91", "G1 Y1 F3000", "G90"}); SERIAL_IMPL.println("Move Y +1"); break;
+            case m_movements::moveZ: enqueueComs({"G91", "G1 Z0.1 F3000", "G90"}); SERIAL_IMPL.println("Move Z +0.1"); break;
             case m_movements::moveE0: enqueueComs({"M83", "T0", "G1 E10 F300", "M82"}); SERIAL_IMPL.println("Move E0 +10"); break;
             case m_movements::moveE1: enqueueComs({"M83", "T1", "G1 E10 F300", "M82"}); SERIAL_IMPL.println("Move E1 +10"); break;
             case m_movements::powerH1: enqueueComs({"M104 T0 S200"}); SERIAL_IMPL.println("H1 On"); break;

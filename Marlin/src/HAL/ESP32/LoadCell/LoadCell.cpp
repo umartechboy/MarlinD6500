@@ -167,6 +167,9 @@
                 }
             }
         }
+        else{
+            SERIAL_IMPL.println("LoadCell update failed");
+        }
     }
     // else if (!ProbeEnable){
     //     //debug("Probe Disabled\r\n");
