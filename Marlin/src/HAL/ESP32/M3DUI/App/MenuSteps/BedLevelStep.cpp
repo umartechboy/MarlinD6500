@@ -206,6 +206,9 @@ MenuStep* BedLevelStep::GetPreviousStep(bool returnEvenIfDummy){
         return MenuStep::GetPreviousStep(returnEvenIfDummy);
     }
     else{
+        if (levelingDoneSince != 0){
+            return &retroMainMenuStep;
+        }
         return 0;
     }
 }

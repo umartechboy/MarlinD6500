@@ -18,6 +18,7 @@ public:
     StringListItem* setNetworkOption;
     StringListItem* updatesOption;
     StringListItem* sensorsOption;
+    StringListItem* finePowerTestOption;
     StringListItem* motorMovementOption;
 };
 

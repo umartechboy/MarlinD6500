@@ -51,6 +51,10 @@ void OnSelectionUpdatedCallback(void* caller, ListItem* selectedItem, int select
         nextCommand = m_movements::powerFan;
         SERIAL_IMPL.println("Power Fan");
     }
+    else if (selectedItem == This->audioOption){
+        nextCommand = m_movements::audio;
+        SERIAL_IMPL.println("Audio");
+    }
 
 
     else {
@@ -76,7 +80,7 @@ MotorMovementStep::MotorMovementStep(MenuHost* host):MenuStep(host)
     h0PowerOption = new StringListItem(host, 0, "0  H1  1", 0, 16);
     h1PowerOption = new StringListItem(host, 0, "0  H2  1", 0, 16);
     fanPowerOption = new StringListItem(host, 0, "0  Fan  1", 0, 16);
-
+    audioOption = new StringListItem(host, 0, "Audio", 0, 16);
     options->Add(homeAllOption);
     options->Add(motorsOffOption);
     options->Add(xMoveOption);
@@ -87,6 +91,7 @@ MotorMovementStep::MotorMovementStep(MenuHost* host):MenuStep(host)
     options->Add(h0PowerOption);
     options->Add(h1PowerOption);
     options->Add(fanPowerOption);
+    options->Add(audioOption);
     options->SetOnSelectionUpdated(this, OnSelectionUpdatedCallback);
     //options->InvokeSelectionChanged();
 }
@@ -116,6 +121,26 @@ void MotorMovementStep::IncrementValue() {
 void MotorMovementStep::DecrementValue() {
     HandleKeyPress(Keys::KEYPAD_DOWN);
 }
+String MotorMovementStep::makeG1(char axis, int dir) {
+    float distance = 10.0 * dir;
+    float feedrate = 3000.0F;
+    if (fineTest)
+    distance /= 10;
+    if(axis == 'Z')
+        distance /= 10.0F;
+    if (axis == 'E'){
+        feedrate = 300.0F;
+        distance *= 10;
+    }
+    String command = "G1 ";
+    command += axis;
+    command += String(distance, 2);
+    command += " ";
+    command += " F";
+    command += String(feedrate);    
+    //SERIAL_IMPL.println("Move command: " + command);
+    return command;
+}
 void MotorMovementStep::HandleKeyPress(Keys key) {
     if (key == Keys::KEYPAD_DOWN)
         options->scrollDown();
@@ -124,11 +149,11 @@ void MotorMovementStep::HandleKeyPress(Keys key) {
     else if (key == Keys::KEYPAD_LEFT){
         switch (nextCommand)
         {
-            case m_movements::moveX: enqueueComs({"G91", "G1 X-1 F3000", "G90"}); SERIAL_IMPL.println("Move X -1"); break;
-            case m_movements::moveY: enqueueComs({"G91", "G1 Y-1 F3000", "G90"}); SERIAL_IMPL.println("Move Y -1"); break;
-            case m_movements::moveZ: enqueueComs({"G91", "G1 Z-0.1 F3000", "G90"}); SERIAL_IMPL.println("Move Z -0.1"); break;
-            case m_movements::moveE0: enqueueComs({"M83", "T0", "G1 E-10 F300", "M82"}); SERIAL_IMPL.println("Move E0 -10"); break;
-            case m_movements::moveE1: enqueueComs({"M83", "T1", "G1 E-10 F300", "M82"}); SERIAL_IMPL.println("Move E1 -10"); break;
+            case m_movements::moveX: enqueueComs({"G91", makeG1('X', -1), "G90"}); break;
+            case m_movements::moveY: enqueueComs({"G91", makeG1('Y', -1), "G90"}); break;
+            case m_movements::moveZ: enqueueComs({"G91", makeG1('Z', -1), "G90"}); break;
+            case m_movements::moveE0: enqueueComs({"M83", "T0", makeG1('E', -1), "M82"}); break;
+            case m_movements::moveE1: enqueueComs({"M83", "T1", makeG1('E', -1), "M82"}); break;
             case m_movements::powerH1: enqueueComs({"M104 T0 S0"}); SERIAL_IMPL.println("H1 Off"); break;
             case m_movements::powerH2: enqueueComs({"M104 T1 S0"}); SERIAL_IMPL.println("H2 Off"); break;
             case m_movements::powerFan: enqueueComs({"M106 S0"}); SERIAL_IMPL.println("Fan Off"); break;
@@ -140,11 +165,11 @@ void MotorMovementStep::HandleKeyPress(Keys key) {
     else if (key == Keys::KEYPAD_RIGHT){
         switch (nextCommand)
         {
-            case m_movements::moveX: enqueueComs({"G91", "G1 X1 F3000", "G90"}); SERIAL_IMPL.println("Move X +1"); break;
-            case m_movements::moveY: enqueueComs({"G91", "G1 Y1 F3000", "G90"}); SERIAL_IMPL.println("Move Y +1"); break;
-            case m_movements::moveZ: enqueueComs({"G91", "G1 Z0.1 F3000", "G90"}); SERIAL_IMPL.println("Move Z +0.1"); break;
-            case m_movements::moveE0: enqueueComs({"M83", "T0", "G1 E10 F300", "M82"}); SERIAL_IMPL.println("Move E0 +10"); break;
-            case m_movements::moveE1: enqueueComs({"M83", "T1", "G1 E10 F300", "M82"}); SERIAL_IMPL.println("Move E1 +10"); break;
+            case m_movements::moveX: enqueueComs({"G91", makeG1('X', 1), "G90"}); break;
+            case m_movements::moveY: enqueueComs({"G91", makeG1('Y', 1), "G90"}); break;
+            case m_movements::moveZ: enqueueComs({"G91", makeG1('Z', 1), "G90"}); break;
+            case m_movements::moveE0: enqueueComs({"M83", "T0", makeG1('E', 1), "M82"}); break;
+            case m_movements::moveE1: enqueueComs({"M83", "T1", makeG1('E', 1), "M82"}); break;
             case m_movements::powerH1: enqueueComs({"M104 T0 S200"}); SERIAL_IMPL.println("H1 On"); break;
             case m_movements::powerH2: enqueueComs({"M104 T1 S200"}); SERIAL_IMPL.println("H2 On"); break;
             case m_movements::powerFan: enqueueComs({"M106 S255"}); SERIAL_IMPL.println("Fan On"); break;
@@ -154,12 +179,15 @@ void MotorMovementStep::HandleKeyPress(Keys key) {
         }
     }
     
-    if (key == Keys::KEYPAD_LEFT || key == Keys::KEYPAD_RIGHT){
+    if (key == Keys::KEYPAD_LEFT || key == Keys::KEYPAD_RIGHT || key == Keys::KEYPAD_MIDDLE){
         if (nextCommand == m_movements::HomeAll) {
             enqueueComs({"G28"}); SERIAL_IMPL.println("Home All");
         }
         else if (nextCommand == m_movements::motorsOff){
             enqueueComs({"M18"}); SERIAL_IMPL.println("Motors Off");
+        }
+        else if (nextCommand == m_movements::audio){
+            enqueueComs({"M37 Mario:d=4,o=5,b=100:16e6,16e6,32p,8e6,16c6,8e6,8g6,8p,8g,8p,8c6,16p,8g,16p,8e,16p,8a,8b,16a#,8a,16g,"}); SERIAL_IMPL.println("Motors Off");
         }
     }
 }    

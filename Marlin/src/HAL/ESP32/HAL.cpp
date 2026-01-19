@@ -38,6 +38,8 @@
 #include "LoadCell/LoadCell.h"
 #include <Preferences.h>
 extern bool hasJoyStick;
+extern float PerMachineProbePressureCompensation;
+extern float FloatingFactor;
 std::map<int, uint16_t> adcMap;
 SoftWire sWire;
 PCF8574 pcf1(0x20, &sWire);
@@ -255,6 +257,8 @@ void MarlinHAL::init_board() {
   Preferences prefs;
   prefs.begin("machine");
   hasJoyStick = prefs.getBool("joystick", false);
+  PerMachineProbePressureCompensation = prefs.getFloat("probe_p", 0);
+  FloatingFactor = prefs.getFloat("probe_f", 0.002F);
   prefs.end();
   SERIAL_IMPL.print("Control set to: ");
   SERIAL_IMPL.println(hasJoyStick?"Joystick":"Touchpad");
@@ -336,6 +340,23 @@ void MarlinHAL::init_board() {
   #endif
 }
 
+void GcodeSuite::M39() {
+  if (parser.seen('P')){
+    PerMachineProbePressureCompensation = parser.value_float();
+    Preferences prefs;
+    prefs.begin("machine");
+    prefs.putFloat("probe_p", PerMachineProbePressureCompensation);
+    prefs.end();
+  }
+  else if (parser.seen('F')){
+    FloatingFactor = parser.value_float();
+    Preferences prefs;
+    prefs.begin("machine");
+    prefs.putFloat("probe_f", FloatingFactor);
+    prefs.end();
+  }
+  SERIAL_IMPL.printf("Using: PComp = %f, FFac = %f\n", PerMachineProbePressureCompensation, FloatingFactor);
+}
 volatile int16_t adcCache[4] = {26000, 26000, 26000, 26000};
 volatile bool needsConversion[4] = {0, 0, 0, 0};
 

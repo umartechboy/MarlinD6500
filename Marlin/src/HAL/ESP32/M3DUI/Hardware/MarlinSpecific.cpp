@@ -133,7 +133,7 @@ void prepareMarlinForRecover(void (*printStartedCallback)(void*), void* sender){
     lastRecoverySavedAt = 0.1;
     
     // FOr now, return right away.
-    enqueueComs({"M1000", "M413 S1"}); // Init SD, Select File, Put to print, enable recovery    
+    enqueueComs({"M1000", "M413 S1", "M83"}); // Init SD, Select File, Put to print, enable recovery, default to extruder relative
     recovery.enable(true); // in case its not enabled after recovery
     recovery.save(true);
     (*printStartedCallback)(sender);

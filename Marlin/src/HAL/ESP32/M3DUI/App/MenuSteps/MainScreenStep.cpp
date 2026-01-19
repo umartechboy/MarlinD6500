@@ -184,13 +184,13 @@ void MainScreenStep::Paint(BufferedDisplay* g) {
                 if (babystep.get_total_mm(Z_AXIS) > 0.0)
                     zStr += "+"; // Force a sign
                 zStr += String(babystep.get_total_mm(Z_AXIS), 2);
-                centerLeftString(g, zStr.c_str(), 2, Host->appTop() + Host->appHeight() - 18);
+                centerLeftString(g, zStr.c_str(), 2, Host->appTop() + Host->appHeight() - 14);
             }
             if (feedrate_percentage != 100){
                 String fStr = String("F: ");
                 fStr += String(feedrate_percentage);
                 fStr += "%";
-                centerRightString(g, fStr.c_str(), Host->appWidth() - 2, Host->appTop() + Host->appHeight() - 18);
+                centerRightString(g, fStr.c_str(), Host->appWidth() - 2, Host->appTop() + Host->appHeight() - 14);
             }
         }
         if (Host->Retro){

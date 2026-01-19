@@ -709,7 +709,7 @@ bool Probe::probe_down_to_z(const_float_t z, const_feedRate_t fr_mm_s) {
 
 extern float readProbeAnalog();
 extern void removeLoadCellOffset();
-
+float PerMachineProbePressureCompensation = 0.0;
 float Probe::run_z_probe(const bool sanity_check/*=true*/) {
   DEBUG_SECTION(log_probe, "Probe::run_z_probe", DEBUGGING(LEVELING));
   SERIAL_IMPL.println("run_z_probe V2");
@@ -873,7 +873,7 @@ float Probe::run_z_probe(const bool sanity_check/*=true*/) {
 
   #endif
 
-  return measured_z + NOZZLE_AS_PROBE_PRESSURE_COMPENSATION/* Compensate for pressure down */;
+  return measured_z + NOZZLE_AS_PROBE_PRESSURE_COMPENSATION/* Compensate for pressure down */ + PerMachineProbePressureCompensation;
 }
 // float Probe::run_z_probe(const bool sanity_check/*=true*/) {
 //   DEBUG_SECTION(log_probe, "Probe::run_z_probe", DEBUGGING(LEVELING));

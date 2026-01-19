@@ -670,6 +670,7 @@ private:
   static void M36(); // Append Monophonic
   static void M37(); // Play Monophonic
   static void M38(); // Set Keypad Type
+  static void M39(); // Set Custom probe pressure
   #if ENABLED(DIRECT_PIN_CONTROL)
     static void M42();
   #endif

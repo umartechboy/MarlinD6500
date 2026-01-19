@@ -22,6 +22,7 @@ class MotorMovementStep:public MenuStep
 {
 private:
 public:
+    bool fineTest = true;
     MotorMovementStep(MenuHost* host);
     ~MotorMovementStep();
     void Paint(BufferedDisplay* g) override;
@@ -30,6 +31,7 @@ public:
     void DecrementValue();
     void LoadComplete() override;
     void UnloadComplete() override;
+    String makeG1(char axis, int dir);
     void Tick() override;   
     VerticalList* options;
     StringListItem* homeAllOption;
@@ -42,6 +44,7 @@ public:
     StringListItem* h0PowerOption;
     StringListItem* h1PowerOption;
     StringListItem* fanPowerOption;
+    StringListItem* audioOption;
 };
 
 #endif

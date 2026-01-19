@@ -560,6 +560,7 @@ void GcodeSuite::process_parsed_command(const bool no_ok/*=false*/) {
       case 37: M37(); break;                                      // Play Monophonic
       
       case 38: M38(); break;                                      // Set KeyPadType
+      case 39: M39(); break;                                      // Set KeyPadType
 
       #if ENABLED(DIRECT_PIN_CONTROL)
         case 42: M42(); break;                                    // M42: Change pin state

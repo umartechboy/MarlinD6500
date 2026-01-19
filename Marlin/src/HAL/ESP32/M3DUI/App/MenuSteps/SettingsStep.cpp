@@ -23,8 +23,18 @@ void OnMovementSelectionUpdatedCallback(void* caller, ListItem* selectedItem, in
         //updateStep.PreviousStep = This;
         SERIAL_IMPL.printf("Setting next step: %s\n", ((StringListItem*)selectedItem)->ItemText.c_str());
     }
+    else if (selectedItem == This->finePowerTestOption){
+        This->RetroNextStep = &motorMovementStep;
+        motorMovementStep.fineTest = true;
+        motorMovementStep.Title = "Power Test";
+        motorMovementStep.RetroPreviousStep = This;
+        motorMovementStep.RetroNextStep = 0;
+        SERIAL_IMPL.printf("Setting next step: %s\n", ((StringListItem*)selectedItem)->ItemText.c_str());
+    }
     else if (selectedItem == This->motorMovementOption){
         This->RetroNextStep = &motorMovementStep;
+        motorMovementStep.fineTest = false;
+        motorMovementStep.Title = "Axis Movement";
         motorMovementStep.RetroPreviousStep = This;
         motorMovementStep.RetroNextStep = 0;
         SERIAL_IMPL.printf("Setting next step: %s\n", ((StringListItem*)selectedItem)->ItemText.c_str());
@@ -45,11 +55,13 @@ SettingsStep::SettingsStep(MenuHost* host):MenuStep(host)
     setNetworkOption = new StringListItem(host, 0, "Change Network", 0, 16);
     updatesOption = new StringListItem(host, 0, "Check for updates", 0, 16);
     sensorsOption = new StringListItem(host, 0, "Test Sensors", 0, 16);
-    motorMovementOption = new StringListItem(host, 0, "Power Test", 0, 16);
+    finePowerTestOption = new StringListItem(host, 0, "Power Test", 0, 16);
+    motorMovementOption = new StringListItem(host, 0, "Axis Movement", 0, 16);
 
     options->Add(setNetworkOption);
     options->Add(updatesOption);
     options->Add(sensorsOption);
+    options->Add(finePowerTestOption);
     options->Add(motorMovementOption);
     
     options->SetOnSelectionUpdated(this, OnMovementSelectionUpdatedCallback);
