@@ -485,6 +485,11 @@ void MenuHost::HandleDialDecrement(){
         CurrentStep->DecrementValue();
 }
 
+void MenuHost::NotifyNoKey(){
+    if (CurrentStep){
+        CurrentStep->NotifyNoKey();
+    }
+}
 void MenuHost::RequestTextEntry(TextEntryField* textField){
     ReleaseTextEntry();
     if (textField == 0)

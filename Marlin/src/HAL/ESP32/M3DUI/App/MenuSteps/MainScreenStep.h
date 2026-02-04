@@ -9,6 +9,8 @@ private:
     uint16_t e0Color = 0;
     uint16_t e1Color = 0;
     float materialAtStart = 0;
+    long lastKeyPress = 0;
+    bool firstKeyPress = true;
 public:
     // Clean, trimmed, name without extensions
     String fileName;
@@ -32,6 +34,7 @@ public:
     MenuStep* GetPreviousStep(bool returnEvenIfDummy = false) override;
     bool CanJumpToMainMenu() override;
     void HandleKeyHold(Keys key) override;
+    void NotifyNoKey() override;
     bool printStarted = false;
 };
 #endif

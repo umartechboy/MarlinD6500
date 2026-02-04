@@ -38,6 +38,7 @@ public:
     void HandleKeyHold(Keys key);
     void HandleDialIncrement();
     void HandleDialDecrement();
+    void NotifyNoKey();
     // Top left
     void DrawButton1(MenuStep* step, BufferedDisplay* g, float progress);
     // Bottom Right

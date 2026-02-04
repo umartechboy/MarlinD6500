@@ -81,7 +81,7 @@ void BedLevelStep::LoadComplete(){
     // Lift and heat up
     writeTemp(0, preHeatTemp);
     writeTemp(1, preHeatTemp);
-    enqueueComs({"G28"});
+    enqueueComs({"G28", "M206 X0 Y0"}); // must reset the offset as well
     enqueueComs({"G91", "G1 Z5", "G90"});
     G29Sent = false;
     donePreHeating = false;

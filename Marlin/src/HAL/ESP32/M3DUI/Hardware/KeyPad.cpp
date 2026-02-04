@@ -278,6 +278,7 @@ void KeyPad::handleJoystick(MenuHost* host) {
       }
       else // no activity
       {
+        host->NotifyNoKey();
         return;
       }
     }

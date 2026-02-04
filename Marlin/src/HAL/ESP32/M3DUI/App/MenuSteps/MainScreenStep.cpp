@@ -290,8 +290,23 @@ void MainScreenStep::HandleKeyPress(Keys key){
     }
 }
 
+void MainScreenStep::NotifyNoKey(){
+    firstKeyPress = true;
+}
 extern int16_t feedrate_percentage;
+extern bool hasJoyStick;
 void MainScreenStep::HandleKeyHold(Keys key){
+    if (!hasJoyStick) {
+        // Filter to hold only
+        if (firstKeyPress){
+            lastKeyPress = millis();
+            firstKeyPress = false;
+            return;
+        }
+        if (millis () - lastKeyPress < 500){
+            return;
+        }
+    }
     if (key == Keys::KEYPAD_UP){
         SERIAL_IMPL.printf("Baby Step Up from: %f\n", babystep.get_total_mm(Z_AXIS));
         if (babystep.get_total_mm(Z_AXIS) < 1.0) // Limit to +1mm
@@ -310,6 +325,7 @@ void MainScreenStep::HandleKeyHold(Keys key){
     }
 }
 void MainScreenStep::LoadComplete(){
+    firstKeyPress = true;
     if (!Host->Retro){
         // Get colors
         prefs.begin("material");

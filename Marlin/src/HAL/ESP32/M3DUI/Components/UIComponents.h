@@ -142,6 +142,7 @@ class MenuStep {
         virtual MenuStep* GetPreviousStep(bool returnEvenIfDummy = false);
         virtual MenuStep* GetNextStep();
         virtual bool CanJumpToMainMenu();
+        virtual void NotifyNoKey() {};
         void loop();
         bool IsDummyStep();
         long TickPeriod = 0;
