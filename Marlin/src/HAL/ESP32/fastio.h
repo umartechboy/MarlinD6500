@@ -45,11 +45,16 @@
   #define READ(IO)                digitalRead(IO)
   // Write to a pin wrapper
   #define WRITE(IO, v)            (IO >= 100 ? Write_EXIO(IO, v) : digitalWrite(IO, v))
-#else
+#elif ENABLED(I2S_STEPPER_STREAM)
   // Read a pin wrapper
   #define READ(IO)                (IS_I2S_EXPANDER_PIN(IO) ? i2s_state(I2S_EXPANDER_PIN_INDEX(IO)) : digitalRead(IO))
   // Write to a pin wrapper
   #define WRITE(IO, v)            (IS_I2S_EXPANDER_PIN(IO) ? i2s_write(I2S_EXPANDER_PIN_INDEX(IO), v) : digitalWrite(IO, v))
+#else
+  // Read a pin wrapper
+  #define READ(IO)                digitalRead(IO)
+  // Write to a pin wrapper
+  #define WRITE(IO, v)            digitalWrite(IO, v)
 #endif
 
 // Set pin as input wrapper (0x80 | (v << 5) | (IO - 100))

@@ -47,6 +47,18 @@ struct filepos_t {
 };
 
 // use the gnu style oflag in open()
+#undef O_READ
+#undef O_RDONLY
+#undef O_WRITE
+#undef O_WRONLY
+#undef O_RDWR
+#undef O_ACCMODE
+#undef O_APPEND
+#undef O_SYNC
+#undef O_TRUNC
+#undef O_AT_END
+#undef O_CREAT
+#undef O_EXCL
 uint8_t const O_READ = 0x01,                    // open() oflag for reading
               O_RDONLY = O_READ,                // open() oflag - same as O_IN
               O_WRITE = 0x02,                   // open() oflag for write

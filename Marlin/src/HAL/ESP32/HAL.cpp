@@ -569,14 +569,29 @@ int digitalRead(uint8_t pin) {
 #define ADC1_CHANNEL(pin) ADC1_GPIO ## pin ## _CHANNEL
 
 adc1_channel_t get_channel(int pin) {
-  switch (pin) {
-    case 39: return ADC1_CHANNEL(39);
-    case 36: return ADC1_CHANNEL(36);
-    case 35: return ADC1_CHANNEL(35);
-    case 34: return ADC1_CHANNEL(34);
-    case 33: return ADC1_CHANNEL(33);
-    case 32: return ADC1_CHANNEL(32);
-  }
+  #ifdef CONFIG_IDF_TARGET_ESP32S3
+    switch (pin) {
+      case  1: return ADC1_CHANNEL_0;
+      case  2: return ADC1_CHANNEL_1;
+      case  3: return ADC1_CHANNEL_2;
+      case  4: return ADC1_CHANNEL_3;
+      case  5: return ADC1_CHANNEL_4;
+      case  6: return ADC1_CHANNEL_5;
+      case  7: return ADC1_CHANNEL_6;
+      case  8: return ADC1_CHANNEL_7;
+      case  9: return ADC1_CHANNEL_8;
+      case 10: return ADC1_CHANNEL_9;
+    }
+  #else
+    switch (pin) {
+      case 39: return ADC1_CHANNEL(39);
+      case 36: return ADC1_CHANNEL(36);
+      case 35: return ADC1_CHANNEL(35);
+      case 34: return ADC1_CHANNEL(34);
+      case 33: return ADC1_CHANNEL(33);
+      case 32: return ADC1_CHANNEL(32);
+    }
+  #endif
   return ADC1_CHANNEL_MAX;
 }
 

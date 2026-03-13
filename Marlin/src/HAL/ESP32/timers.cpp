@@ -64,22 +64,40 @@ void IRAM_ATTR timer_isr(void *para) {
 
   // Retrieve the interrupt status and the counter value
   // from the timer that reported the interrupt
-  uint32_t intr_status = TG[timer.group]->int_st_timers.val;
-  TG[timer.group]->hw_timer[timer.idx].update = 1;
+  #ifdef CONFIG_IDF_TARGET_ESP32S3
+    uint32_t intr_status = TG[timer.group]->int_st_timers.val;
+    TG[timer.group]->hw_timer[timer.idx].update.val = 1;
 
-  // Clear the interrupt
-  if (intr_status & BIT(timer.idx)) {
-    switch (timer.idx) {
-      case TIMER_0: TG[timer.group]->int_clr_timers.t0 = 1; break;
-      case TIMER_1: TG[timer.group]->int_clr_timers.t1 = 1; break;
-      case TIMER_MAX: break;
+    // Clear the interrupt
+    if (intr_status & BIT(timer.idx)) {
+      switch (timer.idx) {
+        case TIMER_0: TG[timer.group]->int_clr_timers.t0_int_clr = 1; break;
+        case TIMER_1: TG[timer.group]->int_clr_timers.t1_int_clr = 1; break;
+        case TIMER_MAX: break;
+      }
     }
-  }
+  #else
+    uint32_t intr_status = TG[timer.group]->int_st_timers.val;
+    TG[timer.group]->hw_timer[timer.idx].update = 1;
+
+    // Clear the interrupt
+    if (intr_status & BIT(timer.idx)) {
+      switch (timer.idx) {
+        case TIMER_0: TG[timer.group]->int_clr_timers.t0 = 1; break;
+        case TIMER_1: TG[timer.group]->int_clr_timers.t1 = 1; break;
+        case TIMER_MAX: break;
+      }
+    }
+  #endif
   if (timersEnabled || (int)para != 1)  // Don't run the thermal if disabled
     timer.fn();
   // After the alarm has been triggered
   // Enable it again so it gets triggered the next time
-  TG[timer.group]->hw_timer[timer.idx].config.alarm_en = TIMER_ALARM_EN;
+  #ifdef CONFIG_IDF_TARGET_ESP32S3
+    TG[timer.group]->hw_timer[timer.idx].config.tn_alarm_en = TIMER_ALARM_EN;
+  #else
+    TG[timer.group]->hw_timer[timer.idx].config.alarm_en = TIMER_ALARM_EN;
+  #endif
 }
 
 /**
@@ -171,7 +189,11 @@ void HAL_timer_disable_interrupt(const uint8_t timer_num) {
 
 bool HAL_timer_interrupt_enabled(const uint8_t timer_num) {
   const tTimerConfig timer = timer_config[timer_num];
-  return TG[timer.group]->int_ena.val | BIT(timer_num);
+  #ifdef CONFIG_IDF_TARGET_ESP32S3
+    return TG[timer.group]->int_ena_timers.val | BIT(timer_num);
+  #else
+    return TG[timer.group]->int_ena.val | BIT(timer_num);
+  #endif
 }
 
 #endif // ARDUINO_ARCH_ESP32
