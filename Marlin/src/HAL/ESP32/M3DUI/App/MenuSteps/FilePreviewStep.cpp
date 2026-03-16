@@ -10,9 +10,13 @@
 
 PNG png;
 
-int PNGDraw(PNGDRAW *pDraw);
-
-int PNGDraw(PNGDRAW *pDraw)
+// PNGdec callback return type differs between some builds (void vs int).
+// Match the local PNGdec typedef based on target.
+#ifdef CONFIG_IDF_TARGET_ESP32S3
+  int PNGDraw(PNGDRAW *pDraw)
+#else
+  void PNGDraw(PNGDRAW *pDraw)
+#endif
 {
     pngDecodeParams* params = (pngDecodeParams*)pDraw->pUser;
     BufferedDisplay* g = params->g;
@@ -28,7 +32,9 @@ int PNGDraw(PNGDRAW *pDraw)
 
         //spilcdWritePixelsMasked(&lcd, pPriv->xoff, pPriv->yoff + pDraw->y, (uint8_t *)usPixels, ucMask, pDraw->iWidth, DRAW_TO_LCD);
     }
+#ifdef CONFIG_IDF_TARGET_ESP32S3
     return 0;
+#endif
 } /* PNGDraw() */
 
 FilePreviewStep::FilePreviewStep(MenuHost* host):MenuStep(host) {

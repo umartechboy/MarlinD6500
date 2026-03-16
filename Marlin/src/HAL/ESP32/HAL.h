@@ -48,7 +48,25 @@
 // Defines
 // ------------------------
 
-#define MYSERIAL1 flushableSerial
+// Primary host serial
+// - For classic ESP32 (UART-based) keep using flushableSerial.
+// - For ESP32-S3 with native USB enabled (SERIAL_PORT == -1) use the USB CDC Serial port.
+
+#if SERIAL_PORT == -1
+  #include "../../core/serial_hook.h"
+  typedef ForwardSerial1Class<decltype(USBSerial)> USBSerialType;
+  extern USBSerialType MSerialUSB;
+  #define MYSERIAL1 MSerialUSB
+#else
+  #define MYSERIAL1 flushableSerial
+#endif
+
+// Some UI / multi-serial configurations use `MYSERIAL` as a catch-all alias.
+// Ensure it's always an actual Serial-like object (not a numeric port ID).
+#ifdef MYSERIAL
+  #undef MYSERIAL
+#endif
+#define MYSERIAL MYSERIAL1
 
 #if EITHER(WIFISUPPORT, ESP3D_WIFISUPPORT)
   #if ENABLED(ESP3D_WIFISUPPORT)

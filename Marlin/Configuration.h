@@ -86,9 +86,9 @@
 // @section machine
 
 // Choose the name from boards.h that matches your setup
-#ifndef MOTHERBOARD
-  #define MOTHERBOARD BOARD_D8500s
-#endif
+  #ifndef MOTHERBOARD
+    #define MOTHERBOARD BOARD_D8500s
+  #endif
 
 
 /**
@@ -99,7 +99,12 @@
  *
  * :[-1, 0, 1, 2, 3, 4, 5, 6, 7]
  */
-#define SERIAL_PORT 0
+// Use native USB-CDC on ESP32-S3, but keep UART0 on legacy ESP32.
+#if MOTHERBOARD == BOARD_D8500s
+  #define SERIAL_PORT -1
+#else
+  #define SERIAL_PORT 0
+#endif
 
 /**
  * Serial Port Baud Rate
