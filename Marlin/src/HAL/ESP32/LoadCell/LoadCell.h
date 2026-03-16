@@ -1,7 +1,7 @@
 #ifndef LOAD_CELL
 #define LOAD_CELL
 
-#define HxData 201
+#define HxData 7
 #define HxClk  15
 
 void LoadCellSetup();

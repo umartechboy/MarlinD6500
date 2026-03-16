@@ -87,7 +87,7 @@
 
 // Choose the name from boards.h that matches your setup
 #ifndef MOTHERBOARD
-  #define MOTHERBOARD BOARD_D8500
+  #define MOTHERBOARD BOARD_D8500s
 #endif
 
 
@@ -2617,7 +2617,7 @@
 // @section lcd
 
 // M3D D8500 UI. Has a 128x128 ST7735 with a touch based 5 buttons keypad.
-#if MOTHERBOARD == BOARD_D8500
+#if MOTHERBOARD == BOARD_D8500s
  #define M3D_D8500_UI // we define out own UI in the board
 #endif
 

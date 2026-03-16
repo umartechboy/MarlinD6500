@@ -101,7 +101,7 @@ float touchOnADCKeyPad_getKeyIntensity(Keys key){
 Keys touchOnADCKeyPad_getKey(){
   
     if (hasJoyStick){
-      int adc = readADCMV(39);
+      int adc = readADCMV(3);
       for (int i = 0; i < 6; i++){
         if ( adc >= minADC[i] && adc <= maxADC[i])
           return adcKeyMap[i];

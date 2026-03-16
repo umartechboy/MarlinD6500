@@ -745,6 +745,8 @@
   #include "esp32/pins_D6500.h"                 // ESP32                                  env:D6500
 #elif MB(D8500)
   #include "esp32/pins_D8500.h"                 // ESP32                                  env:D8500
+#elif MB(D8500s)
+  #include "esp32/pins_D8500s.h"                 // ESP32                                  env:D8500
 #elif MB(PANDA_ZHU)
   #include "esp32/pins_PANDA_ZHU.h"             // ESP32                                  env:PANDA
 #elif MB(PANDA_M4)
