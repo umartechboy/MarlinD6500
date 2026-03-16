@@ -54,7 +54,8 @@
 
 #if SERIAL_PORT == -1
   #include "../../core/serial_hook.h"
-  typedef ForwardSerial1Class<decltype(USBSerial)> USBSerialType;
+  // Use native USB-CDC (Arduino `Serial`) when SERIAL_PORT == -1
+  typedef ForwardSerial1Class<decltype(Serial)> USBSerialType;
   extern USBSerialType MSerialUSB;
   #define MYSERIAL1 MSerialUSB
 #else

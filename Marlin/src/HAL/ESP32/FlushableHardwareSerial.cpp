@@ -30,8 +30,8 @@ Serial1Class<FlushableHardwareSerial> flushableSerial(false, 0);
 // USB-CDC serial wrapper for ESP32-S3 when SERIAL_PORT == -1
 #if SERIAL_PORT == -1
   #include "../../core/serial_hook.h"
-  typedef ForwardSerial1Class<decltype(USBSerial)> USBSerialType;
-  USBSerialType MSerialUSB(false, USBSerial);
+  typedef ForwardSerial1Class<decltype(Serial)> USBSerialType;
+  USBSerialType MSerialUSB(false, Serial);
 #endif
 
 #endif
