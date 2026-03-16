@@ -712,7 +712,11 @@
 #define _H6_PINS
 #define _H7_PINS
 
-#define DIO_PIN(P) TERN(TARGET_LPC1768, P, analogInputToDigitalPin(P))
+#if defined(TARGET_LPC1768) || defined(ARDUINO_ARCH_ESP32)
+  #define DIO_PIN(P) P
+#else
+  #define DIO_PIN(P) analogInputToDigitalPin(P)
+#endif
 
 #if HAS_HOTEND
   #undef _H0_PINS
