@@ -19,7 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
-#ifdef ARDUINO_ARCH_ESP32
+#if defined(ARDUINO_ARCH_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S3)
 
 #include "../../inc/MarlinConfig.h"
 #include "Music.h"
@@ -29,7 +29,6 @@
 #include <HardwareSerial.h>
 #include <soc/adc_channel.h>
 #include <ESP32_SoftWire.h>
-#include "SoftWireLibs/PCF8574/PCF8574.h"
 #include "LoadCell/LoadCell.h"
 #include "M3DUI/App/MenuApp.h"
 #include "..\..\feature\powerloss.h"
@@ -42,17 +41,99 @@ extern float PerMachineProbePressureCompensation;
 extern float FloatingFactor;
 std::map<int, uint16_t> adcMap;
 SoftWire sWire;
-PCF8574 pcf1(0x20, &sWire);
-PCF8574 pcf2(0x21, &sWire); // Closer to ESP32 (U6)
-SemaphoreHandle_t xPCFIOMutex;
-TaskHandle_t pcfTaskHandle = NULL;
-volatile uint16_t pcfReadCache = 0xFFFF;
-volatile bool pcf1_write_pending = false;
-volatile bool pcf2_write_pending = false;
-volatile bool pcf1_read_pending = false;
-volatile bool pcf2_read_pending = false;
-volatile uint16_t pcfMapToSync = 0xFFFF;
-volatile uint16_t pcfWriteMapConfirmed = 0xFFFF;
+
+#ifdef USE_ESP32_PCF8574
+  #include "SoftWireLibs/PCF8574/PCF8574.h"
+  PCF8574 pcf1(0x20, &sWire);
+  PCF8574 pcf2(0x21, &sWire); // Closer to ESP32 (U6)
+  SemaphoreHandle_t xPCFIOMutex;
+  TaskHandle_t pcfTaskHandle = NULL;
+  volatile uint16_t pcfReadCache = 0xFFFF;
+  volatile bool pcf1_write_pending = false;
+  volatile bool pcf2_write_pending = false;
+  volatile bool pcf1_read_pending = false;
+  volatile bool pcf2_read_pending = false;
+  volatile uint16_t pcfMapToSync = 0xFFFF;
+  volatile uint16_t pcfWriteMapConfirmed = 0xFFFF;
+  bool pcfIsSyncing = false;
+  bool PCFIsBusy = false;
+  uint16_t lockedBits = 0;
+
+  bool PCFSync(bool force = false);
+  bool LockPCF(uint16_t lockedPins){
+    if (pcfIsSyncing) return false;
+    lockedBits = lockedPins;
+    PCFIsBusy = true;
+    return true;
+  }
+  void ReleasePCF(){
+    PCFIsBusy = false;
+    lockedBits = 0;
+    PCFSync();
+  }
+  bool PCFSync(bool force){
+    if (PCFIsBusy && !force) return false;
+    if (pcfIsSyncing) return false;
+    pcfIsSyncing = true;
+    if (pcf1_write_pending) {
+      pcf1.write8(pcfMapToSync & 0xFF);
+      pcf1_write_pending = false;
+    }
+    if (pcf2_write_pending) {
+      pcf2.write8((pcfMapToSync >> 8) & 0xFF);
+      pcf2_write_pending = false;
+    }
+    pcfWriteMapConfirmed = pcfMapToSync;
+    if (pcf1_read_pending) {
+      pcfReadCache &= 0xFF00;
+      pcfReadCache |= pcf1.read8();
+      pcf1_read_pending = false;
+    }
+    if (pcf2_read_pending) {
+      pcfReadCache &= 0x00FF;
+      pcfReadCache |= pcf2.read8() << 8;
+      pcf2_read_pending = false;
+    }
+    pcfIsSyncing = false;
+    return true;
+  }
+  void pcfServiceTask(void *param) {
+    for (;;) {
+      ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+      if (xSemaphoreTake(xPCFIOMutex, portMAX_DELAY)) {
+        PCFSync();
+        xSemaphoreGive(xPCFIOMutex);
+      }
+    }
+  }
+  void InitIOExpanders(){
+    xPCFIOMutex = xSemaphoreCreateMutex();
+    xTaskCreatePinnedToCore(pcfServiceTask, "PCFService", 2048, NULL, 1, &pcfTaskHandle, 1);
+    sWire.begin(21, 22, 400000);
+    pcf1.begin();
+    pcf2.begin();
+    delay(20);
+    #define pcfBitOne(pin) (WITHIN((pin), 200, 215) ? (1U << ((pin) - 200)) : 0U)
+    pcfMapToSync = 0 |
+      pcfBitOne(X_ENABLE_PIN) |
+      pcfBitOne(Y_ENABLE_PIN) |
+      pcfBitOne(E0_ENABLE_PIN) |
+      pcfBitOne(E1_ENABLE_PIN) |
+      pcfBitOne(X_STOP_PIN) |
+      pcfBitOne(Z_STOP_PIN) |
+      pcfBitOne(HxData);
+    pcf1.write8(pcfMapToSync);
+    pcf2.write8(pcfMapToSync >> 8);
+  }
+#endif // USE_ESP32_PCF8574
+
+#ifndef USE_ESP32_PCF8574
+  // Stubs for builds / boards without PCF8574 expanders.
+  // Some modules (e.g. HX711) and/or legacy init paths still reference these symbols.
+  void InitIOExpanders() {}
+  bool LockPCF(uint16_t) { return true; }
+  void ReleasePCF() {}
+#endif
 
 //Adafruit_ADS1115 ads;  /* Use this for the 16-bit version */
 #if ENABLED(USE_ESP32_TASK_WDT)
@@ -149,110 +230,14 @@ struct {
   extern void M3DPrintVueSetup();
   extern void M3DPrintVueLoop();
 #endif
-bool pcfIsSyncing = false;
-bool PCFIsBusy = false;
-uint16_t lockedBits = 0;
-bool PCFSync(bool force = false);
-bool LockPCF(uint16_t lockedPins){
-  if (pcfIsSyncing)
-  // Can't get a lock because the PCF are already busy.
-    return false;
-    
-  lockedBits = lockedPins;
-  PCFIsBusy = true;
-  return true;
-}
-void ReleasePCF(){
-  PCFIsBusy = false;
-  lockedBits = 0;
-  PCFSync();
-}
-bool PCFSync(bool force){
-  if (PCFIsBusy && !force)
-    return false;
-  if (pcfIsSyncing)
-    return false;
-  pcfIsSyncing = true;
-  if (pcf1_write_pending) {
-    pcf1.write8(pcfMapToSync & 0xFF);
-    pcf1_write_pending = false;
-  }
-
-  if (pcf2_write_pending) {
-    pcf2.write8((pcfMapToSync >> 8) & 0xFF);
-    pcf2_write_pending = false;
-  }
-
-  pcfWriteMapConfirmed = pcfMapToSync;
-
-  if (pcf1_read_pending) {
-    pcfReadCache &= 0xFF00;
-    pcfReadCache |= pcf1.read8();
-    pcf1_read_pending = false;
-  }
-
-  if (pcf2_read_pending) {
-    pcfReadCache &= 0x00FF;
-    pcfReadCache |= pcf2.read8() << 8;
-    pcf2_read_pending = false;
-  }
-  pcfIsSyncing = false;
-  return true;
-}
-void pcfServiceTask(void *param) {
-  for (;;) {
-    // Block until notified
-    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);  // clears notification automatically
-    if (xSemaphoreTake(xPCFIOMutex, portMAX_DELAY)) {
-      PCFSync();
-      xSemaphoreGive(xPCFIOMutex);
-    }
-  }
-}
-
-
-void InitIOExpanders(){
-  xPCFIOMutex = xSemaphoreCreateMutex();
-  xTaskCreatePinnedToCore(pcfServiceTask, "PCFService", 2048, NULL, 1, &pcfTaskHandle, 1);
-  //SERIAL_IMPL.println("Starting Wire and IO Expander");
-  sWire.begin(21, 22, 400000);
-  if (pcf1.begin()){
-    //SERIAL_IMPL.println("PCF1 Started");
-  }
-  else  
-    //SERIAL_IMPL.println("PCF1 Failed");
-    
-  if (pcf2.begin()){
-    //SERIAL_IMPL.println("PCF2 Started");
-  }
-  else  
-    //SERIAL_IMPL.println("PCF2 Failed");
-    
-  // if (ads.begin(0x48, &sWire)){
-  //   SERIAL_IMPL.println("ADS1115 Started");
-  // }
-  // else  
-  //   SERIAL_IMPL.println("ADS1115 Failed");
-
-  //SERIAL_IMPL.println("Expanders On.");
-  delay(20);
-  #define pcfBitOne(pin) (1 << (pin - 200))
-  pcfMapToSync = 0 | 
-    pcfBitOne(X_ENABLE_PIN) |
-    pcfBitOne(Y_ENABLE_PIN) |
-    pcfBitOne(E0_ENABLE_PIN) |
-    pcfBitOne(E1_ENABLE_PIN) |
-    pcfBitOne(X_STOP_PIN) |
-    pcfBitOne(Z_STOP_PIN) |
-    pcfBitOne(HxData);
-  pcf1.write8(pcfMapToSync); // 200-207
-  pcf2.write8(pcfMapToSync >> 8); // 208-215, 1 for X and Z stops
-}
-
 void MarlinHAL::init_board() {
   UISetup();
   LoadCellSetup();
   InitMusic(Y_STEP_PIN, Y_DIR_PIN, Y_ENABLE_PIN);
+
+  #ifdef USE_ESP32_PCF8574
+    InitIOExpanders();
+  #endif
 
   Preferences prefs;
   prefs.begin("machine");
@@ -290,54 +275,17 @@ void MarlinHAL::init_board() {
   }
   else {
     SERIAL_IMPL.println("No Recovery Data");
+    delay(1);
   }
   
   #if ENABLED(USE_ESP32_TASK_WDT)
     esp_task_wdt_init(10, true);
   #endif
-  #if ENABLED(M3DPrintVueSupport)
-    M3DPrintVueSetup();
-  #endif
   #if ENABLED(ESP3D_WIFISUPPORT)
-    esp3dlib.init();
-  #elif ENABLED(WIFISUPPORT)
-    wifi_init();
-    TERN_(OTASUPPORT, OTA_init());
-    #if ENABLED(WEBSUPPORT)
-      spiffs_init();
-      web_init();
-    #endif
-    server.begin();
+    //esp3dlib.init();
   #endif
-
-  // ESP32 uses a GPIO matrix that allows pins to be assigned to hardware serial ports.
-  // The following code initializes hardware Serial1 and Serial2 to use user-defined pins
-  // if they have been defined.
-  #if defined(HARDWARE_SERIAL1_RX) && defined(HARDWARE_SERIAL1_TX)
-    HardwareSerial Serial1(1);
-    #ifdef TMC_BAUD_RATE  // use TMC_BAUD_RATE for Serial1 if defined
-      Serial1.begin(TMC_BAUD_RATE, SERIAL_8N1, HARDWARE_SERIAL1_RX, HARDWARE_SERIAL1_TX);
-    #else  // use default BAUDRATE if TMC_BAUD_RATE not defined
-      Serial1.begin(BAUDRATE, SERIAL_8N1, HARDWARE_SERIAL1_RX, HARDWARE_SERIAL1_TX);
-    #endif
-  #endif
-  #if defined(HARDWARE_SERIAL2_RX) && defined(HARDWARE_SERIAL2_TX)
-    HardwareSerial Serial2(2);
-    #ifdef TMC_BAUD_RATE  // use TMC_BAUD_RATE for Serial1 if defined
-      Serial2.begin(TMC_BAUD_RATE, SERIAL_8N1, HARDWARE_SERIAL2_RX, HARDWARE_SERIAL2_TX);
-    #else  // use default BAUDRATE if TMC_BAUD_RATE not defined
-      Serial2.begin(BAUDRATE, SERIAL_8N1, HARDWARE_SERIAL2_RX, HARDWARE_SERIAL2_TX);
-    #endif
-  #endif
-
-  // Initialize the i2s peripheral only if the I2S stepper stream is enabled.
-  // The following initialization is performed after Serial1 and Serial2 are defined as
-  // their native pins might conflict with the i2s stream even when they are remapped.
-  #if ENABLED(USE_ESP32_EXIO)
-    YSerial2.begin(460800 * 3, SERIAL_8N1, 16, 17);
-  #elif ENABLED(I2S_STEPPER_STREAM)
-    i2s_init();
-  #endif
+  SERIAL_IMPL.println("Hal init done");
+  delay(1);
 }
 
 void GcodeSuite::M39() {
@@ -366,7 +314,6 @@ volatile bool needsConversion[4] = {0, 0, 0, 0};
  
 
 long lastLoadCellLoop = 0;
-long lastPCFSync = 0;
 void MarlinHAL::idletask() {
   //SERIAL_IMPL.println("update_buttons Idle()");
   //ui.update_buttons();
@@ -374,15 +321,18 @@ void MarlinHAL::idletask() {
     lastLoadCellLoop = millis();
     LoadCellLoop();
   }
-  if (millis() - lastPCFSync >= 1) {// at most 1khz
+#ifdef USE_ESP32_PCF8574
+  static long lastPCFSync = 0;
+  if (millis() - lastPCFSync >= 1) { // at most 1khz
     lastPCFSync = millis();
     if (xSemaphoreTake(xPCFIOMutex, 0)) {
       pcf1_write_pending = true;
-      pcf2_write_pending = true; // this is to refresh PCF in case it has reset due to a brown out.
+      pcf2_write_pending = true; // refresh PCF in case it has reset due to a brown out.
       PCFSync();
       xSemaphoreGive(xPCFIOMutex);
     }
   }
+#endif
   UILoop();
   #if BOTH(WIFISUPPORT, OTASUPPORT)
     OTA_handle();
@@ -441,110 +391,72 @@ int MarlinHAL::freeMemory() { return ESP.getFreeHeap(); }
     extern void __digitalWrite(uint8_t pin, uint8_t val);
     extern int  __digitalRead(uint8_t pin);
     //extern uint16_t __analogRead(uint8_t pin);
-  // Override digitalWrite
-  void digitalWrite(uint8_t pin, uint8_t val) {
-  if (pin >= 200 && pin < 216) {
-    uint8_t bit = pin - 200;
+  #ifdef USE_ESP32_PCF8574
+    // Override digitalWrite / digitalRead only when PCF8574 expander pins are in use.
+    void digitalWrite(uint8_t pin, uint8_t val) {
+      if (pin >= 200 && pin < 216) {
+        const uint8_t bit = pin - 200;
 
-    if (((pcfWriteMapConfirmed >> bit) & 1) == val) return; // already up to date
+        if (((pcfWriteMapConfirmed >> bit) & 1) == val) return; // already up to date
 
-    if (val) {
-      pcfMapToSync |= (1 << bit);
-    }
-    else {
-      pcfMapToSync &= ~(1 << bit);
-    }
-    if (bit < 8)
-      pcf1_write_pending = true;
-    else
-      pcf2_write_pending = true;
+        if (val) pcfMapToSync |= (1 << bit);
+        else     pcfMapToSync &= ~(1 << bit);
 
-    if (PCFIsBusy){ // PCF is busy. We need to see if this is a high priority request
-      // we can let it go through only if we have a lock on the bits
-      if ((1 << bit) & lockedBits){        
-        PCFSync(true);
-      }
-      // can't sync in any way
-      // We have already set the flags, priority user will sync when the lock is released
-      return;
-    }
-    if (pin == Z_DIR_PIN) {// 2nd highest priority by default
-      if (PCFSync()) // Done! Return
-        return;
-      else { // Give it one more try. Most probably will fail too. Its a soft failure, not a hard one.
-        if (PCFSync())
+        if (bit < 8) pcf1_write_pending = true;
+        else         pcf2_write_pending = true;
+
+        if (PCFIsBusy) {
+          if ((1 << bit) & lockedBits) PCFSync(true);
           return;
-        //else
-          // At least let us queue it up.
-      }
-    }
-    if (xPortInIsrContext()) {
-      // We can trigger a sync in the io task
-      if (pcfTaskHandle != NULL) {
-        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-        vTaskNotifyGiveFromISR(pcfTaskHandle, &xHigherPriorityTaskWoken);
-        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-      }
-      return;
-    }
-
-    // Not in ISR, not busy, sync now
-    if (xSemaphoreTake(xPCFIOMutex, portMAX_DELAY)) {
-     PCFSync();
-      xSemaphoreGive(xPCFIOMutex);
-    }
-    // This is double write. Can only happen in task from another core.
-    return;
-  }
-  else if (pin == 217){ // Probe enable disable
-    ProbeEnable = val;
-  }
-  else
-    __digitalWrite(pin, val);
-}
-
-    
-  // Override digitalRead
-int digitalRead(uint8_t pin) {
-  if (pin >= 200 && pin < 216) {
-    uint8_t bit = pin - 200;
-
-    if (bit < 8)
-      pcf1_read_pending = true;
-    else
-      pcf2_read_pending = true;
-    if (PCFIsBusy){ // can't sync now. We have set the flags, priority user will sync when the lock is released      
-      if ((1 << bit) & lockedBits){        
-        PCFSync(true);
-      }
-      return (pcfReadCache >> bit) & 1; // can't sync just return the last
-    }
-    if (xPortInIsrContext()) {
-      if (!PCFSync()){ // try to sync now. If not possible, que the task    
-        //SERIAL_IMPL.printf("ri%d\n", pin);
-        if (pcfTaskHandle != NULL) { // trigger sync in parallel
-          BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-          vTaskNotifyGiveFromISR(pcfTaskHandle, &xHigherPriorityTaskWoken);
-          portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
         }
+
+        if (xPortInIsrContext()) {
+          if (pcfTaskHandle != NULL) {
+            BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+            vTaskNotifyGiveFromISR(pcfTaskHandle, &xHigherPriorityTaskWoken);
+            portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+          }
+          return;
+        }
+
+        if (xSemaphoreTake(xPCFIOMutex, portMAX_DELAY)) {
+          PCFSync();
+          xSemaphoreGive(xPCFIOMutex);
+        }
+        return;
       }
-    } else if (xSemaphoreTake(xPCFIOMutex, portMAX_DELAY)) { // we can sync now      
-      //SERIAL_IMPL.printf("rs%d\n", pin);
-      PCFSync();
-      xSemaphoreGive(xPCFIOMutex);
+      __digitalWrite(pin, val);
     }
-    else {      
-      //SERIAL_IMPL.printf("rn%d\n", pin);
+
+    int digitalRead(uint8_t pin) {
+      if (pin >= 200 && pin < 216) {
+        const uint8_t bit = pin - 200;
+
+        if (bit < 8) pcf1_read_pending = true;
+        else         pcf2_read_pending = true;
+
+        if (PCFIsBusy) {
+          if ((1 << bit) & lockedBits) PCFSync(true);
+          return (pcfReadCache >> bit) & 1;
+        }
+
+        if (xPortInIsrContext()) {
+          if (!PCFSync() && pcfTaskHandle != NULL) {
+            BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+            vTaskNotifyGiveFromISR(pcfTaskHandle, &xHigherPriorityTaskWoken);
+            portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+          }
+        }
+        else if (xSemaphoreTake(xPCFIOMutex, portMAX_DELAY)) {
+          PCFSync();
+          xSemaphoreGive(xPCFIOMutex);
+        }
+
+        return (pcfReadCache >> bit) & 1;
+      }
+      return __digitalRead(pin);
     }
-    return (pcfReadCache >> bit) & 1;
-  }
-  else if (pin == 216) {
-    // Loadcell
-    return LoadCellProbe();
-  }
-  else
-    return __digitalRead(pin);
-}
+  #endif // USE_ESP32_PCF8574
 } // extern "C"
   
 
@@ -669,10 +581,8 @@ void MarlinHAL::adc_start(const pin_t pin) {
   // 370          | 505
 
   uint32_t mvToReturn = mv;
-  if ((pcfMapToSync >> 10) & 0b1 && pin == 34) {// Heater 1
-    // Do the linearization
-    mvToReturn = map(mv, 505, 3195, 370, 3197);
-  }
+  // NOTE: Previously this used a PCF8574 state bit to detect "Heater 1" load.
+  // The D8500s hardware no longer uses PCF8574 expander pins, so skip this compensation here.
 
   uint16_t this_adc_result = mvToReturn * isr_float_t(1023) / isr_float_t(ADC_REFERENCE_VOLTAGE) / isr_float_t(1000);
   if (pin == TEMP_0_PIN || pin == TEMP_1_PIN){

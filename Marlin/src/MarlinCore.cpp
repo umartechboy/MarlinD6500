@@ -1274,6 +1274,7 @@ void setup() {
   #endif
 
   SETUP_RUN(hal.init_board());
+  
   SETUP_RUN(esp_wifi_init());
 
   // Report Reset Reason

@@ -37,6 +37,9 @@
 
 #define BOARD_INFO_NAME       "D8500"
 
+// This board uses PCF8574 I2C expanders for pins 200-215.
+#define USE_ESP32_PCF8574
+
 // Limit Switches
 //
 #define X_STOP_PIN                            215   // Done PCB

@@ -37,6 +37,9 @@
 
 #define BOARD_INFO_NAME       "D8500s"
 
+// D8500s has no PCF8574 expander pins (200-215) in use.
+// (Leave USE_ESP32_PCF8574 undefined.)
+
 // Limit Switches
 //
 #define X_STOP_PIN                            41   // Done PCB
