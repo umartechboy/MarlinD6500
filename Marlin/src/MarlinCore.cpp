@@ -826,7 +826,7 @@ void idle(bool no_stepper_sleep/*=false*/) {
   #endif
 
   // Handle SD Card insert / remove
-  //TERN_(SDSUPPORT, card.manage_media());
+  TERN_(SDSUPPORT, card.manage_media());
 
   // Handle USB Flash Drive insert / remove
   TERN_(USB_FLASH_DRIVE_SUPPORT, card.diskIODriver()->idle());

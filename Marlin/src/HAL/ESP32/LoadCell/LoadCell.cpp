@@ -40,7 +40,7 @@
  #define debug(x) {if (debugOn)SERIAL_IMPL.print((x));}
  long lastUpdateAt = 0;
  void LoadCellLoop(){
-
+    return;
     //debugOn = (millis() - lastProbe) < 1000;
     debugOn = true;
     if (load.getTareAsyncStatus()){

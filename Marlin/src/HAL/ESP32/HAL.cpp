@@ -385,7 +385,7 @@ void MarlinHAL::idletask() {
   //ui.update_buttons();
   if (millis() - lastLoadCellLoop > 13) {// < 80hz
     lastLoadCellLoop = millis();
-    //LoadCellLoop();
+    LoadCellLoop();
   }
 #if USE_ESP32_PCF8574
   if (millis() - lastPCFSync >= 1) {// at most 1khz
