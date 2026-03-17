@@ -213,9 +213,9 @@ void pcfServiceTask(void *param) {
   }
 }
 #else
-bool LockPCF(uint16_t lockedPins){}
+bool LockPCF(uint16_t lockedPins){ return true; } // lock always succeeds (no PCF)
 void ReleasePCF(){}
-bool PCFSync(bool force){}
+bool PCFSync(bool force){ return true; } // always succeeds (no PCF)
 #endif
 
 void InitIOExpanders(){
