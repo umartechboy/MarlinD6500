@@ -608,19 +608,32 @@ void CardReader::printSelectedFilename() {
 }
 
 void CardReader::mount() {
+  SERIAL_IMPL.println("Mounting SD card...");
   flag.mounted = false;
-  if (root.isOpen()) root.close();
+  if (root.isOpen()) {
+    SERIAL_IMPL.println("Closing previously mounted SD card...");
+    root.close();
+  }
 
+  SERIAL_IMPL.printf("Initializing SD card driver on SS: %d\n", SDSS);
   if (!driver->init(SD_SPI_SPEED, SDSS)
     #if defined(LCD_SDSS) && (LCD_SDSS != SDSS)
       && !driver->init(SD_SPI_SPEED, LCD_SDSS)
     #endif
-  ) SERIAL_ECHO_MSG(STR_SD_INIT_FAIL);
-  else if (!volume.init(driver))
+  ) {
+    SERIAL_IMPL.println("Driver initialization failed.");
+    SERIAL_ECHO_MSG(STR_SD_INIT_FAIL);
+  }
+  else if (!volume.init(driver)){
+    SERIAL_IMPL.println("Volume initialization failed.");
     SERIAL_ERROR_MSG(STR_SD_VOL_INIT_FAIL);
-  else if (!root.openRoot(&volume))
+  }
+  else if (!root.openRoot(&volume)) {
+    SERIAL_IMPL.println("Failed to open root directory.");
     SERIAL_ERROR_MSG(STR_SD_OPENROOT_FAIL);
+  }
   else {
+    SERIAL_IMPL.println("SD card mounted successfully.");
     flag.mounted = true;
     SERIAL_ECHO_MSG(STR_SD_CARD_OK);
   }

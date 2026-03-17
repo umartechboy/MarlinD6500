@@ -167,6 +167,12 @@ void DiskIODriver_SPI_SD::chipDeselect() {
 
 void DiskIODriver_SPI_SD::chipSelect() {
   spiInit(spiRate_);
+  #if defined(M3D_D8500_UI)
+    if (chipSelectPin_ != TFT_CS) {
+      SET_OUTPUT(TFT_CS);
+      WRITE(TFT_CS, HIGH);
+    }
+  #endif
   extDigitalWrite(chipSelectPin_, LOW);
 }
 
@@ -235,6 +241,8 @@ bool DiskIODriver_SPI_SD::eraseSingleBlockEnable() {
  * \return true for success, false for failure.
  * The reason for failure can be determined by calling errorCode() and errorData().
  */
+#include "../MarlinCore.h"
+#include "../inc/MarlinConfig.h"
 bool DiskIODriver_SPI_SD::init(const uint8_t sckRateID, const pin_t chipSelectPin) {
   #if IS_TEENSY_35_36 || IS_TEENSY_40_41
     chipSelectPin_ = BUILTIN_SDCARD;
@@ -242,7 +250,7 @@ bool DiskIODriver_SPI_SD::init(const uint8_t sckRateID, const pin_t chipSelectPi
     type_ = SDHC_CardGetType();
     return (ret == 0);
   #endif
-
+  SERIAL_IMPL.println("Initializing SD card driver...");
   errorCode_ = type_ = 0;
   chipSelectPin_ = chipSelectPin;
   // 16-bit init start time allows over a minute
@@ -252,6 +260,13 @@ bool DiskIODriver_SPI_SD::init(const uint8_t sckRateID, const pin_t chipSelectPi
   hal.watchdog_refresh(); // In case init takes too long
 
   // Set pin modes
+  #if defined(M3D_D8500_UI)
+    SERIAL_IMPL.printf("SS: %d, TFT_CS: %d\n", chipSelectPin_, TFT_CS);
+    if (chipSelectPin_ != TFT_CS) {
+      SET_OUTPUT(TFT_CS);
+      WRITE(TFT_CS, HIGH);
+    }
+  #endif
   #if ENABLED(ZONESTAR_12864OLED)
     if (chipSelectPin_ != DOGLCD_CS) {
       SET_OUTPUT(DOGLCD_CS);
@@ -276,6 +291,7 @@ bool DiskIODriver_SPI_SD::init(const uint8_t sckRateID, const pin_t chipSelectPi
   while ((status_ = cardCommand(CMD0, 0)) != R1_IDLE_STATE) {
     if (ELAPSED(millis(), init_timeout)) {
       error(SD_CARD_ERROR_CMD0);
+      SERIAL_IMPL.printf("CMD0 failed, status: 0x%02X\n", status_);
       goto FAIL;
     }
   }
@@ -289,6 +305,7 @@ bool DiskIODriver_SPI_SD::init(const uint8_t sckRateID, const pin_t chipSelectPi
   // check SD version
   for (;;) {
     if (cardCommand(CMD8, 0x1AA) == (R1_ILLEGAL_COMMAND | R1_IDLE_STATE)) {
+      SERIAL_IMPL.printf("SD V1 card detected, CMD8 response: 0x%02X\n", status_);
       type(SD_CARD_TYPE_SD1);
       break;
     }
@@ -297,11 +314,13 @@ bool DiskIODriver_SPI_SD::init(const uint8_t sckRateID, const pin_t chipSelectPi
     LOOP_L_N(i, 4) status_ = spiRec();
     if (status_ == 0xAA) {
       type(SD_CARD_TYPE_SD2);
+      SERIAL_IMPL.printf("SD V2 card detected, CMD8 response: 0x%02X\n", status_);
       break;
     }
 
     if (ELAPSED(millis(), init_timeout)) {
       error(SD_CARD_ERROR_CMD8);
+      SERIAL_IMPL.printf("CMD8 failed, response: 0x%02X\n", status_);
       goto FAIL;
     }
   }
@@ -314,6 +333,7 @@ bool DiskIODriver_SPI_SD::init(const uint8_t sckRateID, const pin_t chipSelectPi
     // Check for timeout
     if (ELAPSED(millis(), init_timeout)) {
       error(SD_CARD_ERROR_ACMD41);
+      SERIAL_IMPL.printf("ACMD41 failed, response: 0x%02X\n", status_);
       goto FAIL;
     }
   }
@@ -321,6 +341,7 @@ bool DiskIODriver_SPI_SD::init(const uint8_t sckRateID, const pin_t chipSelectPi
   if (type() == SD_CARD_TYPE_SD2) {
     if (cardCommand(CMD58, 0)) {
       error(SD_CARD_ERROR_CMD58);
+      SERIAL_IMPL.printf("CMD58 failed, response: 0x%02X\n", status_);
       goto FAIL;
     }
     if ((spiRec() & 0xC0) == 0xC0) type(SD_CARD_TYPE_SDHC);
@@ -330,9 +351,11 @@ bool DiskIODriver_SPI_SD::init(const uint8_t sckRateID, const pin_t chipSelectPi
   chipDeselect();
 
   ready = true;
+  SERIAL_IMPL.printf("SD card initialized, type: %d\n", type_);
   return setSckRate(sckRateID);
 
   FAIL:
+  SERIAL_IMPL.printf("FAIL:\n");
   chipDeselect();
   ready = false;
   return false;

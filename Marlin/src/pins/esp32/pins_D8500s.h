@@ -98,6 +98,14 @@
 #define USES_SHARED_SPI                           // SPI is shared by SD card with TMC SPI drivers
 
 
+#define TFT_CS         39
+#define TFT_DC         40
+#define TFT_RST        -1
+#define TFT_MOSI         35
+#define TFT_SCK         37
+#define TFT_BACKLITE   -1
+
+
 /**
  * Hardware serial pins
  *
