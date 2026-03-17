@@ -1138,7 +1138,9 @@ inline void tmc_standby_setup() {
 extern void InitIOExpanders();
 extern void InitDisplayBasic();
 extern void LoadCellLoop();
+#include <SPI.h>
 void setup() {
+  SPI.begin(37,36,35, 38);
   InitIOExpanders(); // Turn it on as soon as possible
   InitDisplayBasic();
   #ifdef FASTIO_INIT
