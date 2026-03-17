@@ -793,7 +793,6 @@ void idle(bool no_stepper_sleep/*=false*/) {
 
   // Manage Heaters (and Watchdog)
   thermalManager.task();
-
   // Max7219 heartbeat, animation, etc
   TERN_(MAX7219_DEBUG, max7219.idle_tasks());
 
@@ -827,7 +826,7 @@ void idle(bool no_stepper_sleep/*=false*/) {
   #endif
 
   // Handle SD Card insert / remove
-  TERN_(SDSUPPORT, card.manage_media());
+  //TERN_(SDSUPPORT, card.manage_media());
 
   // Handle USB Flash Drive insert / remove
   TERN_(USB_FLASH_DRIVE_SUPPORT, card.diskIODriver()->idle());
@@ -883,7 +882,6 @@ void idle(bool no_stepper_sleep/*=false*/) {
 
   IDLE_DONE:
   TERN_(MARLIN_DEV_MODE, idle_depth--);
-  return;
 }
 
 /**
@@ -1323,7 +1321,7 @@ void setup() {
   // UI must be initialized before EEPROM
   // (because EEPROM code calls the UI).
 
-  SERIAL_IMPL.println("calling ui.init()");
+  // SERIAL_IMPL.println("calling ui.init()");
   SETUP_RUN(ui.init());
 
   SERIAL_IMPL.println("ui.init() done");
@@ -1368,20 +1366,20 @@ void setup() {
   // Glitch happens after this
   sync_plan_position();               // Vital to init stepper/planner equivalent for current_position
 
-  SERIAL_IMPL.println("starting timers");
+  // SERIAL_IMPL.println("starting timers");
   // Glitch happens after this
   SETUP_RUN(thermalManager.init());   // Initialize temperature loop
 
-  delay(1000);
-  SERIAL_IMPL.println("thermalManager done");
+  // delay(1000);
+  // SERIAL_IMPL.println("thermalManager done");
   // Glitch happens before this
   SETUP_RUN(print_job_timer.init());  // Initial setup of print job timer
-  delay(1000);
-  SERIAL_IMPL.println("print_job_timer done");
+  // delay(1000);
+  // SERIAL_IMPL.println("print_job_timer done");
   
   SETUP_RUN(endstops.init());         // Init endstops and pullups
-  delay(1000);
-  SERIAL_IMPL.println("endstops init");
+  // delay(1000);
+  // SERIAL_IMPL.println("endstops init");
 
   // Glitch happens before this
   #if ENABLED(DELTA) && !HAS_SOFTWARE_ENDSTOPS
@@ -1390,8 +1388,8 @@ void setup() {
 
   SETUP_RUN(stepper.init());          // Init stepper. This enables interrupts!
 
-  delay(1000);
-  SERIAL_IMPL.println("stepper init done");
+  // delay(1000);
+  // SERIAL_IMPL.println("stepper init done");
   #if HAS_SERVOS
     SETUP_RUN(servo_init());
   #endif
@@ -1422,8 +1420,8 @@ void setup() {
     SETUP_RUN(endstops.enable_z_probe(false));
   #endif
 
-  delay(1000);
-  SERIAL_IMPL.println("endstops init done");
+  // delay(1000);
+  // SERIAL_IMPL.println("endstops init done");
   #if HAS_STEPPER_RESET
     SETUP_RUN(enableStepperDrivers());
   #endif
@@ -1627,14 +1625,14 @@ void setup() {
     SETUP_RUN(DWIN_InitScreen());
   #endif
 
-    delay(1000);
-    SERIAL_IMPL.println("calling ui.reset_status()");
+    // delay(1000);
+    // SERIAL_IMPL.println("calling ui.reset_status()");
   #if HAS_SERVICE_INTERVALS && !HAS_DWIN_E3V2_BASIC
     SETUP_RUN(ui.reset_status(true));  // Show service messages or keep current status
   #endif
 
-    delay(1000);
-    SERIAL_IMPL.println("ui.reset_status() done");
+    // delay(1000);
+    // SERIAL_IMPL.println("ui.reset_status() done");
   #if ENABLED(MAX7219_DEBUG)
     SETUP_RUN(max7219.init());
   #endif
@@ -1680,7 +1678,8 @@ void setup() {
 
   marlin_state = MF_RUNNING;
 
-  SETUP_LOG("setup() completed.");
+    // delay(1000);
+    SERIAL_IMPL.println("All setup done");
 
   TERN_(MARLIN_TEST_BUILD, runStartupTests());
 }
@@ -1705,7 +1704,7 @@ void loop() {
   do {
     idle();
     if (!card.isPrinting() || millis() - lastEsp3DLoop > 5000){
-      ESP3DLIBLOOP();
+      //ESP3DLIBLOOP();
       lastEsp3DLoop = millis();
     }
     #if ENABLED(SDSUPPORT)
