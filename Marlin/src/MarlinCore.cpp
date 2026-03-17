@@ -1324,6 +1324,8 @@ void setup() {
   SERIAL_IMPL.println("calling ui.init()");
   SETUP_RUN(ui.init());
 
+  SERIAL_IMPL.println("ui.init() done");
+
   
   #if PIN_EXISTS(SAFE_POWER)
     #if HAS_DRIVER_SAFE_POWER_PROTECT
@@ -1341,6 +1343,7 @@ void setup() {
   SETUP_RUN(settings.first_load());   // Load data from EEPROM if available (or use defaults)
                                       // This also updates variables in the planner, elsewhere
 
+  SERIAL_IMPL.println("settings load");
   #if BOTH(HAS_WIRED_LCD, SHOW_BOOTSCREEN)
     SETUP_RUN(ui.show_bootscreen());
     const millis_t bootscreen_ms = millis();
@@ -1363,13 +1366,20 @@ void setup() {
   // Glitch happens after this
   sync_plan_position();               // Vital to init stepper/planner equivalent for current_position
 
+  SERIAL_IMPL.println("starting timers");
   // Glitch happens after this
   SETUP_RUN(thermalManager.init());   // Initialize temperature loop
 
+  delay(1000);
+  SERIAL_IMPL.println("thermalManager done");
   // Glitch happens before this
   SETUP_RUN(print_job_timer.init());  // Initial setup of print job timer
-
+  delay(1000);
+  SERIAL_IMPL.println("print_job_timer done");
+  
   SETUP_RUN(endstops.init());         // Init endstops and pullups
+  delay(1000);
+  SERIAL_IMPL.println("endstops init");
 
   // Glitch happens before this
   #if ENABLED(DELTA) && !HAS_SOFTWARE_ENDSTOPS
@@ -1378,6 +1388,8 @@ void setup() {
 
   SETUP_RUN(stepper.init());          // Init stepper. This enables interrupts!
 
+  delay(1000);
+  SERIAL_IMPL.println("stepper init done");
   #if HAS_SERVOS
     SETUP_RUN(servo_init());
   #endif
@@ -1408,6 +1420,8 @@ void setup() {
     SETUP_RUN(endstops.enable_z_probe(false));
   #endif
 
+  delay(1000);
+  SERIAL_IMPL.println("endstops init done");
   #if HAS_STEPPER_RESET
     SETUP_RUN(enableStepperDrivers());
   #endif
@@ -1583,6 +1597,8 @@ void setup() {
   #endif
 
   #ifdef STARTUP_COMMANDS
+    delay(1000);
+    SERIAL_IMPL.println("injecting startup commands");
     SETUP_LOG("STARTUP_COMMANDS");
     queue.inject(F(STARTUP_COMMANDS));
   #endif
@@ -1609,10 +1625,14 @@ void setup() {
     SETUP_RUN(DWIN_InitScreen());
   #endif
 
+    delay(1000);
+    SERIAL_IMPL.println("calling ui.reset_status()");
   #if HAS_SERVICE_INTERVALS && !HAS_DWIN_E3V2_BASIC
     SETUP_RUN(ui.reset_status(true));  // Show service messages or keep current status
   #endif
 
+    delay(1000);
+    SERIAL_IMPL.println("ui.reset_status() done");
   #if ENABLED(MAX7219_DEBUG)
     SETUP_RUN(max7219.init());
   #endif

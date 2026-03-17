@@ -14,8 +14,11 @@
 #define TFT_CS         39
 #define TFT_DC         40
 #define TFT_RST        -1
+#define TFT_MOSI         35
+#define TFT_SCK         37
+#define TFT_BACKLITE   -1
 
-Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC,TFT_RST);
+Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_MOSI, TFT_SCK, TFT_RST);
 
 void TFT_startWrite()
 {
