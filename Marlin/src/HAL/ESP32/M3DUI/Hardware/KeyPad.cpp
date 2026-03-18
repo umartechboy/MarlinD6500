@@ -102,6 +102,8 @@ Keys touchOnADCKeyPad_getKey(){
   
     if (hasJoyStick){
       int adc = readADCMV(3);
+      // SERIAL_IMPL.printf("KP0: %d\n", adc);
+      // return Keys::KEYPAD_NONE;
       for (int i = 0; i < 6; i++){
         if ( adc >= minADC[i] && adc <= maxADC[i])
           return adcKeyMap[i];

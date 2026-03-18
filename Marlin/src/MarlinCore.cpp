@@ -1140,6 +1140,7 @@ extern void LoadCellLoop();
 void setup() {
   SPI.begin(37,36,35, 38);
   InitIOExpanders(); // Turn it on as soon as possible
+  card.mount();
   InitDisplayBasic();
   #ifdef FASTIO_INIT
     FASTIO_INIT();

@@ -77,7 +77,7 @@
 //
 #define TEMP_0_PIN                            1    // Back to ESP // Done PCB
 #define TEMP_1_PIN                            2    // Back to ESP // Done PCB
-#define TEMP_BED_PIN                            -1    // Back to ESP // Done PCB
+#define TEMP_BED_PIN                          3    // Back to ESP // Done PCB
 //#define TEMP_CHAMBER_PIN                          35    // Back to ESP // Done PCB
 
 //
@@ -86,7 +86,7 @@
 #define HEATER_0_PIN                           46 // Done
 #define HEATER_1_PIN                           45 // Done
 #define FAN_PIN                                21 // Done
-#define HEATER_BED_PIN                         -1
+#define HEATER_BED_PIN                         213
 
 //
 // MicroSD card

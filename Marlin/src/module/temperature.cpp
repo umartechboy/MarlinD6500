@@ -3385,7 +3385,7 @@ void Temperature::isr() {
       #endif
 
       #if HAS_HEATED_BED
-        _PWM_LOW(BED, soft_pwm_bed);
+        //_PWM_LOW(BED, soft_pwm_bed);
       #endif
 
       #if HAS_HEATED_CHAMBER

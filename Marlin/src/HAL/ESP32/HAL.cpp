@@ -517,6 +517,9 @@ void digitalWrite(uint8_t pin, uint8_t val) {
   if (pin == 217){ // Probe enable disable
     ProbeEnable = val;
   }
+  else if (pin == HEATER_BED_PIN){ // Probe enable disable
+    // we actually done have a heater. Skip it.
+  }
   else
     __digitalWrite(pin, val);
 }
