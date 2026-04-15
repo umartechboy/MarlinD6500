@@ -67,12 +67,15 @@ Keys::KEYPAD_BACK,
 Keys::KEYPAD_DOWN,
 Keys::KEYPAD_LEFT,
 };
-int minADC [] =     { 843, 803, 736, 665, 495, 5,};
-int maxADC [] =     { 880, 842, 802, 715, 535, 45,};
-// int typicalADC [] = { 860, 827, 779, 696, 521, 23,};
-// int typicalADC [] = { 860, 823, 776, 684, 516, 23,};
-// int typicalADC [] = { 850, 818, 771, 682, 503, 23,};
+int maxADC_S [] =     { 880, 842, 802, 715, 535, 45,};
+int minADC_S [] =     { 843, 803, 736, 665, 495, 5,};
 
+int maxADC_S3 [] =     { 860, 815, 770, 700, 530, 20,};
+int avgADC_S3 [] =     { 835, 795, 742, 656, 493, 0,};
+int minADC_S3 [] =     { 816, 771, 710, 610, 460, 0,};
+
+int* maxADC = maxADC_S3;
+int* minADC = minADC_S3;
 long lastTempKeyDebug = 0;
 float touchOnADCKeyPad_getKeyIntensity(Keys key){
   if (hasJoyStick){
@@ -102,7 +105,7 @@ Keys touchOnADCKeyPad_getKey(){
   
     if (hasJoyStick){
       int adc = readADCMV(3);
-      // SERIAL_IMPL.printf("KP0: %d\n", adc);
+      SERIAL_IMPL.printf("KP0: %d\n", adc);
       // return Keys::KEYPAD_NONE;
       for (int i = 0; i < 6; i++){
         if ( adc >= minADC[i] && adc <= maxADC[i])
