@@ -23,7 +23,7 @@ void HelpStep::Paint(BufferedDisplay* g){
     else {
         g->setTextColor(TextColor);
         g->setFont(&FreeMono9pt7b);
-        centerString(g, "http://bit.ly/", Host->appWidth() / 2, Host->appTop() + Host->appHeight() / 2 - 10);
+        centerString(g, "bit.ly/", Host->appWidth() / 2, Host->appTop() + Host->appHeight() / 2 - 10);
         g->setFont(&FreeMono12pt7b);
         centerString(g, "3VxBlVO", Host->appWidth() / 2, Host->appTop() + Host->appHeight() / 2 + 10);
     }    

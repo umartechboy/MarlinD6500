@@ -219,6 +219,23 @@ bool PCFSync(bool force){ return true; } // always succeeds (no PCF)
 #endif
 
 void InitIOExpanders(){
+  // disabled all Steppers
+  pinMode(X_ENABLE_PIN, OUTPUT);
+  pinMode(Y_ENABLE_PIN, OUTPUT);
+  pinMode(Z_ENABLE_PIN, OUTPUT);
+  pinMode(E0_ENABLE_PIN, OUTPUT);
+  pinMode(E1_ENABLE_PIN, OUTPUT);
+  pinMode(HEATER_0_PIN, OUTPUT);
+  pinMode(HEATER_1_PIN, OUTPUT);
+  pinMode(FAN0_PIN, OUTPUT);
+  digitalWrite(X_ENABLE_PIN, HIGH);
+  digitalWrite(Y_ENABLE_PIN, HIGH);
+  digitalWrite(Z_ENABLE_PIN, HIGH);
+  digitalWrite(E0_ENABLE_PIN, HIGH);
+  digitalWrite(E1_ENABLE_PIN, HIGH);
+  digitalWrite(HEATER_0_PIN, LOW);
+  digitalWrite(HEATER_1_PIN, LOW);
+  digitalWrite(FAN0_PIN, LOW);
 #if USE_ESP32_PCF8574
   xPCFIOMutex = xSemaphoreCreateMutex();
   xTaskCreatePinnedToCore(pcfServiceTask, "PCFService", 2048, NULL, 1, &pcfTaskHandle, 1);

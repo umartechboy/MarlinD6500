@@ -7,8 +7,10 @@
  void LoadCellSetup(){
   //Serial.println("Starting HX711");
   
+  pinMode(HxData, INPUT_PULLUP);
+  pinMode(HxClk, OUTPUT);
   digitalWrite(HxData, 1); // make sure its floating to let us read
-  digitalWrite(200, 1); // default to high Z coz now we are using pin 15 for testing.
+  digitalWrite(HxClk, 0);
   delay(1);
   load.begin();
   load.tareAsync();
@@ -53,7 +55,8 @@
     // delay(1000);
     // digitalWrite(HxData, LOW);
     // delay(1000);
-    if (ProbeEnable){
+    if (ProbeEnable)
+    {
             
         // if (millis() - lastUpdateAt < 100)
         //     return;

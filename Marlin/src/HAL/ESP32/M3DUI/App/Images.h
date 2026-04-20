@@ -51,6 +51,10 @@ extern Image img_RetroOptionsKey;
 extern Image img_splash;
 extern Image img_CommunityQR;
 extern Image img_Help;
+extern Image img_Movements;
+extern Image img_SearchWifi;
+extern Image img_Sensors;
+extern Image img_Updates;
 
 
 #endif

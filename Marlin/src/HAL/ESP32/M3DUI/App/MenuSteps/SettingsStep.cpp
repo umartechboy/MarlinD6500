@@ -52,11 +52,11 @@ SettingsStep::SettingsStep(MenuHost* host):MenuStep(host)
     RetroNextStep = 0;
     Title = "Settings";
     options = new VerticalList(host);
-    setNetworkOption = new StringListItem(host, 0, "Change Network", 0, 16);
-    updatesOption = new StringListItem(host, 0, "Check for updates", 0, 16);
-    sensorsOption = new StringListItem(host, 0, "Test Sensors", 0, 16);
-    finePowerTestOption = new StringListItem(host, 0, "Power Test", 0, 16);
-    motorMovementOption = new StringListItem(host, 0, "Axis Movement", 0, 16);
+    setNetworkOption = new StringListItem(host, &img_SearchWifi, "Change Network", 0, 16);
+    updatesOption = new StringListItem(host, &img_Updates, "Check for updates", 0, 16);
+    sensorsOption = new StringListItem(host, &img_Sensors, "Test Sensors", 0, 16);
+    finePowerTestOption = new StringListItem(host, &img_Movements, "Power Test", 0, 16);
+    motorMovementOption = new StringListItem(host, &img_Movements, "Axis Movement", 0, 16);
 
     options->Add(setNetworkOption);
     options->Add(updatesOption);
