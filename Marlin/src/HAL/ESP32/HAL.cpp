@@ -325,7 +325,7 @@ void MarlinHAL::init_board() {
     M3DPrintVueSetup();
   #endif
   #if ENABLED(ESP3D_WIFISUPPORT)
-    //esp3dlib.init();
+    esp3dlib.init();
   #elif ENABLED(WIFISUPPORT)
     wifi_init();
     TERN_(OTASUPPORT, OTA_init());

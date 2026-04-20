@@ -198,3 +198,152 @@ void BufferedDisplay::SetOpacity(uint8_t opacity)
     if (drawOpacity > 100)
         drawOpacity = 100;
 }
+
+void BufferedDisplay::pushPixels(uint16_t* image, uint32_t len, uint16_t scanline)
+{
+    if (!AcceptUpdates)
+        return;
+    long st = millis() ;
+    constexpr uint32_t sourceWidth = 256;
+    const uint32_t screenW = this->width();
+    const uint32_t screenH = this->height();
+    const uint32_t srcHeight = (sourceWidth > 0) ? (len / sourceWidth) : 0;
+
+    if (srcHeight == 0 || srcHeight * sourceWidth != len)
+    {
+        totalPushTime += (millis() - st);
+        //Serial.printf("pushPixels: invalid image len %u, expected multiple of %u\n", len, sourceWidth);
+        return;
+    }
+
+    //Serial.printf("pushPixels: image size %u, NES chunk %u x %u, scanline %u, screen %u x %u\n",
+                  //len, sourceWidth, srcHeight, scanline, screenW, screenH);
+
+    for (uint32_t sy = 0; sy < srcHeight; sy++)
+    {
+        const uint32_t srcY = scanline + sy;
+        const uint32_t destY = srcY >> 1;
+        if (destY >= screenH)
+            continue;
+
+        uint16_t* row = image + sy * sourceWidth;
+        for (uint32_t sx = 0; sx < sourceWidth; sx++)
+        {
+            const uint32_t destX = sx >> 1;
+            if (destX >= screenW)
+                continue;
+            // Swap RGB to BGR for display
+            // uint16_t color = row[sx];
+            // color = ((color & 0x001F) << 11) | (color & 0x07E0) | ((color & 0xF800) >> 11);
+            drawPixel(destX, destY, row[sx]);
+        }
+    }
+    totalPushTime += (millis() - st);
+}
+void BufferedDisplay::pushPixelsDMA(uint16_t* image, uint32_t len, uint16_t scanline)
+{
+    // Adafruit_ST7735 does not support DMA in this wrapper.
+    // Fall back to regular pixel transfer.
+    pushPixels(image, len, scanline);
+}
+void BufferedDisplay::setTextDatum(uint8_t datum)
+{
+    textdatum = datum;
+}
+
+uint8_t BufferedDisplay::getTextDatum(void) const
+{
+    return textdatum;
+}
+
+static void adjustTextDatum(int32_t &x, int32_t &y, uint8_t datum, uint16_t w, uint16_t h)
+{
+    switch (datum)
+    {
+        case TC_DATUM: x -= w / 2; break;
+        case TR_DATUM: x -= w; break;
+        case ML_DATUM: y -= h / 2; break;
+        case MC_DATUM: x -= w / 2; y -= h / 2; break;
+        case MR_DATUM: x -= w; y -= h / 2; break;
+        case BL_DATUM: y -= h; break;
+        case BC_DATUM: x -= w / 2; y -= h; break;
+        case BR_DATUM: x -= w; y -= h; break;
+        case TL_DATUM:
+        default: break;
+    }
+}
+
+void BufferedDisplay::drawString(const String &string, int32_t x, int32_t y, uint8_t font)
+{
+    drawString(string.c_str(), x, y, font);
+}
+
+void BufferedDisplay::drawString(const char *string, int32_t x, int32_t y, uint8_t font)
+{
+    uint8_t prevSizeX = textsize_x;
+    uint8_t prevSizeY = textsize_y;
+    const uint8_t prevDatum = textdatum;
+
+    if (font == 0) {
+        setTextSize(1);
+    } else {
+        setTextSize(font);
+    }
+
+    int16_t x1, y1;
+    uint16_t w, h;
+    getTextBounds(string, x, y, &x1, &y1, &w, &h);
+
+    int32_t drawX = x;
+    int32_t drawY = y;
+    adjustTextDatum(drawX, drawY, textdatum, w, h);
+
+    setCursor(drawX, drawY);
+    print(string);
+
+    textsize_x = prevSizeX;
+    textsize_y = prevSizeY;
+    textdatum = prevDatum;
+}
+
+/***************************************************************************************
+** Function name:           textWidth
+** Description:             Return the width in pixels of a string
+***************************************************************************************/
+int16_t BufferedDisplay::textWidth(const String& string)
+{
+    return textWidth(string.c_str());
+}
+
+int16_t BufferedDisplay::textWidth(const String& string, uint8_t font)
+{
+    return textWidth(string.c_str(), font);
+}
+
+int16_t BufferedDisplay::textWidth(const char *string)
+{
+    int16_t x1, y1;
+    uint16_t w, h;
+    getTextBounds(string, 0, 0, &x1, &y1, &w, &h);
+    return w;
+}
+
+int16_t BufferedDisplay::textWidth(const char *string, uint8_t font)
+{
+    uint8_t prevSizeX = textsize_x;
+    uint8_t prevSizeY = textsize_y;
+
+    if (font == 0) {
+        setTextSize(1);
+    } else {
+        setTextSize(font);
+    }
+
+    int16_t x1, y1;
+    uint16_t w, h;
+    getTextBounds(string, 0, 0, &x1, &y1, &w, &h);
+
+    textsize_x = prevSizeX;
+    textsize_y = prevSizeY;
+    return w;
+}

@@ -74,9 +74,13 @@ void PrinterInfoStep::Tick(){
     NeedsRedraw = true;
 }
 
+extern void NES_setup();
 void PrinterInfoStep::HandleKeyPress(Keys key) {
     if (key == Keys::KEYPAD_RIGHT){
         Host->GotoNextStep(); // back to options menu
+    }
+    if (key == Keys::KEYPAD_MIDDLE){
+     //NES_setup();
     }
 }
 

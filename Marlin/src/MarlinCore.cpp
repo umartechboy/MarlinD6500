@@ -1701,11 +1701,14 @@ void setup() {
 extern void ESP3DLIBLOOP();
 #include "sd/cardreader.h"
 long lastEsp3DLoop = 0;
+extern bool NES_loop();
 void loop() {
+  // if (NES_loop())
+  //   return;
   do {
     idle();
     if (!card.isPrinting() || millis() - lastEsp3DLoop > 5000){
-      //ESP3DLIBLOOP();
+      ESP3DLIBLOOP();
       lastEsp3DLoop = millis();
     }
     #if ENABLED(SDSUPPORT)
