@@ -86,6 +86,8 @@ void PrinterInfoStep::HandleKeyPress(Keys key) {
 
 void DrawSplash(BufferedDisplay* g){
     g->fillScreen(0);
-    img_splash.Draw(g, g->width() / 2 - img_splash.width() / 2, g->height() / 2 - img_splash.height() / 2);
+    img_splash.Draw(g, g->width() / 2 - img_splash.width() / 2, g->height() / 2 - img_splash.height() / 2 - 10);
+    g->setTextColor(0xFFFF);
+    centerString(g, EnablerVersion, g->width() / 2, g->height() - 10);
     g->update();
 }
