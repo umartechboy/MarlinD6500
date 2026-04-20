@@ -41,9 +41,9 @@ class Color{
          _a = value;
     }
     uint16_t toColor16() const {
-        return ((uint16_t)(_b * 0b011111) / 0xFF) << 11 |
+        return ((uint16_t)(_r * 0b011111) / 0xFF) << 11 |
                ((uint16_t)(_g * 0b111111) / 0xFF) << 5 |
-               ((uint16_t)(_r * 0b011111) / 0xFF) << 0;
+               ((uint16_t)(_b * 0b011111) / 0xFF) << 0;
     }
     operator uint16_t() const {
         return toColor16();

@@ -265,7 +265,7 @@ void MarlinHAL::init_board() {
 
   Preferences prefs;
   prefs.begin("machine");
-  hasJoyStick = prefs.getBool("joystick", false);
+  hasJoyStick = prefs.getBool("joystick", true);
   PerMachineProbePressureCompensation = prefs.getFloat("probe_p", 0);
   FloatingFactor = prefs.getFloat("probe_f", 0.002F);
   prefs.end();
@@ -324,7 +324,8 @@ void MarlinHAL::init_board() {
   // ESP32 uses a GPIO matrix that allows pins to be assigned to hardware serial ports.
   // The following code initializes hardware Serial1 and Serial2 to use user-defined pins
   // if they have been defined.
-  #if defined(HARDWARE_SERIAL1_RX) && defined(HARDWARE_SERIAL1_TX)
+  // On S3, This interferes with ADC read on channel3. Don't begin seria, there is no need.
+  #if defined(HARDWARE_SERIAL1_RX) && defined(HARDWARE_SERIAL1_TX) && (HARDWARE_SERIAL1_RX != -1) && (HARDWARE_SERIAL1_TX != -1)
     HardwareSerial Serial1(1);
     #ifdef TMC_BAUD_RATE  // use TMC_BAUD_RATE for Serial1 if defined
       Serial1.begin(TMC_BAUD_RATE, SERIAL_8N1, HARDWARE_SERIAL1_RX, HARDWARE_SERIAL1_TX);
@@ -667,11 +668,16 @@ uint32_t readADCMV(const pin_t pin){
     return 0;
 }
 void MarlinHAL::adc_start(const pin_t pin) {
+  
   // if (pin >= 216 && pin < 220){
   //   adc_result = analogRead(pin);
   //   return; // Its on ADS
   // }
   const adc1_channel_t chan = get_channel(pin);
+  // if (pin == TEMP_BED_PIN){
+  //   kp1Read = adc1_get_raw(chan);
+  //   return;
+  // }
   uint32_t mv;
   esp_adc_cal_get_voltage((adc_channel_t)chan, &characteristics[attenuations[chan]], &mv);
 
@@ -709,8 +715,9 @@ void MarlinHAL::adc_start(const pin_t pin) {
     // if (pin == TEMP_CHAMBER_PIN)
     //   kp0Read = this_adc_result;
     // else 
-    if (pin == TEMP_BED_PIN)
+    if (pin == TEMP_BED_PIN){
       kp1Read = this_adc_result;
+    }
   }
   // Change the attenuation level based on the new reading
   adc_atten_t atten;

@@ -1,9 +1,9 @@
 #include "color.h"
 
 Color::Color (uint16_t color) {
-    _b = ((color >> 11) & 0b11111) * 255 / 0b011111;
+    _r = ((color >> 11) & 0b11111) * 255 / 0b011111;
     _g = ((color >> 5) & 0b111111) * 255 / 0b111111;
-    _r = ((color >> 0) & 0b11111) * 255 / 0b011111;
+    _b = ((color >> 0) & 0b11111) * 255 / 0b011111;
     _a = 0xFF;
 }
 // call the one with uint16_t

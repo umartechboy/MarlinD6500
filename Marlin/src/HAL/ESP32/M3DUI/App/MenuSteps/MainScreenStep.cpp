@@ -108,7 +108,7 @@ void MainScreenStep::Paint(BufferedDisplay* g) {
     g->fillScreen(BackColor);
     g->setTextColor(TextColor);
     g->setCursor(0,0);
-    g->print(millis());
+    // g->print(millis());
 
     if (printStatus == PrintStatus::PrintToRecover){
         g->setFont(&FreeSans9pt7b);

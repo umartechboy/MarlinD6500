@@ -17,7 +17,9 @@ class Adafruit_ST7735s: public Adafruit_ST7735 {
     Adafruit_ST7735(spiClass, cs, dc, rst){}
   void ST7735sPatch(){
     _height = ST7735_TFTHEIGHT_128;
-    _width = ST7735_TFTWIDTH_128;
+    _width = ST7735_TFTWIDTH_128;    
+    uint8_t madctl = ST77XX_MADCTL_MX | ST77XX_MADCTL_MV | ST7735_MADCTL_BGR;
+    sendCommand(ST77XX_MADCTL, &madctl, 1);
   }
 };
 Adafruit_ST7735s tft = Adafruit_ST7735s(&SPI, TFT_CS, TFT_DC, TFT_RST);
@@ -54,12 +56,12 @@ void InitDisplayBasic(){
   delay(1);
 
   tft.initR(INITR_BLACKTAB);
+  tft.setRotation(3);
   tft.ST7735sPatch();
   // ADd this to the end of init ST7735.cpp  
   //_height = ST7735_TFTHEIGHT_128;
   // _width = ST7735_TFTWIDTH_128;
   tft.fillScreen(ST77XX_WHITE);
-  tft.setRotation(3);
   bTft = new BufferedDisplay(tft, TFT_startWrite, TFT_setAddressWindow, TFT_writePixels, TFT_endWrite);
   // Lets show the Splash.
   DrawSplash(bTft);
