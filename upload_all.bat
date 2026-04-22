@@ -12,6 +12,3 @@ if "%~1"=="" (
 
 :: Run the esptool command with the dynamic port argument
 esptool --chip esp32s3 %PORT_ARG% --baud 460800 write_flash 0x0 .pio/build/D8500s/bootloader.bin 0x8000 .pio/build/D8500s/partitions.bin 0x10000 .pio/build/D8500s/firmware.bin 0x3B0000 .pio/build/D8500s/spiffs.bin
-
-endlocal
-pause

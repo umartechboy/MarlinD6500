@@ -65,6 +65,8 @@ void PrintPositionStep::HandleKeyPress(Keys key) {
     NeedsRedraw = true;
 }
 void PrintPositionStep::LoadBegin(){
+    mainScreenStep.xOffset = 0;
+    mainScreenStep.yOffset = 0;
     enqueueComs({"M206 X0 Y0"}); // Reset any previous offset
 }
 void PrintPositionStep::UnloadBegin(){
