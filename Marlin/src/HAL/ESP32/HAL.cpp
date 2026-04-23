@@ -40,6 +40,7 @@
 extern bool hasJoyStick;
 extern float PerMachineProbePressureCompensation;
 extern float FloatingFactor;
+extern float loadCellValueThreshold;
 std::map<int, uint16_t> adcMap;
 #if USE_ESP32_PCF8574
 SoftWire sWire;
@@ -285,6 +286,7 @@ void MarlinHAL::init_board() {
   hasJoyStick = prefs.getBool("joystick", true);
   PerMachineProbePressureCompensation = prefs.getFloat("probe_p", 0);
   FloatingFactor = prefs.getFloat("probe_f", 0.002F);
+  loadCellValueThreshold = prefs.getFloat("probe_t", 3.0F);
   prefs.end();
   SERIAL_IMPL.print("Control set to: ");
   SERIAL_IMPL.println(hasJoyStick?"Joystick":"Touchpad");
@@ -386,7 +388,14 @@ void GcodeSuite::M39() {
     prefs.putFloat("probe_f", FloatingFactor);
     prefs.end();
   }
-  SERIAL_IMPL.printf("Using: PComp = %f, FFac = %f\n", PerMachineProbePressureCompensation, FloatingFactor);
+  else if (parser.seen('T')){
+    loadCellValueThreshold = parser.value_float();
+    Preferences prefs;
+    prefs.begin("machine");
+    prefs.putFloat("probe_t", loadCellValueThreshold);
+    prefs.end();
+  }
+  SERIAL_IMPL.printf("Using: PComp = %f, FFac = %f, TThresh = %f\n", PerMachineProbePressureCompensation, FloatingFactor, loadCellValueThreshold);
 }
 volatile int16_t adcCache[4] = {26000, 26000, 26000, 26000};
 volatile bool needsConversion[4] = {0, 0, 0, 0};
