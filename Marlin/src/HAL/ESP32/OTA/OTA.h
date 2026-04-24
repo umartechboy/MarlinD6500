@@ -15,6 +15,8 @@
 #define FIRMWARE_PATH FILES_PATH FIRMWARE_BIN
 #define FRIMWARE_VERSION 2
 
+#define SD_UPDATE_FILE "firmware.bin"
+
 extern void TryOTAUpdate();
 
 #endif

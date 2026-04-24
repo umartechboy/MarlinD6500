@@ -6,7 +6,7 @@
 #include <HTTPClient.h>
 #include "..\M3DUI\App\MenuApp.h"
 #include "..\M3DUI\Components\M3DUI.h"
-//#include "..\..\..\sd\cardreader.h"
+#include "..\..\..\sd\cardreader.h"
 
 WiFiClient wifiClient; 
 String httpGETRequest(const char *serverName);
@@ -23,7 +23,7 @@ void OTALoop(void*);
 
 void TryOTAUpdate(){
     if (!otaLoopRunning){ 
-        xTaskCreate(OTALoop, "ota", 4096, 0, 1, &otaLoopHandle);
+        xTaskCreatePinnedToCore(OTALoop, "ota", 8192, 0, 1, &otaLoopHandle, 0);
     }
     if (inUpdate){ // dont put a double request
         return;
@@ -44,6 +44,45 @@ void OTALoop(void*){
 void _TryOTAUpdate_()
 {
     SERIAL_IMPL.println("TryOTAUpdate()");
+    // Lets first try SD Update
+    
+    bool sdOtaTried = false;
+    if (!card.isMounted()) {
+        SERIAL_IMPL.printf("Mounting card\n");
+        card.mount();
+    }
+    
+    if (card.isMounted()) {
+        SERIAL_IMPL.printf("SD Update\n");
+        if (card.fileExists(SD_UPDATE_FILE)){
+            SERIAL_IMPL.printf("firmware is here!\n");
+            card.openFileRead(SD_UPDATE_FILE);
+            if (card.isFileOpen()){
+                SERIAL_IMPL.printf("firmware open\n");
+                uint8_t bytes[8192];
+                long total = 0;
+                while (!card.eof())
+                {
+                    SERIAL_IMPL.printf("Reading %d bytes as", sizeof(bytes));
+                    int aRead = card.read(bytes, sizeof(bytes));
+                    SERIAL_IMPL.println(aRead);
+                    total += aRead;
+                }
+                SERIAL_IMPL.printf("Total Read: %f\n", total);
+                card.closefile();
+                return;
+            }
+            else
+                SERIAL_IMPL.printf("firmware not open\n");
+        }
+    }
+    if (sdOtaTried){
+        SERIAL_IMPL.printf("SD Tried. no result");
+    }
+    else{
+        SERIAL_IMPL.printf("SD not tried.");
+    }
+
 
     //Show Upgrade Screen
     if (menuHost.CurrentStep && menuHost.CurrentStep != &updateStep){

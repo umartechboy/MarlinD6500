@@ -156,6 +156,7 @@ class MenuStep {
         long TickPeriod = 0;
         long LastActivity = 0;
     protected: 
+        bool inTick = false;
         long lastTick = 0;
         bool isDummy = false;
         virtual void Tick() {}

@@ -14,7 +14,7 @@ void OnMovementSelectionUpdatedCallback(void* caller, ListItem* selectedItem, in
         SERIAL_IMPL.printf("Setting next step: %s\n", ((StringListItem*)selectedItem)->ItemText.c_str());
     }
     else if (selectedItem == This->updatesOption){
-        This->RetroNextStep = &updateStep;
+        This->RetroNextStep = &update2Step;
         updateStep.PreviousStep = This;
         SERIAL_IMPL.printf("Setting next step: %s\n", ((StringListItem*)selectedItem)->ItemText.c_str());
     }

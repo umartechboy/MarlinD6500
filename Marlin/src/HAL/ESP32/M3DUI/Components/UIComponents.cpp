@@ -377,7 +377,11 @@ void MenuStep::loop(){
     if (TickPeriod == 0) return; 
     if (millis() - lastTick > TickPeriod){
         lastTick = millis();
-        Tick();
+        if(!inTick){ // dodge reentrancy
+            inTick = true;
+            Tick();
+            inTick = false;
+        }
     }
 }
 void MenuStep::PaintRetroTitle(BufferedDisplay* g) {

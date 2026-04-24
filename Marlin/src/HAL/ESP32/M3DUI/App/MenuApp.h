@@ -20,6 +20,7 @@
 #include "MenuSteps\HelpStep.h"
 #include "MenuSteps\SensorInfoStep.h"
 #include "MenuSteps\MotorMovementStep.h"
+#include "MenuSteps\Update2Step.h"
 
 extern MenuHost menuHost;
 extern FilePreviewStep filePreviewStep;
@@ -41,6 +42,7 @@ extern UpdateStep updateStep;
 extern HelpStep helpStep;
 extern SensorInfoStep sensorInfoStep;
 extern MotorMovementStep motorMovementStep;
+extern Update2MenuStep update2Step;
 
 void BeginApp();
 #ifdef __MARLIN_FIRMWARE__
