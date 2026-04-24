@@ -3,6 +3,7 @@
 #include "..\Images.h"
 #include "..\..\..\..\..\sd\cardreader.h"
 #include <Update.h>
+#include "..\..\..\OTA\OTA.h"
 
 UpdateStep::UpdateStep(MenuHost* host):MenuStep(host) {
     ButtonColor = DarkRed;
@@ -46,7 +47,7 @@ void UpdateStep::Tick() {
                 if(Update.begin(card.getFileSize())) {
                     totalBytesReadForSd = 0; 
                     TickPeriod = 1;        
-                    StatusMessage = "Updating from SD 1";
+                    StatusMessage = "Updating from SD 2";
                     UpdateState = SdUpdateState::UpdatingFromSd;
                     SERIAL_IMPL.println("File open for update.");                
                     updateBuffer = new uint8_t[SdUpdateBufferSize];                
@@ -101,6 +102,7 @@ void UpdateStep::Tick() {
     else if (UpdateState == SdUpdateState::BeginNetwork){
         UpdateState = SdUpdateState::None;
         SERIAL_IMPL.println("Switching to Network Update.");
+        TryOTAUpdate();
     }
 }
 void UpdateStep::Paint(BufferedDisplay* g) {
@@ -129,6 +131,7 @@ void UpdateStep::LoadComplete(){
     TickPeriod = 1000;
     UpdateState = SdUpdateState::BeginSd;
     StatusMessage = "Checking SD card";
+    NeedsRedraw = true;
 }
 
 void UpdateStep::NotifyOTAProgressChange(String str){

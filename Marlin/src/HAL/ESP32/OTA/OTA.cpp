@@ -46,44 +46,6 @@ void _TryOTAUpdate_()
     SERIAL_IMPL.println("TryOTAUpdate()");
     // Lets first try SD Update
     
-    bool sdOtaTried = false;
-    if (!card.isMounted()) {
-        SERIAL_IMPL.printf("Mounting card\n");
-        card.mount();
-    }
-    
-    if (card.isMounted()) {
-        SERIAL_IMPL.printf("SD Update\n");
-        if (card.fileExists(SD_UPDATE_FILE)){
-            SERIAL_IMPL.printf("firmware is here!\n");
-            card.openFileRead(SD_UPDATE_FILE);
-            if (card.isFileOpen()){
-                SERIAL_IMPL.printf("firmware open\n");
-                uint8_t bytes[8192];
-                long total = 0;
-                while (!card.eof())
-                {
-                    SERIAL_IMPL.printf("Reading %d bytes as", sizeof(bytes));
-                    int aRead = card.read(bytes, sizeof(bytes));
-                    SERIAL_IMPL.println(aRead);
-                    total += aRead;
-                }
-                SERIAL_IMPL.printf("Total Read: %f\n", total);
-                card.closefile();
-                return;
-            }
-            else
-                SERIAL_IMPL.printf("firmware not open\n");
-        }
-    }
-    if (sdOtaTried){
-        SERIAL_IMPL.printf("SD Tried. no result");
-    }
-    else{
-        SERIAL_IMPL.printf("SD not tried.");
-    }
-
-
     //Show Upgrade Screen
     if (menuHost.CurrentStep && menuHost.CurrentStep != &updateStep){
         SERIAL_IMPL.println("Switching to update step()");
