@@ -7,9 +7,10 @@
 
 enum SdUpdateState : uint8_t{
     None = 0,
-    MountingSd,
+    BeginSd,
     UpdatingFromSd,
     RestartingAfterSd,
+    BeginNetwork,
 };
 
 class Update2MenuStep: public MenuStep {
@@ -24,10 +25,12 @@ public:
     void IncrementValue() override;
     void DecrementValue() override;
     void HandleKeyPress(Keys key) override;
-    SdUpdateState UpdateState = SdUpdateState::MountingSd;
+    SdUpdateState UpdateState = SdUpdateState::None;
     uint8_t* updateBuffer = 0;
     long updateFinishedAt = 0;
     long totalBytesReadForSd = 0;
+    float Progress = 0;
+    String StatusMessage = "";
 };
 
 #endif

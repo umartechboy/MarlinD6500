@@ -44,7 +44,6 @@ Update2MenuStep::Update2MenuStep(MenuHost* host):MenuStep(host) {
     RetroNextStep = 0;
 
     Icon = &img_Home;
-    TickPeriod = 50;
 
     list = new VerticalList(Host, "No SD Card");
     list->SetOnSelectionUpdated(this, selectionUpdated);
@@ -55,8 +54,9 @@ Update2MenuStep::~Update2MenuStep(){
 
 void Update2MenuStep::Tick() {
     NeedsRedraw = true;
-    if (UpdateState == SdUpdateState::MountingSd){
-        UpdateState = SdUpdateState::None;
+    if (UpdateState == SdUpdateState::BeginSd){
+        UpdateState = SdUpdateState::BeginNetwork; // skip to network in case this doesn't yield good
+        StatusMessage = "Starting SD card";
         SERIAL_IMPL.println("Starting SD");
         list->EmptyString = "Loading..."; 
         if (!card.isMounted()){
@@ -64,27 +64,29 @@ void Update2MenuStep::Tick() {
         }
         hasSDCard = card.isMounted();
 
-        if (!hasSDCard){
+        if (!hasSDCard){            
+            StatusMessage = "SD card not found";
             SERIAL_IMPL.println("SD card not found");
             list->EmptyString = "No SD card"; 
             return;
         }
 
+        StatusMessage = "SD update failed";
         SERIAL_IMPL.println("SD card FOUND!");
         if (card.fileExists(UpdateFileName)){
-            SERIAL_IMPL.println("Firmware file found!");
+            SERIAL_IMPL.println("Firmware file found!");   
             card.openFileRead(UpdateFileName);
             if (card.isFileOpen()){                
                 if(Update.begin(card.getFileSize())) {
-                    totalBytesReadForSd = 0;
-                    TickPeriod = 1;
+                    totalBytesReadForSd = 0; 
+                    TickPeriod = 1;        
+                    StatusMessage = "Updating from SD";
                     UpdateState = SdUpdateState::UpdatingFromSd;
                     SERIAL_IMPL.println("File open for update.");                
                     updateBuffer = new uint8_t[SdUpdateBufferSize];                
                 }
                 else {
                     SERIAL_IMPL.println("Update could not begin");
-                    UpdateState = SdUpdateState::None;
                 }
             }
             else{
@@ -100,6 +102,7 @@ void Update2MenuStep::Tick() {
             totalBytesReadForSd += tRead;
             // write update data
             Update.write(updateBuffer, tRead);
+            Progress = (float)totalBytesReadForSd / (float)card.getFileSize() * 100.0F;
         }
         SERIAL_IMPL.printf("Read %d/%d\n", totalBytesReadForSd, card.getFileSize());
         if (tRead == 0){
@@ -108,6 +111,8 @@ void Update2MenuStep::Tick() {
 
             if(Update.end()){
                 SERIAL_IMPL.println("Update Finished!");
+                Progress = 100;
+                StatusMessage = "Complete";
             }
             card.closefile();
             UpdateState = SdUpdateState::RestartingAfterSd;
@@ -118,6 +123,7 @@ void Update2MenuStep::Tick() {
     else if (UpdateState == SdUpdateState::RestartingAfterSd){
         if (millis() - updateFinishedAt < 5000){
             SERIAL_IMPL.printf("Restarting in %d\n", (5000 - (millis() - updateFinishedAt)) / 1000);
+            StatusMessage = String("Restarting in ") + String((5000 - (millis() - updateFinishedAt)) / 1000) + String("s");
         }
         else{
             SERIAL_IMPL.println("Restarting");
@@ -127,15 +133,26 @@ void Update2MenuStep::Tick() {
     }
 }
 void Update2MenuStep::Paint(BufferedDisplay* g) {
-    //Serial.printf("SD Menu Step Paint called @ %d, %d\n", g->xOffset, g->yOffset);
+    //Serial.printf("Idle Screen Step Paint called @ %d, %d\n", g->xOffset, g->yOffset);
     // Draw the idle screen
     g->fillScreen(BackColor);
     g->setTextColor(TextColor);
-    if (hasSDCard){
-        list->Paint(g, 0, 0, g->width(), g->height(), TextColor);
-    } else {
-        centerString(g, "No SD Card", Host->appWidth() / 2, Host->appHeight() / 2);
-    }
+    int titleHeight = 10;
+    if (Host->Retro)
+        titleHeight = retroTitleSectionHeight + 14;
+    
+    int pbh = 8;
+    g->SetOpacity(50);
+    float pcCommplete = Progress;
+    //pcCommplete = 24.4;
+    g->drawRoundRect(1, Host->appTop() + Host->appHeight() / 2 - 5, Host->appWidth() - 2, pbh, pbh / 2, TextColor);
+    g->SetOpacity(100);
+    g->fillRoundRect(1, Host->appTop() + Host->appHeight() / 2 - 5, ((Host->appWidth() - 2) * pcCommplete) / 100, pbh, pbh / 2, TextColor);    
+    g->setFont();
+    centerString(g, (String(pcCommplete, 1) + String("%")).c_str(), Host->appWidth() / 2, Host->appTop() + Host->appHeight() / 2 - 14);
+    g->setFont();
+    centerString(g, StatusMessage.c_str(), Host->appWidth() / 2, Host->appTop() + Host->appHeight() / 2 + pbh + 5);
+
 }
 void Update2MenuStep::IncrementValue() {
     HandleKeyPress(Keys::KEYPAD_UP);
@@ -156,7 +173,10 @@ void Update2MenuStep::HandleKeyPress(Keys key) {
             Host->GotoPreviousStep();
     }
 }    
-void Update2MenuStep::LoadComplete(){   
+void Update2MenuStep::LoadComplete(){       
+    TickPeriod = 1000;
+    UpdateState = SdUpdateState::BeginSd;
+    StatusMessage = "Checking SD card";
 }
 
 // String toDOSNameFixed(const String& longName, const std::vector<String>& seenNames) {
