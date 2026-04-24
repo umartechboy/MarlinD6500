@@ -1,22 +1,35 @@
-#ifndef __UPDATE_STEP__
-#define __UPDATE_STEP__
+#ifndef UPDATE_MENU_STEP
+#define UPDATE_MENU_STEP
+
 #include "..\..\Components\M3DUI.h"
-#include <Preferences.h>
+#define UpdateFileName "FIRMWARE.BIN"
+#define SdUpdateBufferSize (1024 * 16)
+
+enum SdUpdateState : uint8_t{
+    None = 0,
+    BeginSd,
+    UpdatingFromSd,
+    RestartingAfterSd,
+    BeginNetwork,
+};
 
 class UpdateStep: public MenuStep {
-private:    
-    MenuStep* retroPreviousStepBkp;
-    String StatusMessage;
-    int Progress = 0;
 public:
     UpdateStep(MenuHost* host);
     ~UpdateStep();
+    void LoadComplete() override;
     void Tick() override;
     void Paint(BufferedDisplay* g) override;
-    void LoadComplete() override;
+    SdUpdateState UpdateState = SdUpdateState::None;
+    uint8_t* updateBuffer = 0;
+    long updateFinishedAt = 0;
+    long totalBytesReadForSd = 0;
+    float Progress = 0;
+    String StatusMessage = "";
     void NotifyOTAProgressChange(String str);
     void NotifyOTAProgressChange(float progress);
     void NotifyOTAComplete();
     void NotifyOTAFailed();
 };
+
 #endif

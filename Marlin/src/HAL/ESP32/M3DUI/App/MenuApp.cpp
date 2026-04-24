@@ -20,7 +20,6 @@ UpdateStep updateStep(&menuHost);
 HelpStep helpStep(&menuHost);
 SensorInfoStep sensorInfoStep(&menuHost);
 MotorMovementStep motorMovementStep(&menuHost);
-Update2MenuStep update2Step(&menuHost);
 
 void BeginApp(){    
   SERIAL_IMPL.println("Goto menu pushed");
