@@ -4,36 +4,6 @@
 #include "..\..\..\..\..\sd\cardreader.h"
 #include <Update.h>
 
-// std::vector<String> seen;
-// String toDOSNameFixed(const String& longName, const std::vector<String>& seenNames);
-
-void OnFileFound3(void* caller, const char* dosName) {
-    Update2MenuStep* This = (Update2MenuStep*)caller;
-
-    // Check if the filename ends with ".GCO" (case-insensitive)
-    const char *ext = strrchr(dosName, '.');  // find last dot
-    if (ext && strcasecmp(ext, ".GCO") == 0) {
-        SERIAL_IMPL.printf("Adding File: %s\n", dosName);
-        This->list->AddAtBeginning(new FileNameListItem(This->Host, "", dosName, 0, 14));
-    }
-    else {
-        SERIAL_IMPL.printf("Skipping non-GCO file: %s\n", dosName);
-    }
-}
-static void selectionUpdated(void* caller, ListItem* selectedItem, int selectedIndex){
-    Update2MenuStep* This = (Update2MenuStep*)caller;
-    if (selectedIndex < 0) {
-        This->NextStep = 0;
-    }
-    else {
-        This->NextStep = &filePreviewStep;
-        This->RetroNextStep = &filePreviewStep; // same in retro
-        mainScreenStep.fileName = ((FileNameListItem*)selectedItem)->ItemText;
-        mainScreenStep.DOSFileName = ((FileNameListItem*)selectedItem)->DOSName;
-        filePreviewStep.Title = mainScreenStep.fileName;
-        This->NeedsRedraw = true;
-    }
-}
 Update2MenuStep::Update2MenuStep(MenuHost* host):MenuStep(host) {
     ButtonColor = DarkRed;
     BackColor = DarkRed;
@@ -44,12 +14,10 @@ Update2MenuStep::Update2MenuStep(MenuHost* host):MenuStep(host) {
     RetroNextStep = 0;
 
     Icon = &img_Home;
-
-    list = new VerticalList(Host, "No SD Card");
-    list->SetOnSelectionUpdated(this, selectionUpdated);
 }
 Update2MenuStep::~Update2MenuStep(){
-    delete list;
+    if (updateBuffer)
+        delete updateBuffer;
 }
 
 void Update2MenuStep::Tick() {
@@ -58,16 +26,14 @@ void Update2MenuStep::Tick() {
         UpdateState = SdUpdateState::BeginNetwork; // skip to network in case this doesn't yield good
         StatusMessage = "Starting SD card";
         SERIAL_IMPL.println("Starting SD");
-        list->EmptyString = "Loading..."; 
         if (!card.isMounted()){
             card.mount();
         }
-        hasSDCard = card.isMounted();
+        bool hasSDCard = card.isMounted();
 
         if (!hasSDCard){            
             StatusMessage = "SD card not found";
             SERIAL_IMPL.println("SD card not found");
-            list->EmptyString = "No SD card"; 
             return;
         }
 
@@ -107,6 +73,7 @@ void Update2MenuStep::Tick() {
         SERIAL_IMPL.printf("Read %d/%d\n", totalBytesReadForSd, card.getFileSize());
         if (tRead == 0){
             delete updateBuffer;
+            updateBuffer = 0;
             SERIAL_IMPL.println("EOF for Update file");
 
             if(Update.end()){
@@ -154,68 +121,8 @@ void Update2MenuStep::Paint(BufferedDisplay* g) {
     centerString(g, StatusMessage.c_str(), Host->appWidth() / 2, Host->appTop() + Host->appHeight() / 2 + pbh + 5);
 
 }
-void Update2MenuStep::IncrementValue() {
-    HandleKeyPress(Keys::KEYPAD_UP);
-}
-void Update2MenuStep::DecrementValue() {
-    HandleKeyPress(Keys::KEYPAD_DOWN);
-}
-void Update2MenuStep::HandleKeyPress(Keys key) {
-    RegisterActivity();
-    if (key == Keys::KEYPAD_DOWN)
-        list->scrollDown();
-    else if (key == Keys::KEYPAD_UP)
-        list->scrollUp();
-    if (!Host->Retro){
-        if (key == Keys::KEYPAD_RIGHT)
-            Host->GotoNextStep();
-        else if (key == Keys::KEYPAD_LEFT)
-            Host->GotoPreviousStep();
-    }
-}    
 void Update2MenuStep::LoadComplete(){       
     TickPeriod = 1000;
     UpdateState = SdUpdateState::BeginSd;
     StatusMessage = "Checking SD card";
 }
-
-// String toDOSNameFixed(const String& longName, const std::vector<String>& seenNames) {
-//   // Strip path
-//   int lastSlash = longName.lastIndexOf('/');
-//   String name = (lastSlash >= 0) ? longName.substring(lastSlash + 1) : longName;
-
-//   // Uppercase it
-//   name.toUpperCase();
-
-//   // Split extension
-//   int dotIndex = name.lastIndexOf('.');
-//   String base = (dotIndex >= 0) ? name.substring(0, dotIndex) : name;
-//   String ext = (dotIndex >= 0) ? name.substring(dotIndex + 1) : "";
-
-//   // Remove spaces and invalid chars from base
-//   String cleanBase = "";
-//   for (char c : base) {
-//     if (isalnum(c) || c == '_') {
-//       cleanBase += c;
-//     }
-//   }
-
-//   // Truncate to 6 characters for base
-//   if (cleanBase.length() > 6)
-//     cleanBase = cleanBase.substring(0, 6);
-
-//   // Count duplicates
-//   int suffix = 1;
-//   String testName;
-//   do {
-//     testName = cleanBase + "~" + String(suffix);
-//     suffix++;
-//   } while (std::find(seenNames.begin(), seenNames.end(), testName) != seenNames.end());
-
-//   // Truncate extension to 3
-//   if (ext.length() > 3)
-//     ext = ext.substring(0, 3);
-
-//   // Compose final name
-//   return ext.length() ? testName + "." + ext : testName;
-// }
