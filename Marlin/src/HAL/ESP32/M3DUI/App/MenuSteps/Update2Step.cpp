@@ -2,6 +2,7 @@
 #include "..\MenuApp.h"
 #include "..\Images.h"
 #include "..\..\..\..\..\sd\cardreader.h"
+#include <Update.h>
 
 // std::vector<String> seen;
 // String toDOSNameFixed(const String& longName, const std::vector<String>& seenNames);
@@ -43,7 +44,7 @@ Update2MenuStep::Update2MenuStep(MenuHost* host):MenuStep(host) {
     RetroNextStep = 0;
 
     Icon = &img_Home;
-    TickPeriod = 5;
+    TickPeriod = 50;
 
     list = new VerticalList(Host, "No SD Card");
     list->SetOnSelectionUpdated(this, selectionUpdated);
@@ -73,10 +74,18 @@ void Update2MenuStep::Tick() {
         if (card.fileExists(UpdateFileName)){
             SERIAL_IMPL.println("Firmware file found!");
             card.openFileRead(UpdateFileName);
-            if (card.isFileOpen()){
-                UpdateState = SdUpdateState::UpdatingFromSd;
-                SERIAL_IMPL.println("File open for update.");
-                updateBuffer = new uint8_t[SdUpdateBufferSize];
+            if (card.isFileOpen()){                
+                if(Update.begin(card.getFileSize())) {
+                    totalBytesReadForSd = 0;
+                    TickPeriod = 1;
+                    UpdateState = SdUpdateState::UpdatingFromSd;
+                    SERIAL_IMPL.println("File open for update.");                
+                    updateBuffer = new uint8_t[SdUpdateBufferSize];                
+                }
+                else {
+                    SERIAL_IMPL.println("Update could not begin");
+                    UpdateState = SdUpdateState::None;
+                }
             }
             else{
                 SERIAL_IMPL.println("File could not be opened.");
@@ -87,13 +96,19 @@ void Update2MenuStep::Tick() {
         }
     } else if (UpdateState == SdUpdateState::UpdatingFromSd){
         int tRead = card.read(updateBuffer, SdUpdateBufferSize);
-        SERIAL_IMPL.printf("Read %d/%d\n", tRead, SdUpdateBufferSize);
         if (tRead > 0) {
+            totalBytesReadForSd += tRead;
             // write update data
+            Update.write(updateBuffer, tRead);
         }
+        SERIAL_IMPL.printf("Read %d/%d\n", totalBytesReadForSd, card.getFileSize());
         if (tRead == 0){
             delete updateBuffer;
             SERIAL_IMPL.println("EOF for Update file");
+
+            if(Update.end()){
+                SERIAL_IMPL.println("Update Finished!");
+            }
             card.closefile();
             UpdateState = SdUpdateState::RestartingAfterSd;
             updateFinishedAt = millis();
@@ -106,6 +121,7 @@ void Update2MenuStep::Tick() {
         }
         else{
             SERIAL_IMPL.println("Restarting");
+            ESP.restart();
             UpdateState = SdUpdateState::None;            
         }
     }

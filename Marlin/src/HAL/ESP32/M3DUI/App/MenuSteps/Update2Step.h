@@ -27,6 +27,7 @@ public:
     SdUpdateState UpdateState = SdUpdateState::MountingSd;
     uint8_t* updateBuffer = 0;
     long updateFinishedAt = 0;
+    long totalBytesReadForSd = 0;
 };
 
 #endif
