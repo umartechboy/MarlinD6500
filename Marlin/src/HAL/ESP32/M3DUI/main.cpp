@@ -42,9 +42,16 @@ void TFT_endWrite()
 }
 BufferedDisplay* bTft;
 
+bool hasGreenTab = false;
 extern void DrawSplash(BufferedDisplay* g);
 bool displayHasInit = false;
 void InitDisplayBasic(){
+  
+  Preferences prefs;
+  prefs.begin("machine");
+  hasGreenTab = prefs.getBool("tft_t", false);
+  prefs.end();
+
   if (displayHasInit)
     return;
   displayHasInit = true;
@@ -55,9 +62,15 @@ void InitDisplayBasic(){
   digitalWrite(TFT_RST, 1);
   delay(1);
 
-  tft.initR(INITR_BLACKTAB);
-  tft.setRotation(3);
-  tft.ST7735sPatch();
+  if (hasGreenTab){
+    tft.initR(INITR_GREENTAB);
+    tft.setRotation(3);
+  }
+  else{
+    tft.initR(INITR_BLACKTAB);
+    tft.setRotation(3);
+    tft.ST7735sPatch();
+  }
   // ADd this to the end of init ST7735.cpp  
   //_height = ST7735_TFTHEIGHT_128;
   // _width = ST7735_TFTWIDTH_128;

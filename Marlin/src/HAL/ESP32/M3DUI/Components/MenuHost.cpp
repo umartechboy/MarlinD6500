@@ -38,6 +38,7 @@ void MenuHost::GotoNextStep(){
             menuTrasnsitionStage = MenuTransitionStage::TransitionaingScreens;
             TargetStep = CurrentStep->RetroNextStep;
             menuTransitionDirection = TransitionDirection::Forward;
+            CurrentStep->RetroNextStep->RegisterActivity();
             CurrentStep->RetroNextStep->LoadBegin();
             CurrentStep->UnloadBegin();
             ResetAnimationProgress(250);
@@ -57,8 +58,10 @@ void MenuHost::GotoNextStep(){
                 moveToMenuAfterStepAnim = CurrentStep->GetNextStep();
             }
             menuTransitionDirection = TransitionDirection::Forward;
-            if (CurrentStep->GetNextStep())
+            if (CurrentStep->GetNextStep()){
+                CurrentStep->GetNextStep()->RegisterActivity();
                 CurrentStep->GetNextStep()->LoadBegin();
+            }
             CurrentStep->UnloadBegin();
             ResetAnimationProgress(250);
         }
@@ -78,8 +81,10 @@ void MenuHost::GotoPreviousStep(){
                 moveToMenuAfterStepAnim = CurrentStep->GetPreviousStep();
             }
             menuTransitionDirection = TransitionDirection::Backward;
-            if (CurrentStep->GetPreviousStep())
+            if (CurrentStep->GetPreviousStep()){
+                CurrentStep->GetPreviousStep()->RegisterActivity();
                 CurrentStep->GetPreviousStep()->LoadBegin();
+            }
             CurrentStep->UnloadBegin();
             ResetAnimationProgress(250);
         }
@@ -385,8 +390,20 @@ void MenuHost::PushNotification(const char* str, int life){
 void MenuHost::Loop(BufferedDisplay* bTft){
     keypad->Loop(this);
     Paint(bTft);
-    if (CurrentStep)
-    CurrentStep->loop();
+    if (CurrentStep){
+        
+        // Auto ergister activity for each step by default. To break the loop, one must set JumpToStepOnNoActivity and NoActivityTimeout to desired values, and use RegisterActivity in the step manually to reset the timer when needed.
+        if (CurrentStep->NoActivityTimeout == 0 || CurrentStep->JumpToStepOnNoActivity == 0)
+            CurrentStep->RegisterActivity();
+        if (millis() - CurrentStep->LastActivity > CurrentStep->NoActivityTimeout && CurrentStep->JumpToStepOnNoActivity && CurrentStep->NoActivityTimeout > 0){
+            if (TargetStep == 0) {
+                    SERIAL_IMPL.printf("No activity timeout, going to: %s\n", CurrentStep->JumpToStepOnNoActivity->Title.c_str());
+                    GotoStepFromAny(CurrentStep->JumpToStepOnNoActivity);
+            }
+        }
+        else
+            CurrentStep->loop();
+    }
     if (TargetStep)
         TargetStep->loop();
 

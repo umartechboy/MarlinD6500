@@ -21,9 +21,9 @@
  bool ProbeEnable = true; // on by default for tarring
  float lastReading = 0;
  int exampleReadingCount = 0;
- float loadCellValueThreshold = 3.0;
  float fluctuationTolerance = 0.2F; // how much fluctuation in the reading to ignore
  float rawValueFilterFactor = 0.1F;
+ float loadCellValueThreshold = 3.0;
  float FloatingFactor = 0.002F;
  #define FilterOutSeriesOfErraticValue 5
  int lastReturn  = 0;

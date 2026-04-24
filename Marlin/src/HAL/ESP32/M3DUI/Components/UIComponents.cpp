@@ -412,6 +412,9 @@ MenuStep* MenuStep::GetNextStep(){
     else
         return NextStep;
 }
+void MenuStep::RegisterActivity(){
+    LastActivity = millis();
+}
 bool MenuStep::CanJumpToMainMenu(){
     return true;
 }

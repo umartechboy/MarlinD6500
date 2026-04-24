@@ -1,1 +1,1 @@
-esptool --chip esp32s3 --port COM9 --baud 460800 write_flash 0x0 .pio/build/D8500s/bootloader.bin 0x8000 .pio/build/D8500s/partitions.bin 0x10000 .pio/build/D8500s/firmware.bin
+esptool --chip esp32s3 --baud 921600 write_flash 0x0 .pio/build/D8500s/bootloader.bin 0x8000 .pio/build/D8500s/partitions.bin 0x10000 .pio/build/D8500s/firmware.bin

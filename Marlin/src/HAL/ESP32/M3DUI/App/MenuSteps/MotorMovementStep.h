@@ -6,6 +6,9 @@
 enum m_movements: byte{
     NoCom = 0,
     HomeAll,
+    HomeZ,
+    Probe,
+    ProbeSensitivity,
     motorsOff,
     moveX, 
     moveY,
@@ -34,6 +37,9 @@ public:
     String makeG1(char axis, int dir);
     void Tick() override;   
     VerticalList* options;
+    StringListItem* homeZOption;
+    StringListItem* probeOption;
+    StringListItem* probeSensitityOption;
     StringListItem* homeAllOption;
     StringListItem* motorsOffOption;
     StringListItem* xMoveOption;

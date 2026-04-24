@@ -143,9 +143,18 @@ class MenuStep {
         virtual MenuStep* GetNextStep();
         virtual bool CanJumpToMainMenu();
         virtual void NotifyNoKey() {};
+        // Auto ergister activity for each step by default. To break the loop, one must set JumpOnNoActivity and NoActivityTimeout to desired values, and use RegisterActivity in the step to reset the timer when needed.
+        // The step to jump to on no activity. If set to 0, auto jump is disabled.
+        MenuStep* JumpToStepOnNoActivity = 0;
+        // Timeout for no activity in milliseconds. Only counts if JumpToStepOnNoActivity is set.
+        long NoActivityTimeout = 0;
+        // Call this to register activity in the current step, which will reset the no activity timer if JumpToStepOnNoActivity and NoActivityTimeout are set.
+        void RegisterActivity();
+
         void loop();
         bool IsDummyStep();
         long TickPeriod = 0;
+        long LastActivity = 0;
     protected: 
         long lastTick = 0;
         bool isDummy = false;

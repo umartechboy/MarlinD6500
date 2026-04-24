@@ -37,6 +37,8 @@
 #include <map>
 #include "LoadCell/LoadCell.h"
 #include <Preferences.h>
+
+extern bool hasGreenTab;
 extern bool hasJoyStick;
 extern float PerMachineProbePressureCompensation;
 extern float FloatingFactor;
@@ -277,17 +279,19 @@ void InitIOExpanders(){
 }
 
 void MarlinHAL::init_board() {
-  UISetup();
-  LoadCellSetup();
-  InitMusic(Y_STEP_PIN, Y_DIR_PIN, Y_ENABLE_PIN);
-
   Preferences prefs;
   prefs.begin("machine");
   hasJoyStick = prefs.getBool("joystick", true);
   PerMachineProbePressureCompensation = prefs.getFloat("probe_p", 0);
   FloatingFactor = prefs.getFloat("probe_f", 0.002F);
   loadCellValueThreshold = prefs.getFloat("probe_t", 3.0F);
+  hasGreenTab = prefs.getBool("tft_t", false);
   prefs.end();
+
+  UISetup();
+  LoadCellSetup();
+  InitMusic(Y_STEP_PIN, Y_DIR_PIN, Y_ENABLE_PIN);
+
   SERIAL_IMPL.print("Control set to: ");
   SERIAL_IMPL.println(hasJoyStick?"Joystick":"Touchpad");
   SERIAL_IMPL.println("Starting SD to look for PLR");
@@ -396,6 +400,16 @@ void GcodeSuite::M39() {
     prefs.end();
   }
   SERIAL_IMPL.printf("Using: PComp = %f, FFac = %f, TThresh = %f\n", PerMachineProbePressureCompensation, FloatingFactor, loadCellValueThreshold);
+}
+void GcodeSuite::M40() {
+  if (parser.seen('T')){
+    hasGreenTab = parser.value_int() > 0;
+    Preferences prefs;
+    prefs.begin("machine");
+    prefs.putBool("tft_t", hasGreenTab);
+    prefs.end();
+  }
+  SERIAL_IMPL.printf("Using ST7735%s\n", hasGreenTab ? "" : "s");
 }
 volatile int16_t adcCache[4] = {26000, 26000, 26000, 26000};
 volatile bool needsConversion[4] = {0, 0, 0, 0};

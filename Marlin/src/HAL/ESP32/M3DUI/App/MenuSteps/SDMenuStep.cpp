@@ -33,6 +33,8 @@ SDMenuStep::SDMenuStep(MenuHost* host):MenuStep(host) {
     TickPeriod = 50;
     list = new VerticalList(Host, "No SD Card");
     list->SetOnSelectionUpdated(this, selectionUpdated);
+    JumpToStepOnNoActivity = &mainScreenStep;
+    NoActivityTimeout = 15000; // 15 seconds
 }
 SDMenuStep::~SDMenuStep(){
     delete list;
@@ -59,6 +61,7 @@ void SDMenuStep::DecrementValue() {
     HandleKeyPress(Keys::KEYPAD_DOWN);
 }
 void SDMenuStep::HandleKeyPress(Keys key) {
+    RegisterActivity();
     if (key == Keys::KEYPAD_DOWN)
         list->scrollDown();
     else if (key == Keys::KEYPAD_UP)

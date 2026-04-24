@@ -40,6 +40,8 @@ FilePreviewStep::FilePreviewStep(MenuHost* host):MenuStep(host) {
     RetroPreviousStep = &sdMenuStep;
     RetroNextStep = &printPositionStep;
     NextActionString = "Continue";
+    JumpToStepOnNoActivity = &mainScreenStep;
+    NoActivityTimeout = 10000; // 10 seconds
 }
 extern volatile bool swapTools;
 void FilePreviewStep::Paint(BufferedDisplay* g) {

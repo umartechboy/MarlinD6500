@@ -15,6 +15,18 @@ void OnSelectionUpdatedCallback(void* caller, ListItem* selectedItem, int select
         nextCommand = m_movements::HomeAll;
         SERIAL_IMPL.println("Home All");
     }
+    else if (selectedItem == This->homeZOption){
+        nextCommand = m_movements::HomeZ;
+        SERIAL_IMPL.println("Home Z");
+    }
+    else if (selectedItem == This->probeOption){
+        nextCommand = m_movements::Probe;
+        SERIAL_IMPL.println("Probe");
+    }
+    else if (selectedItem == This->probeSensitityOption){
+        nextCommand = m_movements::ProbeSensitivity;
+        SERIAL_IMPL.println("Probe Sensitivity");
+    }
     else if (selectedItem == This->motorsOffOption){
         nextCommand = m_movements::motorsOff;
         SERIAL_IMPL.println("Motors Off");
@@ -71,6 +83,9 @@ MotorMovementStep::MotorMovementStep(MenuHost* host):MenuStep(host)
     Title = "Power Test";
     options = new VerticalList(host);
     homeAllOption = new StringListItem(host, 0, "Home All", 0, 16);
+    homeZOption = new StringListItem(host, 0, "Home Z", 0, 16);
+    probeOption = new StringListItem(host, 0, "Probe", 0, 16);
+    probeSensitityOption = new StringListItem(host, 0, "PF: -", 0, 16);
     motorsOffOption = new StringListItem(host, 0, "Motors Off", 0, 16);
     xMoveOption = new StringListItem(host, 0, "-- X ++", 0, 16);
     yMoveOption = new StringListItem(host, 0, "-- Y ++", 0, 16);
@@ -82,6 +97,9 @@ MotorMovementStep::MotorMovementStep(MenuHost* host):MenuStep(host)
     fanPowerOption = new StringListItem(host, 0, "0  Fan  1", 0, 16);
     audioOption = new StringListItem(host, 0, "Audio", 0, 16);
     options->Add(homeAllOption);
+    options->Add(homeZOption);
+    options->Add(probeOption);
+    options->Add(probeSensitityOption);
     options->Add(motorsOffOption);
     options->Add(xMoveOption);
     options->Add(yMoveOption);
@@ -109,10 +127,12 @@ void MotorMovementStep::Paint(BufferedDisplay* g){
     g->SetOpacity(opBkp);
 
 }
+extern float loadCellValueThreshold;
 void MotorMovementStep::Tick(){
     NeedsRedraw = true;
     h0PowerOption->ItemText = String("0  H1 (") + String(readTemp1(), 1) + String("C)  1");
     h1PowerOption->ItemText = String("0  H2 (") + String(readTemp2(), 1) + String("C)  1");
+    probeSensitityOption->ItemText = String("-- Touch: ") + String(loadCellValueThreshold, 2) + String(" ++");
 }
 
 void MotorMovementStep::IncrementValue() {
@@ -141,6 +161,16 @@ String MotorMovementStep::makeG1(char axis, int dir) {
     //SERIAL_IMPL.println("Move command: " + command);
     return command;
 }
+void incrementProbeSensitivity(float increment){ 
+    float t = loadCellValueThreshold + increment;
+    if (t < 0.5) t = 0.5;
+    if (t > 6) t = 6;
+    float f = (t / 3) * 0.002F; // Adjust floating factor based on threshold, with 3 as the reference threshold
+    String com1 = String("M39 F") + String(f, 5);
+    String com2 = String("M39 T") + String(t, 2);
+    SERIAL_IMPL.printf("Setting probe sensitivity: %s, %s\n", com1.c_str(), com2.c_str());
+    enqueueComs({com1, com2});
+}
 void MotorMovementStep::HandleKeyPress(Keys key) {
     if (key == Keys::KEYPAD_DOWN)
         options->scrollDown();
@@ -157,7 +187,7 @@ void MotorMovementStep::HandleKeyPress(Keys key) {
             case m_movements::powerH1: enqueueComs({"M104 T0 S0"}); SERIAL_IMPL.println("H1 Off"); break;
             case m_movements::powerH2: enqueueComs({"M104 T1 S0"}); SERIAL_IMPL.println("H2 Off"); break;
             case m_movements::powerFan: enqueueComs({"M106 S0"}); SERIAL_IMPL.println("Fan Off"); break;
-
+            case m_movements::ProbeSensitivity: incrementProbeSensitivity(-0.25); break;
             default:
                 break;
         }
@@ -173,15 +203,23 @@ void MotorMovementStep::HandleKeyPress(Keys key) {
             case m_movements::powerH1: enqueueComs({"M104 T0 S200"}); SERIAL_IMPL.println("H1 On"); break;
             case m_movements::powerH2: enqueueComs({"M104 T1 S200"}); SERIAL_IMPL.println("H2 On"); break;
             case m_movements::powerFan: enqueueComs({"M106 S255"}); SERIAL_IMPL.println("Fan On"); break;
+            case m_movements::ProbeSensitivity: incrementProbeSensitivity(0.25); break;
 
             default:
                 break;
         }
     }
     
+    
     if (key == Keys::KEYPAD_LEFT || key == Keys::KEYPAD_RIGHT || key == Keys::KEYPAD_MIDDLE){
         if (nextCommand == m_movements::HomeAll) {
             enqueueComs({"G28"}); SERIAL_IMPL.println("Home All");
+        }
+        else if (nextCommand == m_movements::HomeZ) {
+            enqueueComs({"G28 Z"}); SERIAL_IMPL.println("Home Z");
+        }
+        else if (nextCommand == m_movements::Probe) {
+            enqueueComs({"G30"}); SERIAL_IMPL.println("Probe");
         }
         else if (nextCommand == m_movements::motorsOff){
             enqueueComs({"M18"}); SERIAL_IMPL.println("Motors Off");
