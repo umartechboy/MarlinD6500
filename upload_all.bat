@@ -11,4 +11,4 @@ if "%~1"=="" (
 )
 
 :: Run the esptool command with the dynamic port argument
-esptool --chip esp32s3 %PORT_ARG% --baud 460800 write_flash 0x0 BuildB3/bootloader.bin 0x8000 BuildB3/partitions.bin 0x10000 BuildB3/firmware.bin 0x3B0000 BuildB3/spiffs.bin
+esptool --chip esp32s3 %PORT_ARG% --baud 460800 write_flash 0x0 BuildB3/bootloader.bin 0x8000 BuildB3/partitions.bin 0x10000 BuildB3/firmware.bin 0x1E0000 BuildB3/firmware.bin 0x3B0000 BuildB3/spiffs.bin
