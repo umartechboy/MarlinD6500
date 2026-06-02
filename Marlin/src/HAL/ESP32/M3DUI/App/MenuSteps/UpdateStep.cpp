@@ -13,6 +13,8 @@ UpdateStep::UpdateStep(MenuHost* host):MenuStep(host) {
     RetroIcon = &img_RetroM3D;  
     PreviousStep = 0;
     RetroNextStep = 0;
+    NoActivityTimeout = 0;
+    JumpToStepOnNoActivity = &settingsStep;
 
     Icon = &img_Home;
 }
@@ -46,9 +48,10 @@ void UpdateStep::Tick() {
             if (card.isFileOpen()){                
                 if(Update.begin(card.getFileSize())) {
                     totalBytesReadForSd = 0; 
-                    TickPeriod = 1;        
-                    StatusMessage = "Updating from SD 2";
-                    UpdateState = SdUpdateState::UpdatingFromSd;
+                    TickPeriod = 100;        
+                    StatusMessage = "Updating from SD";
+                    beginSdWaitStaertedAt = millis();
+                    UpdateState = SdUpdateState::WatingToBeginSd;
                     SERIAL_IMPL.println("File open for update.");                
                     updateBuffer = new uint8_t[SdUpdateBufferSize];                
                 }
@@ -63,7 +66,18 @@ void UpdateStep::Tick() {
         else{
             SERIAL_IMPL.println("No firmware file found");
         }
-    } else if (UpdateState == SdUpdateState::UpdatingFromSd){
+    } 
+    else if (UpdateState == SdUpdateState::WatingToBeginSd){        
+        if (millis() - beginSdWaitStaertedAt < 5000){
+            StatusMessage = String("Updating in ") + String((5000 - (millis() - beginSdWaitStaertedAt)) / 1000) + String("s");
+        }
+        else {
+            StatusMessage = "Updating from SD Card";
+            TickPeriod = 1;
+            UpdateState = SdUpdateState::UpdatingFromSd;
+        }
+    }
+    else if (UpdateState == SdUpdateState::UpdatingFromSd){
         int tRead = card.read(updateBuffer, SdUpdateBufferSize);
         if (tRead > 0) {
             totalBytesReadForSd += tRead;
@@ -131,7 +145,8 @@ void UpdateStep::LoadComplete(){
     TickPeriod = 1000;
     UpdateState = SdUpdateState::BeginSd;
     StatusMessage = "Checking SD card";
-    NeedsRedraw = true;
+    NeedsRedraw = true;   
+    NoActivityTimeout = 0;
 }
 
 void UpdateStep::NotifyOTAProgressChange(String str){
@@ -147,4 +162,17 @@ void UpdateStep::NotifyOTAComplete(){
 }
 void UpdateStep::NotifyOTAFailed(){
     //retroPreviousStepBkp = retroPreviousStepBkp;
+}
+void UpdateStep::HandleKeyPress(Keys key){
+    if (UpdateState == SdUpdateState::WatingToBeginSd){
+        UpdateState =  SdUpdateState::None;
+        StatusMessage = "Cancelled";
+        card.closefile();
+        delete updateBuffer;
+        updateBuffer = 0;
+        Update.abort();
+        TickPeriod = 100;
+        NeedsRedraw = true;        
+        NoActivityTimeout = 2000;
+    }
 }
