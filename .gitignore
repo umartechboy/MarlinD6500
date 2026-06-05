@@ -171,3 +171,4 @@ __pycache__
 *_log.csv
 /logs
 /.vscode
+.claude/settings.local.json
