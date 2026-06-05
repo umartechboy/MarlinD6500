@@ -2,7 +2,7 @@
 #define __PRINTER_INFO_STEP__
 
 #include "..\..\Components\M3DUI.h"
-#define EnablerVersion "D8500 V3"
+#define EnablerVersion "D8500 V3.1"
 
 class PrinterInfoStep:public MenuStep
 {
